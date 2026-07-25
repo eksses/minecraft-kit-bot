@@ -131,6 +131,13 @@ export const chestLocations = sqliteTable('chest_locations', {
   z: integer('z').notNull(),
   itemName: text('item_name').notNull(),
   description: text('description'),
+  itemCount: integer('item_count'),
+  allItems: text('all_items'), // JSON stringified array of all items
+  source: text('source', { enum: ['manual', 'scan', 'sign'] }).notNull().default('manual'),
+  signData: text('sign_data'), // JSON stringified #Key:Value pairs
+  status: text('status', { enum: ['active', 'unavailable', 'disabled'] }).notNull().default('active'),
+  lastScanned: integer('last_scanned', { mode: 'timestamp' }),
+  botId: text('bot_id').references(() => bots.id, { onDelete: 'set null' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -151,10 +158,11 @@ export const serversRelations = relations(servers, ({ one, many }) => ({
   chestLocations: many(chestLocations),
 }));
 
-export const botsRelations = relations(bots, ({ one }) => ({
+export const botsRelations = relations(bots, ({ one, many }) => ({
   user: one(users, { fields: [bots.userId], references: [users.id] }),
   server: one(servers, { fields: [bots.serverId], references: [servers.id] }),
   swarm: one(swarms, { fields: [bots.swarmId], references: [swarms.id] }),
+  scanConfigs: many(scanConfigs),
 }));
 
 export const swarmsRelations = relations(swarms, ({ one, many }) => ({
@@ -181,4 +189,23 @@ export const botLogsRelations = relations(botLogs, ({ one }) => ({
 export const chestLocationsRelations = relations(chestLocations, ({ one }) => ({
   user: one(users, { fields: [chestLocations.userId], references: [users.id] }),
   server: one(servers, { fields: [chestLocations.serverId], references: [servers.id] }),
+  bot: one(bots, { fields: [chestLocations.botId], references: [bots.id] }),
+}));
+
+// ============================================================
+// Scan Configs Table (Per-bot scan settings)
+// ============================================================
+export const scanConfigs = sqliteTable('scan_configs', {
+  id: text('id').primaryKey(),
+  botId: text('bot_id').notNull().references(() => bots.id, { onDelete: 'cascade' }),
+  scanMarkedEnabled: integer('scan_marked_enabled', { mode: 'boolean' }).notNull().default(false),
+  autoScanOnConnect: integer('auto_scan_on_connect', { mode: 'boolean' }).notNull().default(false),
+  scanIntervalMs: integer('scan_interval_ms'), // null = no periodic scan
+  scanRadius: integer('scan_radius').notNull().default(32),
+  allowUnnamedOrders: integer('allow_unnamed_orders', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const scanConfigsRelations = relations(scanConfigs, ({ one }) => ({
+  bot: one(bots, { fields: [scanConfigs.botId], references: [bots.id] }),
 }));
