@@ -41,9 +41,21 @@ Manual chest entry currently exists (`chestService.save()`). This phase adds aut
 - **D-12:** If chest is missing or moved during rescan: mark as "unavailable" in database (not deleted — admin can investigate)
 - **D-13:** Per-bot setting: option to scan only unavailable chests (to rediscover moved/missing chests)
 
-### Chest Data Model
-- **D-14:** Extended chest data structure beyond current `{ x, y, z, item }`:
+### Per-Bot Data Architecture (CRITICAL)
+- **D-14a:** Data isolation model:
+  - **Global data** = servers, bots, users (shared across system)
+  - **Per-bot data** = chest locations, kits, chat logs, settings, delivery history, scan config
+  - Each bot owns its own chest registry — bots do NOT share chest data
+  - A chest scanned by Bot A is invisible to Bot B unless explicitly shared
+
+- **D-14b:** UI navigation model:
+  - Clicking a bot name → navigates to that bot's control panel (its chests, kits, settings)
+  - Swarm view → combined/aggregate view of multiple selected bots' data
+  - Swarm shows data from its member bots merged together (not a separate data store)
+
+- **D-14c:** Extended chest data structure (per bot):
   - `id` — unique identifier (UUID)
+  - `botId` — which bot this chest belongs to (FOREIGN KEY)
   - `name` — chest name from sign `#Name` or `unnamed:{item}`
   - `x, y, z` — coordinates
   - `item` — primary item type detected
@@ -90,7 +102,8 @@ Manual chest entry currently exists (`chestService.save()`). This phase adds aut
 - `backend/src/services/chest.js` — Current chest CRUD (JSON file-based)
 
 ### Database Schema
-- `backend/src/db/schema.js` — `chestLocations` table definition (lines 124-135), all relations
+- `backend/src/db/schema.js` — `chestLocations` table (lines 124-135) needs `botId` FK added; current schema has `userId` but NOT `botId`
+- `backend/src/db/schema.js` — `bots` table (lines 38-56) — per-bot settings will extend this or use a new `bot_settings` table
 
 ### Routes
 - `backend/src/routes/chests.js` — Existing chest API endpoints
