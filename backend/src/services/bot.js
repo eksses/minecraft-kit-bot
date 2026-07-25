@@ -4,6 +4,9 @@ import { Vec3 } from 'vec3';
 import { EventEmitter } from 'events';
 import { chestService } from './chest.js';
 import { configService } from './config.js';
+import { ChestScanner } from './chest-scanner.js';
+import { db, schema } from '../db/index.js';
+import { eq } from 'drizzle-orm';
 
 const { pathfinder: pathfinderPlugin, Movements, goals } = pathfinderModule;
 
@@ -14,6 +17,7 @@ export class BotService extends EventEmitter {
     this.bot = null;
     this.movements = null;
     this.connected = false;
+    this.scanner = null; // Will be initialized after spawn
   }
   
   async start() {
@@ -29,7 +33,7 @@ export class BotService extends EventEmitter {
         reject(new Error('Connection timeout'));
       }, 10000);
       
-      this.bot.once('spawn', () => {
+      this.bot.once('spawn', async () => {
         clearTimeout(timeout);
         
         // Initialize pathfinder movements after spawn
@@ -39,6 +43,36 @@ export class BotService extends EventEmitter {
         
         this.connected = true;
         this.bot.chat(`/login ${this.botConfig.password}`);
+        
+        // Initialize ChestScanner (D-17: progress events wired)
+        this.scanner = new ChestScanner(this.bot, db);
+        
+        // Wire progress events to EventEmitter for WebSocket forwarding
+        this.scanner.on('progress', (data) => {
+          this.emit('scan-progress', data);
+        });
+        
+        this.scanner.on('complete', (results) => {
+          this.emit('scan-complete', results);
+        });
+        
+        // Auto-scan on connect if configured (D-01, D-02)
+        try {
+          const scanConfig = await this.getScanConfig();
+          if (scanConfig?.autoScanOnConnect) {
+            // Delay slightly to let bot settle
+            setTimeout(() => {
+              this.startScan(scanConfig.scanRadius, {
+                scanMarkedOnly: scanConfig.scanMarkedEnabled,
+              }).catch((err) => {
+                console.error('Auto-scan failed:', err.message);
+              });
+            }, 5000);
+          }
+        } catch (err) {
+          console.error('Failed to check scan config:', err.message);
+        }
+        
         resolve();
       });
       
@@ -54,6 +88,7 @@ export class BotService extends EventEmitter {
         clearTimeout(timeout);
         this.bot = null;
         this.connected = false;
+        this.scanner = null;
         this.emit('end');
       });
     });
@@ -119,6 +154,102 @@ export class BotService extends EventEmitter {
       setTimeout(() => reject(new Error('Pathfinding timeout')), 60000);
     });
   }
+  
+  // ============================================================
+  // Scan Methods (ChestScanner integration)
+  // ============================================================
+  
+  /**
+   * Start a chest scan with given radius and options.
+   * @param {number} radius - Scan radius in blocks (1-128)
+   * @param {Object} options - { scanMarkedOnly: boolean }
+   * @returns {Promise<Object>} Scan results
+   */
+  async startScan(radius = 32, options = {}) {
+    if (!this.scanner) throw new Error('Scanner not initialized');
+    return this.scanner.scan(radius, options);
+  }
+  
+  /**
+   * Rescan a specific chest after delivery.
+   * @param {number} x - Chest X coordinate
+   * @param {number} y - Chest Y coordinate
+   * @param {number} z - Chest Z coordinate
+   * @returns {Promise<Object>} Rescan result
+   */
+  async rescanChest(x, y, z) {
+    if (!this.scanner) throw new Error('Scanner not initialized');
+    return this.scanner.rescanChest(x, y, z);
+  }
+  
+  /**
+   * Abort the current scan.
+   */
+  abortScan() {
+    if (this.scanner) {
+      this.scanner.abort();
+    }
+  }
+  
+  /**
+   * Check if a scan is currently in progress.
+   * @returns {boolean}
+   */
+  isScanning() {
+    return this.scanner?.scanning || false;
+  }
+  
+  // ============================================================
+  // Scan Config
+  // ============================================================
+  
+  /**
+   * Get scan configuration for this bot from the database.
+   * Returns default config if none exists.
+   */
+  async getScanConfig() {
+    // Find this bot's ID from the database
+    const botRecord = await db.query.bots.findFirst({
+      where: eq(schema.bots.username, this.botConfig.username),
+    });
+    
+    if (!botRecord) {
+      // Return defaults if bot not in DB yet
+      return {
+        scanMarkedEnabled: false,
+        autoScanOnConnect: false,
+        scanIntervalMs: null,
+        scanRadius: 32,
+        allowUnnamedOrders: true,
+      };
+    }
+    
+    const scanConfig = await db.query.scanConfigs.findFirst({
+      where: eq(schema.scanConfigs.botId, botRecord.id),
+    });
+    
+    if (!scanConfig) {
+      return {
+        scanMarkedEnabled: false,
+        autoScanOnConnect: false,
+        scanIntervalMs: null,
+        scanRadius: 32,
+        allowUnnamedOrders: true,
+      };
+    }
+    
+    return {
+      scanMarkedEnabled: scanConfig.scanMarkedEnabled,
+      autoScanOnConnect: scanConfig.autoScanOnConnect,
+      scanIntervalMs: scanConfig.scanIntervalMs,
+      scanRadius: scanConfig.scanRadius,
+      allowUnnamedOrders: scanConfig.allowUnnamedOrders,
+    };
+  }
+  
+  // ============================================================
+  // Legacy Methods
+  // ============================================================
   
   leaveServer() {
     if (this.bot && this.connected) {
