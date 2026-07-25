@@ -9,6 +9,7 @@ import { chestRoutes } from './routes/chests.js';
 import { kitRoutes } from './routes/kits.js';
 import { configRoutes } from './routes/config.js';
 import { integrationRoutes } from './routes/integrations.js';
+import { fleetRoutes } from './routes/fleet.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -33,12 +34,16 @@ export function createApp() {
   
   app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: Date.now() }));
   
+  // Legacy routes (keep for backward compatibility)
   app.route('/api/auth', authRoutes);
   app.route('/api/bot', botRoutes);
   app.route('/api/chests', chestRoutes);
   app.route('/api/kits', kitRoutes);
   app.route('/api/config', configRoutes);
   app.route('/api/integrations', integrationRoutes);
+  
+  // New fleet management routes
+  app.route('/api/fleet', fleetRoutes);
   
   app.get('*', serveStatic({ root: DIST_PATH }));
   

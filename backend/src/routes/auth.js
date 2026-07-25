@@ -9,7 +9,12 @@ authRoutes.post('/login', async (c) => {
   const credentials = configService.getUICredentials();
   
   if (username === credentials.username && password === credentials.password) {
-    const sessionId = createSession(c, { username, role: 'admin' });
+    const user = { 
+      id: 'legacy-admin', 
+      username, 
+      role: 'admin' 
+    };
+    const sessionId = createSession(c, user);
     return c.json({ success: true, user: { username, role: 'admin' } });
   }
   
