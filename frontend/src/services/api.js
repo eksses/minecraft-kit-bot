@@ -82,11 +82,18 @@ export const fleetAPI = {
   
   // Bots
   getBots: () => request('/fleet/bots'),
+  getBot: (id) => request(`/fleet/bots/${id}`),
   createBot: (data) => request('/fleet/bots', { method: 'POST', body: JSON.stringify(data) }),
   startBot: (id) => request(`/fleet/bots/${id}/start`, { method: 'POST' }),
   stopBot: (id) => request(`/fleet/bots/${id}/stop`, { method: 'POST' }),
+  sendBotCommand: (id, command) => request(`/fleet/bots/${id}/command`, { method: 'POST', body: JSON.stringify({ command }) }),
   sendCommand: (id, command) => request(`/fleet/bots/${id}/command`, { method: 'POST', body: JSON.stringify({ command }) }),
+  getBotInventory: (id) => request(`/fleet/bots/${id}/inventory`),
+  getBotLogs: (id) => request(`/fleet/bots/${id}/logs`),
   deleteBot: (id) => request(`/fleet/bots/${id}`, { method: 'DELETE' }),
+  
+  // Tasks (global)
+  getTasks: () => request('/fleet/tasks'),
   
   // Swarms
   getSwarms: () => request('/fleet/swarms'),
@@ -97,7 +104,7 @@ export const fleetAPI = {
   removeBotFromSwarm: (swarmId, botId) => request(`/fleet/swarms/${swarmId}/bots/${botId}`, { method: 'DELETE' }),
   getSwarmBots: (swarmId) => request(`/fleet/swarms/${swarmId}/bots`),
   
-  // Tasks
+  // Swarm Tasks
   getSwarmTasks: (swarmId, status) => request(`/fleet/swarms/${swarmId}/tasks${status ? `?status=${status}` : ''}`),
   createTask: (swarmId, data) => request(`/fleet/swarms/${swarmId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
   cancelTask: (taskId) => request(`/fleet/tasks/${taskId}`, { method: 'DELETE' }),
@@ -113,6 +120,11 @@ export const fleetAPI = {
   createChest: (data) => request('/fleet/chests', { method: 'POST', body: JSON.stringify(data) }),
   updateChest: (id, data) => request(`/fleet/chests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteChest: (id) => request(`/fleet/chests/${id}`, { method: 'DELETE' }),
+  
+  // User Management
+  getUsers: () => request('/auth/users'),
+  createUser: (data) => request('/auth/users', { method: 'POST', body: JSON.stringify(data) }),
+  deleteUser: (id) => request(`/auth/users/${id}`, { method: 'DELETE' }),
 };
 
 // ============================================================

@@ -1,4 +1,4 @@
-# Integration Guide
+# Integration Guide — MDB v3.0
 
 How to add new platform integrations to the Minecraft Kit Delivery Bot.
 
@@ -15,15 +15,6 @@ Integrations follow a plugin-based architecture. Each integration is a self-cont
 Every integration must implement the following interface:
 
 ```javascript
-/**
- * @typedef {Object} Integration
- * @property {string} name - Unique identifier for this integration
- * @property {string} version - Semantic version of the integration
- * @property {Function} onStart - Called when the integration is initialized
- * @property {Function} onStop - Called when the integration is shut down
- * @property {Function} onMessage - Called when a message is received from the platform
- * @property {Function} onEvent - Called when the bot emits an event
- */
 module.exports = {
   name: 'my-integration',
   version: '1.0.0',
@@ -59,7 +50,6 @@ module.exports = {
 The bot loads integrations automatically from the `integrations/` directory:
 
 ```javascript
-// In server.js or the integration router
 const fs = require('fs');
 const path = require('path');
 
@@ -117,8 +107,6 @@ module.exports = {
 
 ### Step 3: Create `handler.js`
 
-This is where the actual platform SDK logic lives.
-
 ```javascript
 // integrations/discord/handler.js
 const { Client, GatewayIntentBits } = require('discord.js');
@@ -141,7 +129,7 @@ class DiscordJSHandler {
     });
 
     this.client.on('ready', () => {
-      console.log(`Discord integration connected as ${this.client.user.tag}`);
+      console.log(`Discord connected as ${this.client.user.tag}`);
     });
 
     this.client.on('interactionCreate', async (interaction) => {
@@ -153,18 +141,14 @@ class DiscordJSHandler {
   }
 
   async stop() {
-    if (this.client) {
-      await this.client.destroy();
-    }
+    if (this.client) await this.client.destroy();
   }
 
   async handleMessage(message) {
-    // Forward Discord messages to Minecraft
     this.bot.chat(message.content);
   }
 
   async handleEvent(event, data) {
-    // Send bot events to Discord
     this.client.channels.cache.get(this.config.channelId)?.send(data);
   }
 }
@@ -172,7 +156,7 @@ class DiscordJSHandler {
 module.exports = { DiscordJSHandler };
 ```
 
-### Step 4: Create `config.json` or store config in the database
+### Step 4: Create `config.json`
 
 ```json
 {
@@ -182,9 +166,9 @@ module.exports = { DiscordJSHandler };
 }
 ```
 
-### Step 5: Register the integration in the dashboard
+### Step 5: Register the Integration
 
-Add a new page in the frontend to configure and toggle the integration.
+Add a configuration page in the frontend to toggle the integration.
 
 ---
 
@@ -194,7 +178,7 @@ Add a new page in the frontend to configure and toggle the integration.
 
 - **Slash Commands:**
   - `/kits` — List available kits
-  - `/order <kit> <amount> <player>` — Order a kit for a player
+  - `/order <kit> <amount> <player>` — Order a kit
   - `/status` — Check bot status
 
 - **Button Interactions:**
@@ -202,11 +186,11 @@ Add a new page in the frontend to configure and toggle the integration.
   - Admin buttons for bot control
 
 - **Embed Messages:**
-  - Order confirmations with kit details
-  - Bot status embeds with server info
+  - Order confirmations
+  - Bot status embeds
   - Error notifications
 
-### Discord Bot Permissions Required
+### Discord Bot Permissions
 
 ```json
 {
@@ -225,19 +209,19 @@ Before creating a new integration, make sure you have:
 - [ ] Read the Integration Interface specification
 - [ ] Set up your platform's SDK/framework
 - [ ] Created `integrations/<name>/index.js`
-- [ ] Created `integrations/<name>/handler.js` (or equivalent)
-- [ ] Added configuration schema (database or config file)
+- [ ] Created `integrations/<name>/handler.js`
+- [ ] Added configuration schema
 - [ ] Added a frontend page for configuration
 - [ ] Tested the integration end-to-end
-- [ ] Documented the integration in `docs/INTEGRATION.md`
+- [ ] Documented the integration
 
 ---
 
 ## Sharing Integrations
 
-Integrations can be shared by including them in the `integrations/` folder. The integration router discovers them automatically on startup. To share an integration with the community:
+Integrations can be shared by including them in the `integrations/` folder. The integration router discovers them automatically on startup. To share with the community:
 
 1. Fork the repository
 2. Add your integration under `integrations/<name>/`
 3. Submit a PR
-4. Your integration will appear in the dashboard automatically for all users
+4. Your integration will appear in the dashboard automatically

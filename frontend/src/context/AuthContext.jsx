@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
   const checkAuth = async () => {
     try {
       const res = await authAPI.me();
-      setUser(res);
+      setUser(res.user || res);
     } catch {
       setUser(null);
     } finally {
@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   
   const login = async (username, password) => {
     const res = await authAPI.login(username, password);
-    setUser(res);
+    setUser(res.user || res);
   };
   
   const logout = async () => {

@@ -13,3 +13,5 @@ frontend/dist
 frontend/node_modules
 backend/node_modules
 backend/dist
+data/mcdb.db-shm
+data/mcdb.db-wal

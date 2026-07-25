@@ -1,229 +1,218 @@
-# Architecture & Module Details
+# Architecture & Module Details — MDB v3.0
 
 ## Project Structure
 
 ```
 minecraft-kit-bot/
-├── backend/                    # Hono backend
+├── backend/                    # Hono API Server
 │   └── src/
-│       ├── index.js           # Entry point, HTTP + WS server
-│       ├── app.js             # App factory, routes
-│       ├── services/          # Business logic
-│       │   ├── bot.js         # Mineflayer bot service
-│       │   ├── chest.js       # Chest data service
-│       │   ├── kit.js         # Kit ordering service
-│       │   ├── config.js      # Configuration service
-│       │   └── websocket.js   # WebSocket handler
-│       ├── routes/            # API routes
-│       │   ├── auth.js        # Authentication
-│       │   ├── bot.js         # Bot control
-│       │   ├── chests.js      # Chest CRUD
-│       │   ├── kits.js        # Kit ordering
-│       │   ├── config.js      # Configuration
-│       │   └── integrations.js # Platform integrations
-│       ├── middleware/        # Custom middleware
-│       │   └── session.js     # Session management
-│       └── utils/             # Utilities
-├── frontend/                   # React PWA
-│   ├── src/
-│   │   ├── main.tsx           # Entry point
-│   │   ├── App.tsx            # Routes & providers
-│   │   ├── context/           # React context
-│   │   │   └── AuthContext.tsx
-│   │   ├── components/        # Reusable components
-│   │   │   ├── Layout/        # Layout with sidebar
-│   │   │   └── ToastContainer.tsx
-│   │   ├── pages/             # Page components
-│   │   │   ├── Login.tsx
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── ChestManager.tsx
-│   │   │   ├── KitOrder.tsx
-│   │   │   ├── BotControl.tsx
-│   │   │   ├── Chat.tsx
-│   │   │   └── Settings.tsx
-│   │   ├── services/          # API client
-│   │   │   └── api.ts
-│   │   ├── store/             # Zustand stores
-│   │   │   ├── authStore.ts
-│   │   │   ├── botStore.ts
-│   │   │   └── chestStore.ts
-│   │   ├── styles/            # CSS
-│   │   │   └── main.css
-│   │   ├── index.css          # Global styles
-│   │   └── vite-env.d.ts
-│   ├── vite.config.ts         # Vite + PWA config
-│   ├── index.html
-│   └── package.json
-├── chestData.json              # Chest database (JSON)
-├── .env.example                # Environment template
-├── package.json                # Root package.json
-└── docs/                       # Documentation
+│       ├── index.js           # Entry point, binds 0.0.0.0:8081
+│       ├── app.js             # Hono app factory with CORS, sessions
+│       ├── db/                # SQLite + Drizzle ORM
+│       │   ├── schema.js      # 8 tables defined
+│       │   └── index.js       # Auto-migration, default user creation
+│       ├── services/
+│       │   ├── botLifecycle.js    # Worker thread bot isolation
+│       │   ├── swarmCoordinator.js # Task queue, load balancing, failover
+│       │   └── realtime.js        # WebSocket server for live updates
+│       ├── routes/
+│       │   ├── auth.js        # Session auth, user management, RBAC
+│       │   └── fleet.js       # Fleet API (servers, bots, swarms, tasks)
+│       └── middleware/
+│           └── session.js     # Cookie-based session validation
+├── frontend/                   # React SPA + PWA
+│   └── src/
+│       ├── main.jsx           # Entry (AuthProvider + ToastProvider + BrowserRouter)
+│       ├── App.jsx            # Router with 9 protected routes
+│       ├── index.css          # Obsidian Command design system (~21KB)
+│       ├── context/
+│       │   └── AuthContext.jsx # Cookie-based auth, handles {user:{}} response
+│       ├── services/
+│       │   └── api.js         # API client with fleet endpoints
+│       ├── components/
+│       │   ├── Layout/
+│       │   │   ├── Layout.jsx     # App shell (sidebar + main + bottom nav)
+│       │   │   ├── Sidebar.jsx    # Desktop sidebar (280px, Lucide icons)
+│       │   │   ├── BottomNav.jsx  # Mobile bottom nav (4 items + More)
+│       │   │   └── MoreSheet.jsx  # Mobile nav sheet (full list + logout)
+│       │   ├── ui/
+│       │   │   └── StatusComponents.jsx # StatusBadge, HealthBar, FoodBar, BotCard, etc.
+│       │   ├── BotInspector.jsx  # Bot detail drawer (inventory, logs, commands)
+│       │   └── ToastContainer.jsx
+│       └── pages/
+│           ├── Login.jsx
+│           ├── FleetDashboard.jsx
+│           ├── BotControl.jsx
+│           ├── SwarmController.jsx
+│           ├── TaskQueue.jsx
+│           ├── ServerManager.jsx
+│           ├── ChestManager.jsx
+│           ├── KitOrder.jsx
+│           ├── Chat.jsx
+│           ├── Settings.jsx
+│           └── Dashboard.jsx
+├── .planning/                  # Project planning documents
+│   ├── UI-SPEC.md             # Approved UI design contract
+│   └── phases/                # Implementation plans
+├── docs/                       # Documentation
+├── chestData.json              # Legacy chest database (JSON)
+├── .env                        # Environment config
+├── start.sh                    # Production start script
+├── package.json                # Root package.json (npm run dev/start/build)
+└── README.md
 ```
+
+## Database Schema (SQLite + Drizzle ORM)
+
+8 tables:
+
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with roles (admin/operator/viewer) |
+| `servers` | Minecraft server configurations |
+| `bots` | Bot instances (name, username, server, status) |
+| `swarms` | Bot groups with load balancing config |
+| `bot_swarms` | Many-to-many: bots ↔ swarms |
+| `delivery_queue` | Task queue (type, status, assigned bot, details) |
+| `swarm_memory` | Persistent swarm coordination state |
+| `bot_logs` | Bot event logs |
 
 ## Backend Architecture
 
-### Services
+### BotLifecycleManager
 
-**BotService** (`backend/src/services/bot.js`)
-- Manages Mineflayer bot lifecycle
-- Handles pathfinding to chests
-- Processes item withdrawal and TPA
-- Emits events: chat, whisper, error, end
+Each bot runs in an isolated **worker thread**:
+- Auto-reconnect with exponential backoff
+- Pathfinder plugin loaded after spawn
+- Movements set inside `spawn` event handler
+- Status streamed via WebSocket every 5s
 
-**ChestService** (`backend/src/services/chest.js`)
-- File-based JSON storage for chests
-- CRUD operations with validation
-- Auto-save on mutations
+### SwarmCoordinator
 
-**KitService** (`backend/src/services/kit.js`)
-- Orders kits using bot service
-- Tracks order history
-- Uses BotService.takeItemFromChest()
+- **Task Allocation:** NEAREST, LEAST_BUSY, ROUND_ROBIN
+- **Atomic Locking:** Prevents double-assignment
+- **Failover:** Failed tasks auto-requeue
+- **Dead Letter:** Unrecoverable tasks marked as FAILED
 
-**ConfigService** (`backend/src/services/config.js`)
-- Loads/parses .env file
-- Provides bot, server, UI credentials
-- Runtime config updates with auto-reload
+### RealtimeServer
 
-**WebSocketHandler** (`backend/src/services/websocket.js`)
-- Manages WebSocket connections
-- Forwards bot chat to clients
-- Heartbeat/ping-pong for keepalive
+WebSocket server on same HTTP server:
+- Bot status streaming (health, food, position, inventory)
+- Chat message relay
+- Heartbeat/ping-pong keepalive
 
-### Routes
-
-All routes under `/api/*` with session auth:
+### Fleet API Routes
 
 | Route | Methods | Description |
 |-------|---------|-------------|
-| `/auth/login` | POST | Session login |
-| `/auth/logout` | POST | Destroy session |
-| `/auth/me` | GET | Current user |
-| `/bot/status` | GET | Bot online status |
-| `/bot/leave` | POST | Bot leaves server |
-| `/bot/restart` | POST | Restart bot |
-| `/chests` | GET | List all chests |
-| `/chests` | POST | Create chest |
-| `/chests/:name` | PUT | Update chest |
-| `/chests/:name` | DELETE | Delete chest |
-| `/kits/order` | POST | Order kit for player |
-| `/kits/available` | GET | Available chests |
-| `/config` | GET/POST | Get/update config |
-
-### Session Middleware
-
-Custom cookie-based session (`backend/src/middleware/session.js`):
-- HttpOnly, Secure (production), SameSite=Lax
-- 7-day expiry
-- Validates against UI credentials from config
+| `/api/fleet/dashboard` | GET | Fleet overview stats |
+| `/api/fleet/servers` | GET/POST | Server CRUD |
+| `/api/fleet/servers/:id` | DELETE | Delete server |
+| `/api/fleet/bots` | GET/POST | Bot CRUD |
+| `/api/fleet/bots/:id` | GET | Bot details |
+| `/api/fleet/bots/:id/start` | POST | Start bot |
+| `/api/fleet/bots/:id/stop` | POST | Stop bot |
+| `/api/fleet/bots/:id/command` | POST | Send command |
+| `/api/fleet/bots/:id/inventory` | GET | Bot inventory |
+| `/api/fleet/bots/:id/logs` | GET | Bot logs |
+| `/api/fleet/swarms` | GET/POST | Swarm CRUD |
+| `/api/fleet/swarms/:id` | DELETE | Delete swarm |
+| `/api/fleet/swarms/:id/members` | POST | Add bot to swarm |
+| `/api/fleet/swarms/:id/members/:botId` | DELETE | Remove bot |
+| `/api/fleet/tasks` | GET/POST | Task queue |
+| `/api/fleet/tasks/:id/cancel` | POST | Cancel task |
+| `/api/fleet/chests` | GET/POST | Chest locations |
+| `/api/fleet/chests/:id` | DELETE | Delete chest |
+| `/api/fleet/memory` | GET/POST | Swarm memory |
 
 ## Frontend Architecture
 
-### State Management (Zustand)
+### Design System: Obsidian Command
 
-**authStore** - Authentication state
-- user, isAuthenticated, isLoading
-- login(), logout(), checkAuth()
-
-**botStore** - Bot status & info
-- status (online/offline/connecting)
-- username, server
-- chests, orders
-
-**chestStore** - Chest data
-- chests object, isLoading, error
-- fetchChests(), saveChest(), updateChest(), deleteChest()
-
-### API Client
-
-Centralized in `frontend/src/services/api.ts`:
-- Auto-includes credentials (cookies)
-- JSON request/response handling
-- Error normalization
-
-### Components
-
-**Layout** (`components/Layout/Layout.jsx`)
-- Responsive sidebar navigation
-- Header with bot status, user menu
-- Mobile hamburger menu + overlay
-
-**ToastContainer** (`components/ToastContainer.jsx`)
-- Global notifications via Zustand store
-- Auto-dismiss after 5s
-- Click to dismiss
+- **Background:** `#141313`
+- **Surface:** `#201f1f`
+- **Border:** `#2a2a2a`
+- **Primary:** `#ffffff`
+- **Status Online:** `#00ff41`
+- **Status Warning:** `#ffb000`
+- **Status Error:** `#ff3131`
+- **Corner Radius:** 0px (sharp)
+- **Shadows:** None
+- **Typography:** Inter + JetBrains Mono
+- **Touch Targets:** 48px minimum
 
 ### Pages
 
 | Page | Path | Description |
 |------|------|-------------|
-| Login | `/login` | Username/password auth |
-| Dashboard | `/` | Overview, quick actions |
-| ChestManager | `/chests` | CRUD for chests |
-| KitOrder | `/kits` | Order kits for players |
-| BotControl | `/bot` | Start/stop/restart/leave |
-| Chat | `/chat` | Real-time in-game chat |
-| Settings | `/settings` | Config, password, about |
+| Login | `/login` | Centered card login form |
+| Fleet Dashboard | `/fleet` | Stats grid, bot list, swarm list |
+| Bots | `/fleet/bots` | Bot cards with health/food bars |
+| Servers | `/fleet/servers` | Server configuration cards |
+| Swarms | `/fleet/swarms` | Two-column swarm management |
+| Tasks | `/fleet/tasks` | Filter chips, task cards |
+| Chests | `/chests` | Chest location management |
+| Order Kit | `/kits` | Kit ordering form |
+| Chat | `/chat` | WebSocket real-time chat |
+| Settings | `/settings` | User management table |
+
+### Navigation
+
+- **Desktop:** Fixed 280px sidebar with Lucide icons
+- **Mobile:** Bottom nav (Dashboard, Bots, Tasks, More) + MoreSheet with full nav list
 
 ## Data Flow
 
 ### Kit Order Flow
+
 1. User submits order on `/kits` page
-2. Frontend calls `api.kit.order(chestName, amount, player)`
-3. Backend `/api/kits/order` validates chest exists
-4. Backend calls `botService.takeItemFromChest()`
-5. Bot pathfinds to chest, withdraws items
-6. Bot whispers player, sends TPA
-6. Backend returns success, frontend shows toast
+2. Frontend calls `api.fleet.createTask()`
+3. Backend creates task in `delivery_queue` table
+4. SwarmCoordinator assigns task to best available bot
+5. BotLifecycleManager executes task in worker thread
+6. Bot pathfinds to chest, withdraws items, whispers player, sends TPA
+7. Task marked as COMPLETED or FAILED
 
-### Chat Flow
-1. Frontend connects to `ws://host:8081`
-2. Backend WebSocketServer accepts connection
-3. Bot chat event → WebSocket broadcast to all clients
-4. Frontend sends message → Bot.chat()
+### Bot Status Flow
 
-### Config Update Flow
-1. User edits settings on `/settings`
-2. Frontend POSTs to `/api/config`
-3. Backend updates `.env`, reloads dotenv
-4. Response: "restart required"
+1. Bot worker thread emits status events
+2. RealtimeServer broadcasts via WebSocket
+3. Frontend receives and updates UI in real-time
+
+### Auth Flow
+
+1. User submits credentials on `/login`
+2. Backend validates against `users` table
+3. Session cookie set (HttpOnly, Secure, SameSite=Lax)
+4. `/api/auth/me` returns `{ user: { id, username, role } }`
+5. Frontend unwraps with `res.user || res`
 
 ## Security
 
-- Session cookies: HttpOnly, Secure, SameSite=Lax
+- Session cookies: HttpOnly, Secure (production), SameSite=Lax
+- Role-based access control (admin/operator/viewer)
 - No third-party auth (no OAuth, Firebase, etc.)
 - No biometrics/WebAuthn
-- Passwords stored as bcrypt hash in .env
-- CORS restricted to frontend origin
-- No Firebase/OneSignal/third-party push
-
-## Tech Stack Constraints
-
-| Layer | Allowed | Forbidden |
-|-------|---------|-----------|
-| Frontend | React 18, Vite, Zustand, CSS | TypeScript/TSX, Next.js, CSS-in-JS |
-| Backend | Hono, Express, Mineflayer | Fastify, NestJS, other frameworks |
-| Database | JSON file, SQLite, Turso, Neon, MySQL, PG | MongoDB, Firebase |
-| Notifications | Web Push API | Firebase, OneSignal |
-| Auth | Session cookies + bcrypt | OAuth, JWT in localStorage |
-| Build | Vite only | Webpack, Rollup configs |
+- Passwords stored as bcrypt hash
+- CORS configurable via `CORS_ORIGINS` env var
 
 ## Deployment
 
 ### Development
+
 ```bash
-npm run dev  # Runs backend (--watch) + frontend (vite)
+npm run dev    # Runs backend (--watch) + frontend (vite --host)
 ```
 
 ### Production
+
 ```bash
-npm run build      # Builds frontend to frontend/dist
-npm start          # Runs backend (serves static + API)
+npm run build  # Builds frontend to frontend/dist
+npm start      # Starts backend (HOST=0.0.0.0 PORT=8081)
 ```
 
-### Linux Service (systemd)
-- `mdb` - Main bot panel (backend + frontend)
-- `mdbr` - API demon for systemctl start/stop/restart
+### Public Access
 
-### Nginx
-Reverse proxy to `http://localhost:8081` with SSL termination.
+Server binds to `0.0.0.0` for public access:
+- Frontend: `http://103.151.60.212:5173`
+- Backend API: `http://103.151.60.212:8081`

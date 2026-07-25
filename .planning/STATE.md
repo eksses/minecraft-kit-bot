@@ -11,6 +11,14 @@
   - Fault-tolerant delivery queue with zero-drop guarantee
   - Mobile-first React UI with heatmap status indicators
 
+### Phase Status
+
+- **ui-redesign**: PLANNED (3 plans, 2 waves)
+  - Plan 01-01: CSS Foundation & Design System (Wave 1)
+  - Plan 01-02: Layout & Navigation (Wave 1)
+  - Plan 01-03: Page Components & Error Handling (Wave 2)
+  - Status: Ready to execute
+
 ### Completed Work
 
 - Migrated from Express/EJS to Hono + React SPA

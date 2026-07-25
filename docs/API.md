@@ -1,4 +1,4 @@
-# API Reference
+# API Reference — MDB v3.0
 
 Complete REST API documentation for the Minecraft Kit Delivery Bot.
 
@@ -6,328 +6,253 @@ Complete REST API documentation for the Minecraft Kit Delivery Bot.
 
 ## Base URL
 
-Replace `http://yourdomain.com` with the actual base URL where your server is hosted.
-
 ```
-http://localhost:<SERVER_PORT>
+http://localhost:8081
 ```
 
-The default `SERVER_PORT` is `8081`.
+Or from public IP: `http://103.151.60.212:8081`
 
 ---
 
 ## Authentication
 
-The web dashboard routes require login. API endpoints for bot control and chest management are **not protected** in the current implementation (consider adding auth for production use).
+All protected endpoints require a session cookie. Login first:
 
-Default credentials (set in `.env`):
-- **Username:** `admin`
-- **Password:** `password`
-
----
-
-## Bot Control Endpoints
-
-### Check Bot Status
+### Login
 
 ```
-POST /api/status
-```
-
-**Response Values:**
-
-| Code | Meaning |
-|------|---------|
-| `1`  | Bot is online |
-| `2`  | Bot is not online |
-
-**Example:**
-
-```bash
-curl -X POST http://localhost:8081/api/status
-```
-
-**Response:**
-```
-1
-```
-
----
-
-### Make the Bot Leave the Server
-
-```
-POST /api/bot/leave
-```
-
-**Response Values:**
-
-| Code | Meaning |
-|------|---------|
-| `3`  | Bot successfully left the server |
-| `4`  | Bot is not online; no action taken |
-
-**Example:**
-
-```bash
-curl -X POST http://localhost:8081/api/bot/leave
-```
-
-**Response:**
-```
-3
-```
-
----
-
-## Kit Ordering Endpoint
-
-### Order Items from a Chest
-
-```
-POST /api/order
+POST /api/auth/login
 Content-Type: application/json
 ```
 
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chestName` | string | Yes | Name of the chest in `chestData.json` |
-| `amount` | number | Yes | Number of items to order |
-| `player` | string | Yes | Minecraft username of the recipient |
-
-**Example Request:**
-
-```bash
-curl -X POST http://localhost:8081/api/order \
-  -H "Content-Type: application/json" \
-  -d '{"chestName":"starter_kit","amount":1,"player":"Notch"}'
-```
-
-**Success Response:**
-```
-Ordered 1 diamond_sword from "starter_kit" for Notch.
-```
-
-**Error Responses:**
-
-| Status | Message |
-|--------|---------|
-| `400` | `Chest "<name>" data not found or incomplete.` |
-| `500` | `Failed to take item from chest.` |
-
----
-
-## Chest Data Endpoints
-
-### Get All Chests
-
-```
-GET /chest/all-chests
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8081/chest/all-chests
+**Request:**
+```json
+{
+  "username": "admin",
+  "password": "password"
+}
 ```
 
 **Response:**
 ```json
 {
-  "starter_kit": {
-    "x": 1234,
-    "y": 66,
-    "z": -567,
-    "item": "diamond_sword"
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin"
   }
 }
 ```
 
----
-
-### Save a New Chest
+### Get Current User
 
 ```
-POST /chest/save-chest
-Content-Type: application/json
-```
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chestName` | string | Yes | Unique name for the chest |
-| `x` | number | Yes | X coordinate |
-| `y` | number | Yes | Y coordinate |
-| `z` | number | Yes | Z coordinate |
-| `item` | string | Yes | Minecraft item name |
-
-**Example:**
-
-```bash
-curl -X POST http://localhost:8081/chest/save-chest \
-  -H "Content-Type: application/json" \
-  -d '{"chestName":"new_kit","x":100,"y":66,"z":200,"item":"diamond"}'
+GET /api/auth/me
 ```
 
 **Response:**
-```
-Chest data saved successfully.
-```
-
----
-
-### Edit an Existing Chest
-
-```
-PUT /chest/edit-chest
-Content-Type: application/json
-```
-
-**Request Body:** Same as save-chest.
-
-**Example:**
-
-```bash
-curl -X PUT http://localhost:8081/chest/edit-chest \
-  -H "Content-Type: application/json" \
-  -d '{"chestName":"new_kit","x":150,"y":70,"z":250,"item":"netherite_ingot"}'
-```
-
-**Response:**
-```
-Chest data edited successfully.
-```
-
-**Error Responses:**
-
-| Status | Message |
-|--------|---------|
-| `400` | `Invalid data` |
-| `404` | `Chest not found` |
-
----
-
-### Delete a Chest
-
-```
-DELETE /chest/delete-chest
-Content-Type: application/json
-```
-
-**Request Body:**
-
 ```json
 {
-  "chestName": "new_kit"
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin"
+  }
 }
 ```
 
-**Example:**
+> **Note:** Frontend must unwrap with `res.user || res`
 
-```bash
-curl -X DELETE http://localhost:8081/chest/delete-chest \
-  -H "Content-Type: application/json" \
-  -d '{"chestName":"new_kit"}'
+### Logout
+
+```
+POST /api/auth/logout
+```
+
+### User Management (Admin)
+
+```
+GET /api/auth/users          # List all users
+POST /api/auth/users         # Create user { username, password, role }
+DELETE /api/auth/users/:id   # Delete user
+```
+
+---
+
+## Fleet Management
+
+### Dashboard
+
+```
+GET /api/fleet/dashboard
 ```
 
 **Response:**
-```
-Chest data deleted successfully.
-```
-
----
-
-## JSON Editor Endpoint
-
-### Update `chestData.json` via Raw JSON
-
-```
-POST /update-json
-Content-Type: application/json
-```
-
-**Request Body:**
-
 ```json
 {
-  "jsonData": "<entire file content as string>"
+  "bots": { "total": 5, "idle": 3, "working": 1, "error": 1, "offline": 0 },
+  "tasks": { "pending": 2, "active": 1, "completed": 15, "failed": 3 },
+  "swarms": { "total": 2 }
 }
 ```
 
-This endpoint requires authentication (session-based).
-
----
-
-## Environment Variable Endpoint
-
-### Update `.env` via Dashboard
+### Servers
 
 ```
-POST /update
-Content-Type: application/x-www-form-urlencoded
+GET /api/fleet/servers       # List all servers
+POST /api/fleet/servers      # Create server
+DELETE /api/fleet/servers/:id # Delete server
 ```
 
-This endpoint is accessed from the web dashboard form at `/`. It writes all form fields to `.env` and reloads the environment. Requires authentication.
-
----
-
-## Application Control Endpoints (API Demon)
-
-The API demon (`api.js`) runs on `WS_PORT` (default `3000`) and provides the following endpoints:
-
-### Restart the Application
-
-```
-POST /restart
+**Create Server Request:**
+```json
+{
+  "name": "2b2t",
+  "host": "2b2t.org",
+  "port": 25565,
+  "version": "1.12.2",
+  "authType": "microsoft"
+}
 ```
 
-**Response:** `Application restarted successfully`
-
-### Start the Application
+### Bots
 
 ```
-POST /start
+GET /api/fleet/bots          # List all bots
+POST /api/fleet/bots         # Create bot
+GET /api/fleet/bots/:id      # Get bot details
+DELETE /api/fleet/bots/:id   # Delete bot
+POST /api/fleet/bots/:id/start   # Start bot
+POST /api/fleet/bots/:id/stop    # Stop bot
+POST /api/fleet/bots/:id/command # Send command { command: "/say hello" }
+GET /api/fleet/bots/:id/inventory # Get bot inventory
+GET /api/fleet/bots/:id/logs      # Get bot logs
 ```
 
-**Response:** `Application started successfully`
+**Create Bot Request:**
+```json
+{
+  "name": "DeliveryBot",
+  "username": "kit_bot",
+  "serverId": "server-id-here"
+}
+```
 
-### Stop the Application
+**Command Request:**
+```json
+{
+  "command": "/say Hello world"
+}
+```
+
+### Swarms
 
 ```
-POST /stop
+GET /api/fleet/swarms        # List all swarms
+POST /api/fleet/swarms       # Create swarm
+DELETE /api/fleet/swarms/:id # Delete swarm
+POST /api/fleet/swarms/:id/members      # Add bot { botId }
+DELETE /api/fleet/swarms/:id/members/:botId # Remove bot
 ```
 
-**Response:** `Application stopped successfully`
+**Create Swarm Request:**
+```json
+{
+  "name": "DeliverySwarm",
+  "loadBalancing": "NEAREST"
+}
+```
+
+**Load Balancing Options:**
+- `NEAREST` — Assigns to bot closest to target
+- `LEAST_BUSY` — Assigns to bot with fewest active tasks
+- `ROUND_ROBIN` — Cycles through bots sequentially
+
+### Task Queue
+
+```
+GET /api/fleet/tasks         # List all tasks
+POST /api/fleet/tasks        # Create task
+POST /api/fleet/tasks/:id/cancel  # Cancel task
+```
+
+**Create Task Request:**
+```json
+{
+  "type": "KIT_DELIVERY",
+  "targetChestId": "chest-id",
+  "assignedBotId": "bot-id",
+  "swarmId": "swarm-id",
+  "details": {
+    "itemName": "diamond_sword",
+    "quantity": 1,
+    "targetPlayer": "Notch"
+  }
+}
+```
+
+**Task Status Values:** `PENDING`, `LOCKED`, `IN_PROGRESS`, `COMPLETED`, `FAILED`
+
+### Chest Locations
+
+```
+GET /api/fleet/chests        # List all chests
+POST /api/fleet/chests       # Create chest
+DELETE /api/fleet/chests/:id # Delete chest
+```
+
+**Create Chest Request:**
+```json
+{
+  "name": "Main Storage",
+  "x": 1234,
+  "y": 66,
+  "z": -567,
+  "itemName": "diamond_sword"
+}
+```
+
+### Swarm Memory
+
+```
+GET /api/fleet/memory        # List memory entries
+POST /api/fleet/memory       # Store memory entry
+```
 
 ---
 
 ## WebSocket API
 
-The bot runs a WebSocket server on `WS_PORT` (default `3000`, same as the API demon).
-
-### Connect
+Connect to the same HTTP server on port 8081:
 
 ```javascript
-const ws = new WebSocket('ws://localhost:3000');
+const ws = new WebSocket('ws://localhost:8081');
 ```
 
-### Send a Chat Command
+### Event Types
 
-Messages must be sent as JSON strings:
+| Type | Description |
+|------|-------------|
+| `bot_status` | Bot health, food, position, inventory updates |
+| `chat` | In-game chat messages |
+| `inventory` | Bot inventory changes |
 
-```javascript
-ws.send(JSON.stringify('say Hello world'));
-```
-
-### Receive Chat Events
-
-The server forwards in-game chat as JSON objects:
-
+**Bot Status Event:**
 ```json
 {
+  "type": "bot_status",
+  "botId": "bot-id",
+  "status": "IDLE",
+  "health": 20,
+  "food": 20,
+  "position": { "x": 100, "y": 66, "z": -200 }
+}
+```
+
+**Chat Event:**
+```json
+{
+  "type": "chat",
   "username": "PlayerName",
   "message": "Hello everyone!"
 }
@@ -337,12 +262,14 @@ The server forwards in-game chat as JSON objects:
 
 ## Error Handling
 
-All API endpoints return appropriate HTTP status codes:
+All endpoints return appropriate HTTP status codes:
 
 | Code | Meaning |
 |------|---------|
 | `200` | Success |
 | `400` | Bad request (missing or invalid data) |
+| `401` | Unauthorized (not logged in) |
+| `403` | Forbidden (insufficient permissions) |
 | `404` | Resource not found |
 | `500` | Internal server error |
 
@@ -352,15 +279,16 @@ All API endpoints return appropriate HTTP status codes:
 
 | Endpoint | Method | Auth | Purpose |
 |----------|--------|------|---------|
-| `/api/status` | POST | No | Check bot online status |
-| `/api/bot/leave` | POST | No | Bot leaves server |
-| `/api/order` | POST | No | Order a kit for a player |
-| `/chest/all-chests` | GET | No | Get all chest data |
-| `/chest/save-chest` | POST | Yes | Add a new chest |
-| `/chest/edit-chest` | PUT | Yes | Edit chest data |
-| `/chest/delete-chest` | DELETE | Yes | Delete a chest |
-| `/update-json` | POST | Yes | Update chestData.json directly |
-| `/update` | POST | Yes | Update .env values |
-| `/restart` | POST | No | Restart the bot service (via demon) |
-| `/start` | POST | No | Start the bot service (via demon) |
-| `/stop` | POST | No | Stop the bot service (via demon) |
+| `/api/auth/login` | POST | No | Login |
+| `/api/auth/logout` | POST | Yes | Logout |
+| `/api/auth/me` | GET | Yes | Current user |
+| `/api/auth/users` | GET/POST/DELETE | Yes | User management |
+| `/api/fleet/dashboard` | GET | Yes | Fleet overview |
+| `/api/fleet/servers` | GET/POST | Yes | Server CRUD |
+| `/api/fleet/bots` | GET/POST | Yes | Bot CRUD |
+| `/api/fleet/bots/:id/start` | POST | Yes | Start bot |
+| `/api/fleet/bots/:id/stop` | POST | Yes | Stop bot |
+| `/api/fleet/bots/:id/command` | POST | Yes | Send command |
+| `/api/fleet/swarms` | GET/POST | Yes | Swarm CRUD |
+| `/api/fleet/tasks` | GET/POST | Yes | Task queue |
+| `/api/fleet/chests` | GET/POST | Yes | Chest locations |

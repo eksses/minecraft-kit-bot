@@ -1,79 +1,85 @@
 import { useState, useEffect } from 'react';
-import { useChestStore } from '../store';
 import { api } from '../services/api';
+import { useToast } from '../components/ToastContainer';
 
 export default function KitOrder() {
-  const { chests, fetchChests } = useChestStore();
-  const [selectedChest, setSelectedChest] = useState('');
-  const [amount, setAmount] = useState(1);
-  const [player, setPlayer] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [chests, setChests] = useState([]);
+  const [bots, setBots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [order, setOrder] = useState({ chestId: '', botName: '', itemName: '', quantity: 1 });
+  const { addToast } = useToast();
 
   useEffect(() => {
-    fetchChests();
+    (async () => {
+      try {
+        const [c, b] = await Promise.all([api.fleet.getChests(), api.fleet.getBots()]);
+        setChests(c);
+        setBots(b);
+      } catch (err) {
+        addToast({ type: 'error', title: 'Failed to load data' });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const handleOrder = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setResult(null);
-    
     try {
-      const response = await api.kits.order(selectedChest, amount, player);
-      setResult({ success: true, message: response.message });
+      await api.fleet.createTask({
+        type: 'KIT_DELIVERY',
+        targetChestId: order.chestId,
+        assignedBotId: order.botName,
+        details: { itemName: order.itemName, quantity: order.quantity },
+      });
+      setOrder({ chestId: '', botName: '', itemName: '', quantity: 1 });
+      addToast({ type: 'success', title: 'Kit ordered' });
     } catch (err) {
-      setResult({ success: false, message: err.message });
+      addToast({ type: 'error', title: 'Failed to submit order' });
     }
-    setLoading(false);
   };
 
+  if (loading) {
+    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+  }
+
   return (
-    <div className="page">
-      <h1>Order Kit</h1>
-      
-      <div className="card">
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Order Kit</h1>
+          <p className="page-subtitle">Request item delivery from chest to bot</p>
+        </div>
+      </div>
+
+      <div className="card" style={{maxWidth: '500px'}}>
+        <div className="card-header">
+          <span className="card-title">Create Delivery Order</span>
+        </div>
         <form onSubmit={handleOrder}>
           <div className="form-group">
-            <label>Kit / Chest</label>
-            <select value={selectedChest} onChange={(e) => setSelectedChest(e.target.value)} required>
-              <option value="">Select a kit...</option>
-              {Object.keys(chests).map(name => (
-                <option key={name} value={name}>{name} ({chests[name].item})</option>
-              ))}
+            <label className="form-label">Source Chest</label>
+            <select value={order.chestId} onChange={(e) => setOrder({...order, chestId: e.target.value})} required>
+              <option value="">Select a chest...</option>
+              {chests.map(c => <option key={c.id} value={c.id}>{c.name} ({c.itemName})</option>)}
             </select>
           </div>
-          
           <div className="form-group">
-            <label>Amount</label>
-            <input 
-              type="number" 
-              min="1" 
-              value={amount} 
-              onChange={(e) => setAmount(parseInt(e.target.value))} 
-              required 
-            />
+            <label className="form-label">Assigned Bot</label>
+            <select value={order.botName} onChange={(e) => setOrder({...order, botName: e.target.value})}>
+              <option value="">Auto-assign</option>
+              {bots.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
           </div>
-          
           <div className="form-group">
-            <label>Player Name</label>
-            <input 
-              value={player} 
-              onChange={(e) => setPlayer(e.target.value)} 
-              required 
-              placeholder="Minecraft username"
-            />
+            <label className="form-label">Item Name</label>
+            <input type="text" value={order.itemName} onChange={(e) => setOrder({...order, itemName: e.target.value})} required placeholder="diamond" />
           </div>
-          
-          {result && (
-            <div className={`alert ${result.success ? 'success' : 'error'}`}>
-              {result.message}
-            </div>
-          )}
-          
-          <button type="submit" className="btn primary" disabled={loading || !selectedChest || !player}>
-            {loading ? 'Ordering...' : 'Order Kit'}
-          </button>
+          <div className="form-group">
+            <label className="form-label">Quantity</label>
+            <input type="number" min="1" max="64" value={order.quantity} onChange={(e) => setOrder({...order, quantity: parseInt(e.target.value)})} required />
+          </div>
+          <button type="submit" className="btn btn-primary w-full">Submit Order</button>
         </form>
       </div>
     </div>

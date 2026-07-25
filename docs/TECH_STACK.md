@@ -1,4 +1,4 @@
-# Tech Stack Policy
+# Tech Stack Policy — MDB v3.0
 
 This document defines the technology stack for MDB and rules that are non-negotiable.
 
@@ -8,22 +8,18 @@ This document defines the technology stack for MDB and rules that are non-negoti
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| **Frontend** | React.js (Vite) | Component-driven SPA, no TSX, no framework |
+| **Frontend** | React 18 (Vite) | Component-driven SPA, plain JavaScript |
 | **PWA** | Vite PWA Plugin | Service workers, manifest, offline support |
-| **Push Notifications** | Web Push API (React Push) | Browser-native push notifications, no Firebase |
-| **Backend (Primary)** | Express.js | Battle-tested, minimal, massive ecosystem |
-| **Backend (Alternative)** | Hono | Lightweight serverless-compatible alternative to Express |
-| **Bot Framework** | Mineflayer | The standard Minecraft bot library |
-| **Database (Dev)** | SQLite or JSON file | Zero setup, portable |
-| **Database (Production)** | Turso (libSQL), Neon Postgres, MySQL, PostgreSQL | Structured, scalable, migration-ready |
-| **State Management** | Zustand | Lightweight, minimal boilerplate |
-| **Styling** | CSS (or a utility library) | No CSS-in-JS overhead |
+| **Backend** | Hono | Lightweight, fast, serverless-compatible |
+| **Bot Framework** | Mineflayer + mineflayer-pathfinder | Standard Minecraft bot library |
+| **Database** | SQLite + Drizzle ORM | Zero setup, portable, type-safe queries |
+| **Real-time** | WebSocket | Live bot status, chat, inventory |
+| **Auth** | Cookie-based sessions with RBAC | No third-party auth providers |
+| **Styling** | CSS custom properties | Obsidian Command design system |
 | **Language** | JavaScript (ES2022+) | No TypeScript/TSX — ever |
 | **API** | REST + WebSocket | Simple, universal, debuggable |
-| **Auth** | Session-based (server-side) with role system | No third-party auth providers |
 | **Process Manager** | PM2 (production) | Auto-restart, clustering, logging |
 | **Reverse Proxy** | Nginx | SSL termination, proxying |
-| **Test Runner** | Built-in `node:test` or Jest | No heavy test frameworks required |
 
 ---
 
@@ -31,22 +27,19 @@ This document defines the technology stack for MDB and rules that are non-negoti
 
 ### No TypeScript or TSX
 
-MDB is **JavaScript only**. No TypeScript, no TSX, no `*.ts` or `*.tsx` files. TypeScript adds build complexity and slows down contributors. Plain JavaScript keeps the barrier to entry low and the codebase accessible.
+MDB is **JavaScript only**. No TypeScript, no TSX, no `*.ts` or `*.tsx` files. Plain JavaScript keeps the barrier to entry low and the codebase accessible.
 
 ### No Next.js
 
-Next.js is not part of MDB. It is a real-time bot control application with a single-page dashboard. A standalone React app served by Express provides everything we need without the overhead of SSR/SSG, file-based routing, or framework-specific abstractions.
+Next.js is not part of MDB. It is a real-time bot control application with a single-page dashboard. A standalone React app served by Hono provides everything we need.
 
-### Backend: Express or Hono Only
+### Backend: Hono Only
 
-The backend must be either **Express.js** or **Hono**. No other backend frameworks are allowed. These are the only approved options:
-
-- **Express.js** — The default backend. Mature, huge ecosystem, battle-tested for real-time bot applications.
-- **Hono** — Lightweight alternative for serverless or edge deployments. Same API patterns as Express.
+The backend is **Hono** — lightweight, fast, and serverless-compatible. Express.js is no longer used as of v3.0.
 
 ### No Meta-Frameworks
 
-No Nuxt, SvelteKit, Astro, Remix, Redwood, or similar build-heavy frontend frameworks. The frontend is a vanilla React SPA with Vite.
+No Nuxt, SvelteKit, Astro, Remix, Redwood, or similar. The frontend is a vanilla React SPA with Vite.
 
 ### No Heavy Build Tooling
 
@@ -54,7 +47,7 @@ No custom Babel or Webpack configs. Vite is the dev tool and build tool. That's 
 
 ### No Third-Party Auth Providers
 
-No Google OAuth, GitHub OAuth, or similar. All authentication stays within the application using session-based login with hashed passwords (bcryptjs).
+No Google OAuth, GitHub OAuth, or similar. All authentication stays within the application using session-based login with hashed passwords.
 
 ### No Biometric or Fingerprint Auth
 
@@ -62,33 +55,28 @@ No WebAuthn, no fingerprint scanning, no Face ID. Authentication is username/pas
 
 ### No Firebase or Cloud Notification Services
 
-No Firebase Cloud Messaging, no OneSignal, no third-party notification services. Push notifications are handled via the browser's native Web Push API with React push notification components.
-
-### No Fingerprint/Biometric Login
-
-Users log in with username and password. No fingerprint, no Face ID, no biometric verification.
+No Firebase Cloud Messaging, no OneSignal, no third-party notification services. Push notifications are handled via the browser's native Web Push API.
 
 ---
 
-## Database Options
+## Database
 
-MDB supports multiple database backends:
+MDB uses **SQLite with Drizzle ORM** for structured data:
 
-| Database | Use Case |
-|----------|----------|
-| **JSON file** (`chestData.json`) | Quick start, single bot, dev/testing |
-| **SQLite** | Local dev, simple deployments |
-| **Turso (libSQL)** | Edge-compatible SQLite, serverless deployments |
-| **Neon Postgres** | Serverless Postgres with branching, multi-bot deployments |
-| **MySQL** | Self-hosted production, traditional hosting |
-| **PostgreSQL** | Multi-bot swarm deployments, complex queries |
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with roles |
+| `servers` | Minecraft server configurations |
+| `bots` | Bot instances |
+| `swarms` | Bot groups with load balancing |
+| `bot_swarms` | Many-to-many: bots ↔ swarms |
+| `delivery_queue` | Task queue |
+| `swarm_memory` | Persistent swarm state |
+| `bot_logs` | Bot event logs |
 
-### Migration Path
+### Legacy Support
 
-1. Start with JSON file (like current v2.0)
-2. On first structured DB setup, auto-import `chestData.json` into the DB
-3. All operations go through the DB from then on
-4. JSON export is still supported for backup/sharing
+`chestData.json` is still supported for development. The system auto-migrates from JSON to SQLite on first run.
 
 ---
 
@@ -96,12 +84,29 @@ MDB supports multiple database backends:
 
 - React.js only (no TSX)
 - Vite as the build tool
-- Component-driven architecture with modular components
-- Zustand for state management
-- Web Push API for notifications
+- Component-driven architecture
+- CSS custom properties for theming
 - Responsive design, mobile-first
 - PWA-capable (installable on mobile/desktop)
 - No framework abstractions — just React + CSS
+
+---
+
+## Design System: Obsidian Command
+
+| Token | Value |
+|-------|-------|
+| Background | `#141313` |
+| Surface | `#201f1f` |
+| Border | `#2a2a2a` |
+| Primary | `#ffffff` |
+| Status Online | `#00ff41` |
+| Status Warning | `#ffb000` |
+| Status Error | `#ff3131` |
+| Corner Radius | 0px |
+| Shadows | None |
+| Touch Targets | 48px |
+| Typography | Inter + JetBrains Mono |
 
 ---
 

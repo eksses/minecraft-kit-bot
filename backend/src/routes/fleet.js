@@ -421,6 +421,61 @@ fleetRoutes.delete('/chests/:id', requireAuth, async (c) => {
 });
 
 // ============================================================
+// Global Tasks (all user's tasks across all swarms)
+// ============================================================
+fleetRoutes.get('/tasks', requireAuth, async (c) => {
+  const user = c.get('session');
+  const tasks = await db.select()
+    .from(schema.deliveryQueue)
+    .where(eq(schema.deliveryQueue.userId, user.id));
+  return c.json(tasks);
+});
+
+// ============================================================
+// Single Bot Detail
+// ============================================================
+fleetRoutes.get('/bots/:id', requireAuth, async (c) => {
+  const user = c.get('session');
+  const botId = c.req.param('id');
+  
+  const bots = await db.select()
+    .from(schema.bots)
+    .where(and(
+      eq(schema.bots.id, botId),
+      eq(schema.bots.userId, user.id)
+    ));
+  
+  if (bots.length === 0) {
+    return c.json({ error: 'Bot not found' }, 404);
+  }
+
+  const bot = bots[0];
+  const instance = botLifecycleManager.getBot(bot.id);
+  
+  return c.json({
+    ...bot,
+    liveStatus: instance ? instance.getStatus() : null,
+  });
+});
+
+fleetRoutes.get('/bots/:id/inventory', requireAuth, async (c) => {
+  const botId = c.req.param('id');
+  const instance = botLifecycleManager.getBot(botId);
+  if (!instance) return c.json([]);
+  const status = instance.getStatus();
+  return c.json(status.inventory || []);
+});
+
+fleetRoutes.get('/bots/:id/logs', requireAuth, async (c) => {
+  const botId = c.req.param('id');
+  const logs = await db.select()
+    .from(schema.botLogs)
+    .where(eq(schema.botLogs.botId, botId))
+    .limit(50);
+  return c.json(logs);
+});
+
+// ============================================================
 // Fleet Dashboard Stats
 // ============================================================
 fleetRoutes.get('/dashboard', requireAuth, async (c) => {

@@ -32,6 +32,12 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Get public IP
+get_public_ip() {
+    PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "localhost")
+    echo "$PUBLIC_IP"
+}
+
 check_dependencies() {
     log_info "Checking dependencies..."
     
@@ -80,23 +86,30 @@ start_dev() {
     
     cd "$PROJECT_ROOT"
     
+    PUBLIC_IP=$(get_public_ip)
+    
     # Start backend with watch mode
-    log_info "Starting backend on port 8081..."
-    node --watch backend/src/index.js &
+    log_info "Starting backend on 0.0.0.0:8081..."
+    HOST=0.0.0.0 node --watch backend/src/index.js &
     BACKEND_PID=$!
     
     # Wait for backend to start
     sleep 3
     
     # Start frontend
-    log_info "Starting frontend on port 5173..."
+    log_info "Starting frontend on 0.0.0.0:5173..."
     cd "$FRONTEND_DIR"
-    npm run dev &
+    npm run dev -- --host 0.0.0.0 &
     FRONTEND_PID=$!
     
     log_success "Development servers started!"
-    log_info "Backend: http://localhost:8081"
-    log_info "Frontend: http://localhost:5173"
+    log_info "Backend: http://${PUBLIC_IP}:8081"
+    log_info "Frontend: http://${PUBLIC_IP}:5173"
+    log_info ""
+    log_info "Local access:"
+    log_info "  Backend: http://localhost:8081"
+    log_info "  Frontend: http://localhost:5173"
+    log_info ""
     log_info "Press Ctrl+C to stop both servers"
     
     # Wait for interrupt
@@ -118,10 +131,12 @@ start_prod() {
         exit 1
     fi
     
+    PUBLIC_IP=$(get_public_ip)
+    
     # Start backend
-    log_info "Starting production server on port 8081..."
+    log_info "Starting production server on 0.0.0.0:8081..."
     cd "$PROJECT_ROOT"
-    NODE_ENV=production node backend/src/index.js
+    HOST=0.0.0.0 NODE_ENV=production node backend/src/index.js
 }
 
 start_backend_only() {
@@ -134,16 +149,16 @@ start_backend_only() {
     
     cd "$PROJECT_ROOT"
     if [ "$1" = "dev" ]; then
-        node --watch backend/src/index.js
+        HOST=0.0.0.0 node --watch backend/src/index.js
     else
-        node backend/src/index.js
+        HOST=0.0.0.0 node backend/src/index.js
     fi
 }
 
 start_frontend_only() {
     log_info "Starting frontend only..."
     cd "$FRONTEND_DIR"
-    npm run dev
+    npm run dev -- --host 0.0.0.0
 }
 
 show_help() {

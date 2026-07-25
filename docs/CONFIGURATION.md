@@ -1,4 +1,4 @@
-# Configuration Guide
+# Configuration Guide — MDB v3.0
 
 This document covers all configuration options for the Minecraft Kit Delivery Bot.
 
@@ -6,20 +6,21 @@ This document covers all configuration options for the Minecraft Kit Delivery Bo
 
 ## Environment Variables (`.env`)
 
-The `.env` file controls every aspect of the bot's behavior. Here is a reference:
+The `.env` file controls the bot's behavior:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `IP` | `6b6t.org` | Minecraft server address |
 | `PORT` | `25565` | Minecraft server port |
 | `BOTNAME` | `changeme_mdb` | Bot's in-game username |
-| `PASSWORD` | `changeme_mdb` | Bot's login password (sent as `/login <password>`) |
+| `PASSWORD` | `changeme_mdb` | Bot's login password |
 | `VERSION` | `1.17` | Minecraft protocol version |
-| `SERVER_PORT` | `8081` | Port for the Express web dashboard |
-| `WS_PORT` | `3000` | Port for the WebSocket server and API demon |
-| `DEMON_PORT` | `25567` | Port for the demon API (unused in current code) |
+| `SERVER_PORT` | `8081` | Port for the Hono backend |
+| `HOST` | `0.0.0.0` | Bind address (0.0.0.0 for public) |
 | `UI_USER` | `admin` | Web dashboard login username |
 | `UI_PASSWORD` | `password` | Web dashboard login password |
+| `CORS_ORIGINS` | `*` | Allowed CORS origins |
+| `SESSION_SECRET` | random | Session signing secret |
 
 ### Example `.env`
 
@@ -30,158 +31,126 @@ BOTNAME=my_kit_bot
 PASSWORD=securePassword123
 VERSION=1.17
 SERVER_PORT=8081
-WS_PORT=3000
-DEMON_PORT=25567
+HOST=0.0.0.0
 UI_USER=admin
 UI_PASSWORD=changeMeInProduction
+CORS_ORIGINS=http://localhost:5173,http://103.151.60.212:5173
 ```
 
-> **Warning:** Never commit `.env` with real credentials. The `.gitignore` is already set to ignore it, but double-check before sharing files.
+> **Warning:** Never commit `.env` with real credentials.
 
 ---
 
-## `chestData.json` Format
+## Database (SQLite + Drizzle ORM)
 
-This file is the bot's kit database. It is a JSON object where each key is a kit name and each value contains chest coordinates and the item to deliver.
+MDB v3.0 uses SQLite with Drizzle ORM. The database file is auto-created at startup:
 
-### Structure
-
-```json
-{
-  "<kitName>": {
-    "x": <number>,
-    "y": <number>,
-    "z": <number>,
-    "item": "<minecraftItemName>"
-  }
-}
+```
+backend/data/mdb.sqlite
 ```
 
-### Example
+### Tables
 
-```json
-{
-  "starter_kit": {
-    "x": 1234,
-    "y": 66,
-    "z": -567,
-    "item": "diamond_sword"
-  },
-  "pvp_kit": {
-    "x": 1200,
-    "y": 70,
-    "z": -500,
-    "item": "iron_chestplate"
-  },
-  "red_shulker": {
-    "x": 0,
-    "y": 66,
-    "z": 0,
-    "item": "red_shulker_box"
-  }
-}
-```
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts (id, username, password_hash, role) |
+| `servers` | Minecraft servers (id, name, host, port, version, auth_type) |
+| `bots` | Bot instances (id, name, username, server_id, status) |
+| `swarms` | Bot groups (id, name, load_balancing) |
+| `bot_swarms` | Many-to-many mapping |
+| `delivery_queue` | Task queue (id, type, status, assigned_bot, details) |
+| `swarm_memory` | Persistent swarm state |
+| `bot_logs` | Bot event logs |
 
-### Important Rules
+### Auto-Migration
 
-- **Unique Item per Chest:** If a chest contains a shulker box (e.g., `red_shulker_box`), it should only contain that item. The bot does not filter — it withdraws the specified item and the player accepts the TPA to collect everything.
-- **Coordinates must be integers.**
-- **Chest names must be unique.**
-- **Item names must match Minecraft registry names** (e.g., `diamond_sword`, `lime_shulker_box`, `stone`).
+On first startup, the system:
+1. Creates all tables if they don't exist
+2. Creates a default admin user (username: `admin`, password: `password`)
+3. Migrates data from `chestData.json` if it exists
 
 ---
 
-## Database Selection
+## Chest Data
 
-MDB supports multiple database backends for production deployments:
+Chest locations are stored in the SQLite database. Each chest has:
 
-| Database | Best For |
-|----------|----------|
-| **JSON file** (`chestData.json`) | Quick start, single bot, dev/testing |
-| **SQLite** | Local dev, simple deployments |
-| **Turso (libSQL)** | Edge-compatible, serverless |
-| **Neon Postgres** | Serverless Postgres, multi-bot |
-| **MySQL** | Traditional self-hosted |
-| **PostgreSQL** | Multi-bot swarm, complex queries |
-
-The database is auto-migrated from `chestData.json` on first setup. All chest and kit data moves to the structured database after migration.
-
-## Managing Chest Data
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique chest name |
+| `x` | integer | X coordinate |
+| `y` | integer | Y coordinate |
+| `z` | integer | Z coordinate |
+| `itemName` | string | Minecraft item name |
 
 ### Via Web UI
 
-Navigate to the **Chests** page (`/chest`) while logged in. You can:
-
-- **Add** a new chest with name, coordinates, and item
-- **Edit** existing chest data
-- **Delete** chests
-- View all chests in a list
+Navigate to the **Chests** page (`/chests`) to add, edit, or delete chest locations.
 
 ### Via API
 
 See [API Reference](API.md) for full endpoint documentation.
 
-### Direct File Edit
-
-You can also edit `chestData.json` directly:
-
-1. Open `chestData.json` in a text editor
-2. Modify the JSON object
-3. Save the file
-4. Restart the bot (or send a POST to `/update-json` if the JSON editor is enabled)
-
-> **Note:** The bot reads `chestData.json` at startup and on each `loadChestData()` call. Changes to the file take effect when the bot reloads the data.
-
 ---
 
-## Web Dashboard Configuration
+## Web Dashboard
 
-The dashboard at `/` allows you to update `.env` values in real time:
+The dashboard is accessible at:
+- **Development:** `http://localhost:5173`
+- **Production:** `http://localhost:8081`
+- **Public:** `http://103.151.60.212:5173`
 
-1. Log in with `UI_USER` / `UI_PASSWORD`
-2. Edit any environment variable in the form
-3. Click **Update**
+### Login
 
-The updated values are written back to `.env` and reloaded. However, **some changes (like IP, PORT, BOTNAME) require a bot restart** to take effect.
+Navigate to the login page and enter your credentials. Default:
+- **Username:** `admin`
+- **Password:** `password`
+
+### User Roles
+
+| Role | Permissions |
+|------|-------------|
+| `admin` | Full access: bot control, user management, all CRUD |
+| `operator` | Bot control, chest management, kit ordering |
+| `viewer` | Read-only access to dashboards |
 
 ---
 
 ## Service Configuration (Linux)
 
-### Systemd Services
+### Start Script
 
-The install script creates two systemd services:
-
-| Service | Command | Description |
-|---------|---------|-------------|
-| `mdb` | `ExecStart=node /etc/mdb/server.js` | Bot panel and web server |
-| `mdbr` | `ExecStart=node /etc/mdb/api.js` | API demon for service control |
-
-### Managing Services
+The `start.sh` script handles production startup:
 
 ```bash
-# Start
-sudo systemctl start mdb
-sudo systemctl start mdbr
+#!/bin/bash
+HOST=0.0.0.0 PORT=8081 node backend/src/index.js
+```
 
-# Stop
-sudo systemctl stop mdb
-sudo systemctl stop mdbr
+### Systemd (Optional)
 
-# Restart
-sudo systemctl restart mdb
-sudo systemctl restart mdbr
+```ini
+[Unit]
+Description=MDB Bot Panel
+After=network.target
 
-# Enable on boot
-sudo systemctl enable mdb
-sudo systemctl enable mdbr
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/Mcbot/minecraft-kit-bot
+ExecStart=/bin/bash start.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ---
 
 ## Nginx Configuration
 
-When a domain is provided during installation, the installer configures Nginx as a reverse proxy:
+When using Nginx as reverse proxy:
 
 ```nginx
 server {
@@ -189,11 +158,17 @@ server {
     server_name yourdomain.com;
 
     location / {
-        proxy_pass http://localhost:<SERVER_PORT>;
+        proxy_pass http://localhost:8081;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /ws {
+        proxy_pass http://localhost:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
     }
 }
 ```
-
-If a domain is provided and SSL is configured, Certbot handles certificate issuance and the nginx config includes HTTPS-to-HTTP redirect rules.

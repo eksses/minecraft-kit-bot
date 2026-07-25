@@ -16,12 +16,14 @@ swarmCoordinator.start();
 const app = createApp();
 
 const PORT = configService.getServerPort();
+const HOST = process.env.HOST || '0.0.0.0';
 
 const server = serve({
   fetch: app.fetch,
   port: PORT,
+  hostname: HOST,
 }, (info) => {
-  console.log(`Server running on http://localhost:${info.port}`);
+  console.log(`Server running on http://${HOST}:${info.port}`);
 });
 
 // Setup real-time WebSocket server

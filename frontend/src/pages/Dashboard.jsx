@@ -1,41 +1,70 @@
-import { useEffect } from 'react';
-import { useBotStore, useChestStore } from '../store';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import { useToast } from '../components/ToastContainer';
 
 export default function Dashboard() {
-  const { status, fetchStatus } = useBotStore();
-  const { chests, fetchChests } = useChestStore();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
-  useEffect(() => {
-    fetchStatus();
-    fetchChests();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
+
+  const loadDashboard = async () => {
+    try { setDashboard(await api.fleet.getDashboard()); }
+    catch (err) { addToast({ type: 'error', title: 'Failed to load dashboard' }); }
+    finally { setLoading(false); }
+  };
+
+  if (loading) {
+    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading dashboard...</div>;
+  }
 
   return (
-    <div className="page">
-      <h1>Dashboard</h1>
-      
-      <div className="card-grid">
-        <div className="card">
-          <h3>Bot Status</h3>
-          <div className={`status-indicator ${status?.online ? 'online' : 'offline'}`}>
-            {status?.online ? 'Online' : 'Offline'}
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Fleet overview and status</p>
+        </div>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-value">{dashboard?.bots?.total || 0}</div>
+          <div className="stat-label">Total Bots</div>
+        </div>
+        <div className="stat-card stat-success">
+          <div className="stat-value">{(dashboard?.bots?.idle || 0) + (dashboard?.bots?.working || 0)}</div>
+          <div className="stat-label">Active Bots</div>
+        </div>
+        <div className="stat-card stat-warning">
+          <div className="stat-value">{dashboard?.tasks?.active || 0}</div>
+          <div className="stat-label">Active Tasks</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{dashboard?.swarms?.total || 0}</div>
+          <div className="stat-label">Swarms</div>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-header">Bot Status</div>
+        <div className="stats-grid" style={{marginBottom: 0}}>
+          <div className="stat-card stat-success">
+            <div className="stat-value">{dashboard?.bots?.idle || 0}</div>
+            <div className="stat-label">Idle</div>
           </div>
-          <p>Server: {status?.server || 'Unknown'}</p>
-          <p>Username: {status?.username || 'Unknown'}</p>
-        </div>
-        
-        <div className="card">
-          <h3>Chests</h3>
-          <div className="big-number">{Object.keys(chests).length}</div>
-          <p>Available kits</p>
-        </div>
-        
-        <div className="card">
-          <h3>Quick Actions</h3>
-          <div className="quick-actions">
-            <a href="/kits" className="btn">Order Kit</a>
-            <a href="/chests" className="btn">Manage Chests</a>
-            <a href="/bot" className="btn">Bot Control</a>
+          <div className="stat-card stat-warning">
+            <div className="stat-value">{dashboard?.bots?.working || 0}</div>
+            <div className="stat-label">Working</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{dashboard?.bots?.offline || 0}</div>
+            <div className="stat-label">Offline</div>
+          </div>
+          <div className="stat-card stat-danger">
+            <div className="stat-value">{dashboard?.bots?.error || 0}</div>
+            <div className="stat-label">Error</div>
           </div>
         </div>
       </div>

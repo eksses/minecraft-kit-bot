@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Bot, Server, Activity, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { StatusBadge, HealthBar, FoodBar, StatsCard } from '../components/ui/StatusComponents';
+import { useToast } from '../components/ToastContainer';
+import { StatusBadge } from '../components/ui/StatusComponents';
+import { RefreshCw } from 'lucide-react';
 
 export default function FleetDashboard() {
   const [dashboard, setDashboard] = useState(null);
   const [bots, setBots] = useState([]);
+  const [swarms, setSwarms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
   useEffect(() => {
     loadDashboard();
@@ -16,14 +20,16 @@ export default function FleetDashboard() {
 
   const loadDashboard = async () => {
     try {
-      const [dashData, botsData] = await Promise.all([
+      const [dashData, botsData, swarmsData] = await Promise.all([
         api.fleet.getDashboard(),
         api.fleet.getBots(),
+        api.fleet.getSwarms(),
       ]);
       setDashboard(dashData);
       setBots(botsData);
+      setSwarms(swarmsData);
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
+      addToast({ type: 'error', title: 'Failed to load dashboard' });
     } finally {
       setLoading(false);
     }
@@ -31,129 +37,125 @@ export default function FleetDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900" />
+      <div className="flex items-center justify-center" style={{minHeight: '60vh', color: 'var(--text-muted)'}}>
+        Loading fleet data...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Fleet Dashboard</h1>
-        <p className="text-slate-500">Monitor and manage your bot fleet</p>
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Fleet Dashboard</h1>
+          <p className="page-subtitle">Overview of your bot fleet</p>
+        </div>
+        <button className="btn btn-secondary btn-sm" onClick={loadDashboard}>
+          <RefreshCw size={16} />
+          Refresh
+        </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatsCard 
-          label="Total Bots" 
-          value={dashboard?.bots?.total || 0} 
-          icon={Bot}
-          color="slate"
-        />
-        <StatsCard 
-          label="Active Bots" 
-          value={dashboard?.bots?.idle + dashboard?.bots?.working || 0} 
-          icon={Activity}
-          color="emerald"
-        />
-        <StatsCard 
-          label="Active Tasks" 
-          value={dashboard?.tasks?.active || 0} 
-          icon={Clock}
-          color="amber"
-        />
-        <StatsCard 
-          label="Completed" 
-          value={dashboard?.tasks?.completed || 0} 
-          icon={CheckCircle}
-          color="blue"
-        />
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-value">{dashboard?.bots?.total || 0}</div>
+          <div className="stat-label">Total Bots</div>
+        </div>
+        <div className="stat-card stat-success">
+          <div className="stat-value">{dashboard?.bots?.idle || 0}</div>
+          <div className="stat-label">Idle</div>
+        </div>
+        <div className="stat-card stat-warning">
+          <div className="stat-value">{dashboard?.bots?.working || 0}</div>
+          <div className="stat-label">Working</div>
+        </div>
+        <div className="stat-card stat-danger">
+          <div className="stat-value">{dashboard?.bots?.error || 0}</div>
+          <div className="stat-label">Error</div>
+        </div>
       </div>
 
-      {/* Status Breakdown */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Bot Status</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-emerald-500">{dashboard?.bots?.idle || 0}</div>
-            <div className="text-sm text-slate-500">Idle</div>
+      <div className="section">
+        <div className="section-header">
+          <span>Task Queue</span>
+        </div>
+        <div className="stats-grid" style={{marginBottom: 0}}>
+          <div className="stat-card">
+            <div className="stat-value">{dashboard?.tasks?.pending || 0}</div>
+            <div className="stat-label">Pending</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-amber-500">{dashboard?.bots?.working || 0}</div>
-            <div className="text-sm text-slate-500">Working</div>
+          <div className="stat-card stat-warning">
+            <div className="stat-value">{dashboard?.tasks?.active || 0}</div>
+            <div className="stat-label">Active</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-slate-500">{dashboard?.bots?.offline || 0}</div>
-            <div className="text-sm text-slate-500">Offline</div>
+          <div className="stat-card stat-success">
+            <div className="stat-value">{dashboard?.tasks?.completed || 0}</div>
+            <div className="stat-label">Completed</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-500">{dashboard?.bots?.error || 0}</div>
-            <div className="text-sm text-slate-500">Error</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-slate-900">{dashboard?.swarms?.total || 0}</div>
-            <div className="text-sm text-slate-500">Swarms</div>
+          <div className="stat-card stat-danger">
+            <div className="stat-value">{dashboard?.tasks?.failed || 0}</div>
+            <div className="stat-label">Failed</div>
           </div>
         </div>
       </div>
 
-      {/* Task Queue */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Task Queue</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{dashboard?.tasks?.pending || 0}</div>
-            <div className="text-sm text-blue-600">Pending</div>
-          </div>
-          <div className="bg-amber-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-amber-600">{dashboard?.tasks?.active || 0}</div>
-            <div className="text-sm text-amber-600">Active</div>
-          </div>
-          <div className="bg-emerald-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-emerald-600">{dashboard?.tasks?.completed || 0}</div>
-            <div className="text-sm text-emerald-600">Completed</div>
-          </div>
-          <div className="bg-red-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{dashboard?.tasks?.failed || 0}</div>
-            <div className="text-sm text-red-600">Failed</div>
-          </div>
+      <div className="section">
+        <div className="section-header">
+          <span>Bots</span>
+          <Link to="/fleet/bots" className="btn btn-ghost btn-sm">View All</Link>
         </div>
-      </div>
-
-      {/* Recent Bots */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Your Bots</h2>
-          <a href="/fleet/bots" className="text-sm text-blue-600 hover:text-blue-700">
-            View All
-          </a>
-        </div>
-        
         {bots.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <Bot className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p>No bots yet. Add your first bot to get started.</p>
+          <div className="empty-state">
+            <div className="empty-state-title">No bots yet</div>
+            <div className="empty-state-text">Add your first bot to get started</div>
+            <Link to="/fleet/bots" className="btn btn-primary mt-md">Add Bot</Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div>
             {bots.slice(0, 5).map((bot) => (
-              <div 
-                key={bot.id}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-slate-500" />
-                  </div>
+              <div key={bot.id} className="list-item">
+                <div className="list-item-info">
+                  <div className="avatar">{bot.name.charAt(0)}</div>
                   <div>
-                    <div className="font-medium text-slate-900">{bot.name}</div>
-                    <div className="text-sm text-slate-500">{bot.username}</div>
+                    <div className="list-item-name">{bot.name}</div>
+                    <div className="list-item-meta" style={{fontFamily: 'var(--font-mono)', fontSize: '12px'}}>
+                      {bot.username}
+                    </div>
                   </div>
                 </div>
-                <StatusBadge status={bot.liveStatus?.status || bot.status} size="sm" />
+                <StatusBadge status={bot.liveStatus?.status || bot.status} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <div className="section-header">
+          <span>Swarms</span>
+          <Link to="/fleet/swarms" className="btn btn-ghost btn-sm">View All</Link>
+        </div>
+        {swarms.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-title">No swarms yet</div>
+            <div className="empty-state-text">Create a swarm to group your bots</div>
+            <Link to="/fleet/swarms" className="btn btn-primary mt-md">Create Swarm</Link>
+          </div>
+        ) : (
+          <div>
+            {swarms.map((swarm) => (
+              <div key={swarm.id} className="list-item">
+                <div>
+                  <div className="list-item-name">{swarm.name}</div>
+                  <div className="list-item-meta">
+                    {swarm.stats?.totalBots || 0} bots &middot; {swarm.loadBalancing}
+                  </div>
+                </div>
+                <div style={{textAlign: 'right'}}>
+                  <span className="text-success" style={{fontSize: '13px'}}>{swarm.stats?.idleBots || 0} idle</span>
+                  <span style={{margin: '0 6px', color: 'var(--outline-variant)'}}>/</span>
+                  <span className="text-warning" style={{fontSize: '13px'}}>{swarm.stats?.activeTasks || 0} active</span>
+                </div>
               </div>
             ))}
           </div>
