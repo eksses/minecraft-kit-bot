@@ -1,26 +1,26 @@
 {
-    "test2": {
-        "x": 0,
-        "y": 66,
-        "z": 0,
-        "item": "stone"
-    },
-    "pvp": {
-        "x": 0,
-        "y": 66,
-        "z": 0,
-        "item": "stone"
-    },
-    "kit1": {
-        "x": 0,
-        "y": 45,
-        "z": 0,
-        "item": "lime_shulker_box"
-    },
-    "8b8t": {
-        "x": 0,
-        "y": 55,
-        "z": 0,
-        "item": "Dirt"
-    }
+  "test2": {
+    "x": 0,
+    "y": 66,
+    "z": 0,
+    "item": "stone"
+  },
+  "pvp": {
+    "x": 0,
+    "y": 66,
+    "z": 0,
+    "item": "stone"
+  },
+  "kit1": {
+    "x": 0,
+    "y": 45,
+    "z": 0,
+    "item": "lime_shulker_box"
+  },
+  "8b8t": {
+    "x": 0,
+    "y": 55,
+    "z": 0,
+    "item": "Dirt"
+  }
 }

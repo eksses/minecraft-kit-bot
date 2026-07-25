@@ -1,2 +1,15 @@
 node_modules
 MDB.zip
+.env
+*.log
+.DS_Store
+coverage
+dist
+build
+.vscode
+.idea
+*.tsbuildinfo
+frontend/dist
+frontend/node_modules
+backend/node_modules
+backend/dist
