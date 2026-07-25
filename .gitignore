@@ -15,3 +15,4 @@ backend/node_modules
 backend/dist
 data/mcdb.db-shm
 data/mcdb.db-wal
+opencode.json
