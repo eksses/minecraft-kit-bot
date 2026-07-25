@@ -41,13 +41,38 @@ export const botAPI = {
 };
 
 // ============================================================
-// Legacy Chest API
+// Chest API (Legacy + Bot-Scoped)
 // ============================================================
 export const chestAPI = {
+  // Legacy endpoints
   getAll: () => request('/chests'),
   create: (data) => request('/chests', { method: 'POST', body: JSON.stringify(data) }),
   update: (name, data) => request(`/chests/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (name) => request(`/chests/${name}`, { method: 'DELETE' }),
+
+  // Bot-scoped chest operations (D-14a)
+  listForBot: (botId) => request(`/chests/${botId}`),
+  createForBot: (botId, data) => request(`/chests/${botId}`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Scan endpoints — all scoped by botId (D-01, D-02)
+  triggerScan: (botId, radius = 32) =>
+    request(`/chests/${botId}/scan`, {
+      method: 'POST',
+      body: JSON.stringify({ radius }),
+    }),
+  getScanStatus: (botId) => request(`/chests/${botId}/scan/status`),
+  abortScan: (botId) => request(`/chests/${botId}/scan/abort`, { method: 'POST' }),
+  getScanConfig: (botId) => request(`/chests/${botId}/scan/config`),
+  updateScanConfig: (botId, config) =>
+    request(`/chests/${botId}/scan/config`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    }),
+  rescanChest: (botId, x, y, z) =>
+    request(`/chests/${botId}/rescan`, {
+      method: 'POST',
+      body: JSON.stringify({ x, y, z }),
+    }),
 };
 
 // ============================================================
@@ -128,6 +153,108 @@ export const fleetAPI = {
 };
 
 // ============================================================
+// Realtime WebSocket Client (D-17)
+// ============================================================
+class RealtimeClient {
+  constructor() {
+    this.ws = null;
+    this.listeners = new Map(); // event -> Set<callback>
+    this.subscribedBots = new Set();
+    this.reconnectTimer = null;
+    this.connected = false;
+  }
+
+  connect() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = `${protocol}//${window.location.host}`;
+
+    try {
+      this.ws = new WebSocket(url);
+    } catch {
+      return;
+    }
+
+    this.ws.onopen = () => {
+      this.connected = true;
+      // Re-subscribe to previously subscribed bots
+      for (const botId of this.subscribedBots) {
+        this.ws.send(JSON.stringify({ type: 'subscribe_bot', botId }));
+      }
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        this._dispatch(msg.type, msg);
+      } catch { /* ignore parse errors */ }
+    };
+
+    this.ws.onclose = () => {
+      this.connected = false;
+      // Attempt reconnect after 3 seconds
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = setTimeout(() => this.connect(), 3000);
+    };
+
+    this.ws.onerror = () => {
+      this.connected = false;
+    };
+  }
+
+  _dispatch(eventType, data) {
+    const callbacks = this.listeners.get(eventType);
+    if (callbacks) {
+      for (const cb of callbacks) {
+        try { cb(data); } catch { /* swallow listener errors */ }
+      }
+    }
+  }
+
+  on(eventType, callback) {
+    if (!this.listeners.has(eventType)) {
+      this.listeners.set(eventType, new Set());
+    }
+    this.listeners.get(eventType).add(callback);
+
+    // Return unsubscribe function
+    return () => this.off(eventType, callback);
+  }
+
+  off(eventType, callback) {
+    const callbacks = this.listeners.get(eventType);
+    if (callbacks) callbacks.delete(callback);
+  }
+
+  subscribeBot(botId) {
+    this.subscribedBots.add(botId);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'subscribe_bot', botId }));
+    }
+  }
+
+  unsubscribeBot(botId) {
+    this.subscribedBots.delete(botId);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'unsubscribe_bot', botId }));
+    }
+  }
+
+  disconnect() {
+    clearTimeout(this.reconnectTimer);
+    this.subscribedBots.clear();
+    this.listeners.clear();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+}
+
+export const realtimeClient = new RealtimeClient();
+
+// ============================================================
 // Combined API Export
 // ============================================================
 export const api = {
@@ -137,4 +264,5 @@ export const api = {
   kits: kitAPI,
   config: configAPI,
   fleet: fleetAPI,
+  realtime: realtimeClient,
 };
