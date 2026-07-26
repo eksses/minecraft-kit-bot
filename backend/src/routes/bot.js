@@ -30,7 +30,8 @@ botRoutes.post('/restart', requireAuth, async (c) => {
     await execAsync('sudo systemctl restart mdb');
     return c.json({ success: true, message: 'Bot restart initiated' });
   } catch (error) {
-    return c.json({ success: false, error: error.message }, 500);
+    console.error('Restart failed:', error.message);
+    return c.json({ success: false, error: 'Service restart failed' }, 500);
   }
 });
 
@@ -39,7 +40,8 @@ botRoutes.post('/start', requireAuth, async (c) => {
     await execAsync('sudo systemctl start mdb');
     return c.json({ success: true, message: 'Bot started' });
   } catch (error) {
-    return c.json({ success: false, error: error.message }, 500);
+    console.error('Start failed:', error.message);
+    return c.json({ success: false, error: 'Service start failed' }, 500);
   }
 });
 
@@ -48,6 +50,7 @@ botRoutes.post('/stop', requireAuth, async (c) => {
     await execAsync('sudo systemctl stop mdb');
     return c.json({ success: true, message: 'Bot stopped' });
   } catch (error) {
-    return c.json({ success: false, error: error.message }, 500);
+    console.error('Stop failed:', error.message);
+    return c.json({ success: false, error: 'Service stop failed' }, 500);
   }
 });
