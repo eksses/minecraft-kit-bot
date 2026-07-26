@@ -13,11 +13,12 @@
 
 ### Phase Status
 
-- **ui-redesign**: PLANNED (3 plans, 2 waves)
+- **ui-redesign**: COMPLETE (3 plans, 2 waves)
   - Plan 01-01: CSS Foundation & Design System (Wave 1)
   - Plan 01-02: Layout & Navigation (Wave 1)
   - Plan 01-03: Page Components & Error Handling (Wave 2)
-  - Status: Ready to execute
+  - Verification: PASSED (16/16 must-haves)
+  - Completed: 2026-07-26
 - **chest-scanner**: COMPLETE (3 plans, 3 waves)
   - Plan 02-01: Schema & Scanner Core (Wave 1)
   - Plan 02-02: API Routes & WebSocket (Wave 2)
@@ -44,6 +45,14 @@
   - Added post-delivery rescan to kit service
   - Built frontend scan UI with bot selector, progress bar, config modal
   - Fixed 15 code review issues (4 critical, 8 warnings, 3 info)
+- Phase 01: UI Redesign (Obsidian Command)
+  - Complete CSS rewrite to Obsidian Command design system (1443 lines)
+  - All 11 pages rewritten with new CSS classes
+  - Layout components (Sidebar, BottomNav, MoreSheet)
+  - StatusComponents with dot-style badges
+  - BotInspector detail drawer
+  - Fixed 8 verification gaps (inline styles, accessibility, hover states)
+  - Inline styles reduced from 71 to 5 (93% reduction)
 
 ### Key Decisions
 
