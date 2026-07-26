@@ -6,7 +6,7 @@ import { chestService } from './chest.js';
 import { configService } from './config.js';
 import { ChestScanner } from './chest-scanner.js';
 import { db, schema } from '../db/index.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const { pathfinder: pathfinderPlugin, Movements, goals } = pathfinderModule;
 
@@ -43,6 +43,23 @@ export class BotService extends EventEmitter {
         
         this.connected = true;
         this.bot.chat(`/login ${this.botConfig.password}`);
+        
+        // Set bot metadata on the mineflayer object for ChestScanner DB writes
+        // CR-02: These underscore-prefixed properties are read by ChestScanner.saveChestToDb
+        try {
+          const botRecord = await db.query.bots.findFirst({
+            where: and(
+              eq(schema.bots.username, this.botConfig.username),
+            ),
+          });
+          if (botRecord) {
+            this.bot._botId = botRecord.id;
+            this.bot._userId = botRecord.userId;
+            this.bot._serverId = botRecord.serverId;
+          }
+        } catch (err) {
+          console.error('Failed to load bot metadata:', err.message);
+        }
         
         // Initialize ChestScanner (D-17: progress events wired)
         this.scanner = new ChestScanner(this.bot, db);
