@@ -582,12 +582,14 @@ select {
   font-size: 10px;
   font-weight: 500;
   text-decoration: none;
-  transition: color var(--transition);
+  transition: color var(--transition), border-color var(--transition);
+  border-bottom: 2px solid transparent;
   padding: 4px;
 }
 
 .bottom-nav-item.active {
   color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 .bottom-nav-item svg, .bottom-nav-item .lucide {
