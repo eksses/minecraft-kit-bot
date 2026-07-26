@@ -1,0 +1,64 @@
+{
+  "id": "demo-everything",
+  "name": "Demo Everything Plugin",
+  "version": "1.0.0",
+  "description": "Comprehensive test plugin that demonstrates ALL plugin capabilities",
+  "author": "MDB Team",
+  "entry": "index.js",
+  "dependencies": {},
+  "settingsSchema": {
+    "apiKey": {
+      "type": "string",
+      "label": "API Key",
+      "description": "External API key for testing",
+      "required": false
+    },
+    "interval": {
+      "type": "number",
+      "label": "Check Interval (ms)",
+      "description": "How often to run the periodic check",
+      "default": 30000
+    },
+    "enabled_features": {
+      "type": "object",
+      "label": "Enabled Features",
+      "description": "Toggle individual features on/off",
+      "default": {
+        "chat_logger": true,
+        "status_monitor": true,
+        "auto_respond": false
+      }
+    }
+  },
+  "ui": {
+    "navItems": [
+      {
+        "id": "demo-page",
+        "label": "Demo Plugin",
+        "icon": "Puzzle",
+        "path": "/plugins/demo-everything"
+      }
+    ],
+    "routes": [
+      {
+        "path": "/plugins/demo-everything",
+        "component": "DemoPage.jsx"
+      }
+    ],
+    "settingsPanels": [
+      {
+        "id": "demo-settings",
+        "title": "Demo Plugin Settings",
+        "component": "DemoSettings.jsx"
+      }
+    ],
+    "dashboardWidgets": [
+      {
+        "id": "demo-widget",
+        "title": "Plugin Status",
+        "component": "DemoWidget.jsx",
+        "size": "small"
+      }
+    ]
+  }
+}

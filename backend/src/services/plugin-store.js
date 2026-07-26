@@ -349,7 +349,7 @@ class PluginStore {
   }
 
   /**
-   * Uninstall a plugin by removing its files and database record.
+   * Uninstall a plugin completely — files, database, settings, registry, and running state.
    *
    * @param {string} pluginId
    * @returns {Promise<boolean>}
@@ -367,14 +367,38 @@ class PluginStore {
       throw new Error(`Plugin "${pluginId}" not found`);
     }
 
-    // Remove plugin directory
+    // 1. Stop the plugin if it's running (unload from plugin loader)
+    try {
+      const { pluginLoader } = await import('./plugin-loader.js');
+      if (pluginLoader.loaded.has(pluginId)) {
+        await pluginLoader._stopPlugin(pluginId);
+      }
+      pluginLoader.manifests.delete(pluginId);
+    } catch {
+      // plugin loader may not be available
+    }
+
+    // 2. Remove plugin API context and unmount routes
+    try {
+      const { pluginAPI } = await import('./plugin-api.js');
+      pluginAPI.removeContext(pluginId);
+    } catch {
+      // plugin API may not be available
+    }
+
+    // 3. Delete all plugin settings from database
+    await db.delete(schema.pluginSettings)
+      .where(eq(schema.pluginSettings.pluginId, pluginId));
+
+    // 4. Delete plugin record from database
+    await db.delete(schema.plugins)
+      .where(eq(schema.plugins.id, pluginId));
+
+    // 5. Remove plugin directory and all files
     const pluginDir = join(PLUGINS_DIR, pluginId);
     await rm(pluginDir, { recursive: true, force: true });
 
-    // Remove from database (cascade will remove settings)
-    await db.delete(schema.plugins).where(eq(schema.plugins.id, pluginId));
-
-    console.log(`[PluginStore] Uninstalled plugin: ${pluginId}`);
+    console.log(`[PluginStore] Uninstalled plugin: ${pluginId} (files, DB, settings, registry)`);
     return true;
   }
 

@@ -3,10 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="Minecraft Kit Delivery Bot Dashboard" />
-    <meta name="theme-color" content="#1e1e1e" />
+    <meta name="theme-color" content="#141313" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
     <title>MDB - Kit Delivery Bot</title>
+    <style>
+      /* Prevent zoom on iOS and lock to 85% scale */
+      @media screen and (max-width: 768px) {
+        html {
+          -webkit-text-size-adjust: 85%;
+          text-size-adjust: 85%;
+          -ms-text-size-adjust: 85%;
+          touch-action: manipulation;
+        }
+        body {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
