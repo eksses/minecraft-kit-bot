@@ -11,6 +11,7 @@ import { configRoutes } from './routes/config.js';
 import { integrationRoutes } from './routes/integrations.js';
 import { fleetRoutes } from './routes/fleet.js';
 import { pluginRoutes } from './routes/plugins.js';
+import { pluginUIRoutes } from './routes/plugin-ui.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -48,6 +49,9 @@ export function createApp() {
   
   // Plugin management routes
   app.route('/api/plugins', pluginRoutes);
+
+  // Plugin UI registry routes
+  app.route('/api/plugin-ui', pluginUIRoutes);
   
   app.get('*', serveStatic({ root: DIST_PATH }));
   
