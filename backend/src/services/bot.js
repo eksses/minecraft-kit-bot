@@ -49,11 +49,11 @@ export class BotService extends EventEmitter {
         
         // Wire progress events to EventEmitter for WebSocket forwarding
         this.scanner.on('progress', (data) => {
-          this.emit('scan-progress', data);
+          this.emit('scan-progress', { ...data, botId: this.botConfig.username });
         });
         
         this.scanner.on('complete', (results) => {
-          this.emit('scan-complete', results);
+          this.emit('scan-complete', { ...results, botId: this.botConfig.username });
         });
         
         // Auto-scan on connect if configured (D-01, D-02)

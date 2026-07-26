@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { botLifecycleManager } from './botLifecycle.js';
+import { botService } from './bot.js';
 import { swarmCoordinator } from './swarmCoordinator.js';
 
 // ============================================================
@@ -20,6 +21,7 @@ export class RealtimeServer {
     });
 
     this.setupBotEventForwarding();
+    this.setupScanEventForwarding();
     this.setupSwarmEventForwarding();
     this.startHeartbeat();
     
@@ -200,6 +202,32 @@ export class RealtimeServer {
       this.broadcastToAll({
         type: 'bot:death_update',
         botId: data.botId,
+      });
+    });
+  }
+
+  // ============================================================
+  // Scan Event Forwarding
+  // ============================================================
+  setupScanEventForwarding() {
+    botService.on('scan-progress', (data) => {
+      this.broadcastToBotSubscribers(data.botId, {
+        type: 'scan-progress',
+        botId: data.botId,
+        data,
+      });
+    });
+
+    botService.on('scan-complete', (data) => {
+      this.broadcastToBotSubscribers(data.botId, {
+        type: 'scan-complete',
+        botId: data.botId,
+        data,
+      });
+      this.broadcastToAll({
+        type: 'scan-complete',
+        botId: data.botId,
+        data,
       });
     });
   }
