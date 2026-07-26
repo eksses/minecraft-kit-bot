@@ -9,6 +9,7 @@ import {
   Settings,
   X,
   LogOut,
+  Puzzle,
 } from 'lucide-react';
 
 const moreItems = [
@@ -17,6 +18,7 @@ const moreItems = [
   { path: '/fleet/servers', label: 'Servers', icon: Server },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
   { path: '/fleet/tasks', label: 'Tasks', icon: Package },
+  { path: '/plugins', label: 'Plugins', icon: Puzzle },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

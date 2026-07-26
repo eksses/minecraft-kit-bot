@@ -4,6 +4,7 @@ import { ConfigService } from './services/config.js';
 import { initDatabase } from './db/index.js';
 import { swarmCoordinator } from './services/swarmCoordinator.js';
 import { realtimeServer } from './services/realtime.js';
+import { pluginLoader } from './services/plugin-loader.js';
 
 const configService = new ConfigService();
 
@@ -12,6 +13,11 @@ initDatabase();
 
 // Start swarm coordinator
 swarmCoordinator.start();
+
+// Start plugin loader (scans and loads plugins)
+pluginLoader.start().catch(err => {
+  console.error('[PluginLoader] Failed to start:', err.message);
+});
 
 const app = createApp();
 
@@ -32,12 +38,14 @@ realtimeServer.setup(server);
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down...');
+  pluginLoader.stop();
   swarmCoordinator.stop();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   console.log('Shutting down...');
+  pluginLoader.stop();
   swarmCoordinator.stop();
   process.exit(0);
 });

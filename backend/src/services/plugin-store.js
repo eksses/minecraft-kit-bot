@@ -17,7 +17,7 @@ const DEFAULT_REPOS = [
   {
     id: 'official',
     name: 'Official Repository',
-    url: 'https://plugins.minecraftkitbot.dev',
+    url: 'https://raw.githubusercontent.com/eksses/minecraft-kit-bot/main/plugins.json',
     enabled: true,
   },
 ];
@@ -69,77 +69,30 @@ class PluginStore {
   /**
    * Fetch available plugins from all enabled repositories.
    *
-   * In a real implementation this would make HTTP requests to each repo URL.
-   * For now, we return a curated list of well-known plugins.
+   * Fetches plugins.json from each configured repository URL.
    *
    * @returns {Promise<Array<Object>>} List of available plugins
    */
   async getAvailable() {
     await this._ensureReposLoaded();
 
-    // Simulated plugin catalog — in production, aggregate from repo URLs
-    const available = [
-      {
-        id: 'chest-sorter',
-        name: 'Chest Sorter',
-        version: '1.2.0',
-        description: 'Automatically sorts items in chests by category and type',
-        author: 'MCBot Team',
-        downloads: 1240,
-        repo: 'official',
-        tags: ['organization', 'utility'],
-      },
-      {
-        id: 'auto-delivery',
-        name: 'Auto Delivery',
-        version: '2.0.1',
-        description: 'Enhanced delivery scheduling with cron-based automation',
-        author: 'MCBot Team',
-        downloads: 890,
-        repo: 'official',
-        tags: ['delivery', 'automation'],
-      },
-      {
-        id: 'inventory-tracker',
-        name: 'Inventory Tracker',
-        version: '1.0.3',
-        description: 'Tracks bot inventory across sessions with history',
-        author: 'Community',
-        downloads: 567,
-        repo: 'official',
-        tags: ['inventory', 'tracking'],
-      },
-      {
-        id: 'weather-alerts',
-        name: 'Weather Alerts',
-        version: '0.9.1',
-        description: 'Sends notifications based on in-game weather events',
-        author: 'Community',
-        downloads: 234,
-        repo: 'official',
-        tags: ['notifications', 'weather'],
-      },
-      {
-        id: 'pathfinder-pro',
-        name: 'Pathfinder Pro',
-        version: '1.5.0',
-        description: 'Advanced pathfinding with obstacle avoidance and caching',
-        author: 'MCBot Team',
-        downloads: 1100,
-        repo: 'official',
-        tags: ['navigation', 'performance'],
-      },
-      {
-        id: 'chat-logger',
-        name: 'Chat Logger',
-        version: '1.1.0',
-        description: 'Logs all server chat messages with search and filtering',
-        author: 'Community',
-        downloads: 445,
-        repo: 'official',
-        tags: ['logging', 'chat'],
-      },
-    ];
+    const available = [];
+
+    for (const repo of this.repos) {
+      if (!repo.enabled) continue;
+
+      try {
+        const res = await fetch(repo.url);
+        if (res.ok) {
+          const plugins = await res.json();
+          if (Array.isArray(plugins)) {
+            available.push(...plugins.map(p => ({ ...p, repoId: repo.id, repoName: repo.name })));
+          }
+        }
+      } catch (err) {
+        console.error(`[PluginStore] Failed to fetch from ${repo.name}:`, err.message);
+      }
+    }
 
     return available;
   }
@@ -261,53 +214,97 @@ class PluginStore {
       if (err.code !== 'EEXIST') throw err;
     }
 
-    // In a real implementation, download and extract the plugin archive here.
-    // For now, create a minimal plugin.json manifest.
-    const manifest = {
-      id: pluginId,
-      name: pluginId.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-      version: '1.0.0',
-      description: `Installed plugin: ${pluginId}`,
-      author: 'Unknown',
-      entry: 'index.js',
-    };
+    // Check if plugin files already exist in data/plugins
+    const { readFileSync, existsSync } = await import('fs');
+    const manifestPath = join(pluginDir, 'plugin.json');
+    
+    if (existsSync(manifestPath)) {
+      // Plugin already exists in data/plugins, just register it
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      
+      const { valid, errors } = validateManifest(manifest);
+      if (!valid) {
+        throw new Error(`Invalid plugin manifest: ${errors.join('; ')}`);
+      }
 
-    await writeFile(join(pluginDir, 'plugin.json'), JSON.stringify(manifest, null, 2));
+      // Insert into database
+      const now = new Date();
+      await db.insert(schema.plugins).values({
+        id: pluginId,
+        name: manifest.name,
+        version: manifest.version,
+        description: manifest.description,
+        author: manifest.author,
+        enabled: true, // Enable by default since files exist
+        installedAt: now,
+        updatedAt: now,
+        settings: null,
+      });
 
-    // Create a stub entry file
-    await writeFile(
-      join(pluginDir, 'index.js'),
-      `// Plugin: ${pluginId}\n// This is a stub entry point.\nconsole.log('[${pluginId}] loaded');\n`
-    );
-
-    // Validate the manifest
-    const { valid, errors } = validateManifest(manifest);
-    if (!valid) {
-      await rm(pluginDir, { recursive: true, force: true });
-      throw new Error(`Invalid plugin manifest: ${errors.join('; ')}`);
+      console.log(`[PluginStore] Registered existing plugin: ${pluginId}`);
+      return {
+        id: pluginId,
+        name: manifest.name,
+        version: manifest.version,
+        enabled: true,
+      };
     }
 
-    // Insert into database
-    const now = new Date();
-    await db.insert(schema.plugins).values({
-      id: pluginId,
-      name: manifest.name,
-      version: manifest.version,
-      description: manifest.description,
-      author: manifest.author,
-      enabled: false, // Start disabled — user must explicitly enable
-      installedAt: now,
-      updatedAt: now,
-      settings: null,
-    });
+    // Download plugin from repository if downloadUrl provided
+    if (downloadUrl) {
+      try {
+        const res = await fetch(downloadUrl);
+        if (res.ok) {
+          // In a real implementation, this would extract a zip/tar file
+          // For now, we'll create a stub
+          const manifest = {
+            id: pluginId,
+            name: pluginId.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            version: '1.0.0',
+            description: `Installed plugin: ${pluginId}`,
+            author: 'Unknown',
+            entry: 'index.js',
+          };
 
-    console.log(`[PluginStore] Installed plugin: ${pluginId}`);
-    return {
-      id: pluginId,
-      name: manifest.name,
-      version: manifest.version,
-      enabled: false,
-    };
+          await writeFile(join(pluginDir, 'plugin.json'), JSON.stringify(manifest, null, 2));
+          await writeFile(
+            join(pluginDir, 'index.js'),
+            `// Plugin: ${pluginId}\n// This is a stub entry point.\nconsole.log('[${pluginId}] loaded');\n`
+          );
+
+          const { valid, errors } = validateManifest(manifest);
+          if (!valid) {
+            await rm(pluginDir, { recursive: true, force: true });
+            throw new Error(`Invalid plugin manifest: ${errors.join('; ')}`);
+          }
+
+          const now = new Date();
+          await db.insert(schema.plugins).values({
+            id: pluginId,
+            name: manifest.name,
+            version: manifest.version,
+            description: manifest.description,
+            author: manifest.author,
+            enabled: false,
+            installedAt: now,
+            updatedAt: now,
+            settings: null,
+          });
+
+          console.log(`[PluginStore] Installed plugin: ${pluginId}`);
+          return {
+            id: pluginId,
+            name: manifest.name,
+            version: manifest.version,
+            enabled: false,
+          };
+        }
+      } catch (err) {
+        console.error(`[PluginStore] Failed to download plugin:`, err.message);
+      }
+    }
+
+    throw new Error('Plugin not found in repositories and no download URL provided');
   }
 
   /**
