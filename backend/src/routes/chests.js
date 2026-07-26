@@ -96,13 +96,21 @@ chestRoutes.post('/:botId/scan', requireAuth, async (c) => {
 /**
  * GET /:botId/scan/status — Get current scan status for a bot
  * T-02-07: Require auth, only return for user's bots
+ * WR-08: Currently checks singleton botService scanner state (global, not per-bot).
+ * For true per-bot scanning, each BotInstance needs its own ChestScanner instance.
  */
-chestRoutes.get('/:botId/scan/status', requireAuth, (c) => {
+chestRoutes.get('/:botId/scan/status', requireAuth, async (c) => {
   const botId = c.req.param('botId');
   const session = c.get('session');
 
-  // Note: We verify ownership but the singleton botService tracks one scan at a time
-  // For multi-bot, each BotInstance would need its own scanner
+  const botInstance = await verifyBotOwnership(botId, session.id);
+  if (!botInstance) {
+    return c.json({ error: 'Bot not found or access denied' }, 404);
+  }
+
+  // NOTE: botService.isScanning() checks the singleton scanner state.
+  // This is a known limitation — scan status is global, not per-bot.
+  // A full fix requires per-BotInstance ChestScanner instances.
   const scanning = botService.isScanning();
 
   return c.json({ scanning });
@@ -110,10 +118,16 @@ chestRoutes.get('/:botId/scan/status', requireAuth, (c) => {
 
 /**
  * POST /:botId/scan/abort — Abort current scan for a bot
+ * WR-08: Currently aborts the singleton scanner (global, not per-bot).
  */
-chestRoutes.post('/:botId/scan/abort', requireAuth, (c) => {
+chestRoutes.post('/:botId/scan/abort', requireAuth, async (c) => {
   const botId = c.req.param('botId');
   const session = c.get('session');
+
+  const botInstance = await verifyBotOwnership(botId, session.id);
+  if (!botInstance) {
+    return c.json({ error: 'Bot not found or access denied' }, 404);
+  }
 
   botService.abortScan();
   return c.json({ success: true, message: 'Scan abort requested' });
