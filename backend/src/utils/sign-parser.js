@@ -42,8 +42,15 @@ export function extractChestName(signData) {
  * @returns {boolean} True if sign is on front or back face
  */
 export function isSignOnChestFace(chestPos, signPos, signFace) {
-  // Signs on front/back faces of chest have same Y, different Z by 1
-  // Signs on top/bottom have different Y
-  const validFaces = ['north', 'south']; // Front and back faces
-  return validFaces.includes(signFace);
+  const validFaces = ['north', 'south'];
+  if (!validFaces.includes(signFace)) return false;
+  
+  // Verify sign is adjacent to chest on the validated face
+  const dz = signPos.z - chestPos.z;
+  const dy = signPos.y - chestPos.y;
+  const dx = signPos.x - chestPos.x;
+  
+  if (signFace === 'north') return dz === -1 && dy === 0 && dx === 0;
+  if (signFace === 'south') return dz === 1 && dy === 0 && dx === 0;
+  return false;
 }
