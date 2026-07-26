@@ -25,12 +25,11 @@
   - Plan 02-03: Frontend Scan UI (Wave 3)
   - Verification: PASSED (10/10 must-haves)
   - Completed: 2026-07-26
-- **plugin-system**: PLANNED (4 plans, 3 waves)
-  - Plan 03-01: Plugin Schema & Core Loader (Wave 1)
-  - Plan 03-02: Plugin Worker Thread & API (Wave 2)
+- **plugin-system**: IN PROGRESS (4 plans, 3 waves)
+  - Plan 03-01: Plugin Schema & Core Loader (Wave 1) ✅ COMPLETE
+  - Plan 03-02: Plugin Worker Thread & API (Wave 2) — Next
   - Plan 03-03: Plugin UI Registry & Settings (Wave 2)
   - Plan 03-04: Plugin Store & Management UI (Wave 3)
-  - Next: Execute with `/gsd-execute-phase 03`
 
 ### Completed Work
 
@@ -41,6 +40,11 @@
 - Implemented WebSocket chat relay
 - Fixed 8 code review issues (credentials, CORS, validation)
 - Pushed to GitHub
+- Phase 03 Plan 01: Plugin Schema & Core Loader
+  - Added plugins and pluginSettings tables to drizzle schema
+  - Created plugin-manifest.js with parseManifest and validateManifest
+  - Built PluginLoader service with worker_threads for isolated plugin execution
+  - Hot-reload togglePlugin method for enabling/disabling plugins at runtime
 - Phase 02: Chest Scanner & Auto-Discovery
   - Extended chestLocations schema with scan metadata (7 new columns)
   - Created scanConfigs table for per-bot settings
@@ -67,6 +71,8 @@
 - Database: Starting with JSON file, migrate to SQLite for production
 - Auth: Session-based (not JWT) for simplicity
 - Bot framework: mineflayer with pathfinder plugin
+- Plugins: worker_threads per plugin for isolation (not child_process)
+- Plugin manifest: plugin.json with id, name, version, entry fields
 
 ### Blockers
 
