@@ -231,6 +231,17 @@ class PluginStore {
     });
 
     if (existing) {
+      // Already installed — check if files exist too
+      const { existsSync } = await import('fs');
+      const manifestPath = join(PLUGINS_DIR, pluginId, 'plugin.json');
+      if (existsSync(manifestPath)) {
+        return {
+          id: pluginId,
+          name: existing.name,
+          version: existing.version,
+          enabled: existing.enabled,
+        };
+      }
       throw new Error(`Plugin "${pluginId}" is already installed`);
     }
 
@@ -255,19 +266,21 @@ class PluginStore {
         throw new Error(`Invalid plugin manifest: ${errors.join('; ')}`);
       }
 
-      // Insert into database
-      const now = new Date();
-      await db.insert(schema.plugins).values({
-        id: pluginId,
-        name: manifest.name,
-        version: manifest.version,
-        description: manifest.description,
-        author: manifest.author,
-        enabled: true, // Enable by default since files exist
-        installedAt: now,
-        updatedAt: now,
-        settings: null,
-      });
+      // Insert into database (skip if already exists)
+      if (!existing) {
+        const now = new Date();
+        await db.insert(schema.plugins).values({
+          id: pluginId,
+          name: manifest.name,
+          version: manifest.version,
+          description: manifest.description,
+          author: manifest.author,
+          enabled: true,
+          installedAt: now,
+          updatedAt: now,
+          settings: null,
+        });
+      }
 
       console.log(`[PluginStore] Registered existing plugin: ${pluginId}`);
       return {

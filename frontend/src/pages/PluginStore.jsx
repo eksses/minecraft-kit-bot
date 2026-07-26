@@ -65,7 +65,8 @@ export default function PluginStore() {
   const handleInstall = async (pluginId) => {
     setInstalling(pluginId);
     try {
-      await api.pluginStore.install(pluginId);
+      const plugin = available.find(p => p.id === pluginId);
+      await api.pluginStore.install(pluginId, plugin?.downloadUrl);
       addToast({ type: 'success', title: `Installed ${pluginId}` });
       await loadAll();
     } catch (err) {
