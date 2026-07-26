@@ -319,6 +319,8 @@ chestRoutes.post('/:botId', requireAuth, async (c) => {
 
 // ============================================================
 // Legacy Endpoints (backward compatibility)
+// NOTE: These operate on a JSON file without per-user ownership.
+// Prefer bot-scoped endpoints (/:botId) for production use.
 // ============================================================
 
 chestRoutes.get('/', requireAuth, (c) => {
@@ -348,7 +350,17 @@ chestRoutes.post('/', requireAuth, async (c) => {
 
 chestRoutes.put('/:name', requireAuth, async (c) => {
   const name = c.req.param('name');
+  const session = c.get('session');
   const body = await c.req.json();
+  
+  // Basic ownership check (WR-05): if chest has userId, verify it matches
+  const existing = chestService.get(name);
+  if (!existing) {
+    return c.json({ error: 'Chest not found' }, 404);
+  }
+  if (existing.userId && existing.userId !== session.id) {
+    return c.json({ error: 'Chest not found or access denied' }, 404);
+  }
   
   if (body.x !== undefined || body.y !== undefined || body.z !== undefined) {
     const coordCheck = validateCoordinates(body.x, body.y, body.z);
@@ -370,6 +382,16 @@ chestRoutes.put('/:name', requireAuth, async (c) => {
 
 chestRoutes.delete('/:name', requireAuth, async (c) => {
   const name = c.req.param('name');
+  const session = c.get('session');
+  
+  // Basic ownership check (WR-05): if chest has userId, verify it matches
+  const existing = chestService.get(name);
+  if (!existing) {
+    return c.json({ error: 'Chest not found' }, 404);
+  }
+  if (existing.userId && existing.userId !== session.id) {
+    return c.json({ error: 'Chest not found or access denied' }, 404);
+  }
   
   try {
     chestService.deleteChest(name);
