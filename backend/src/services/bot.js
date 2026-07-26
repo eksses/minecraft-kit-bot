@@ -237,7 +237,8 @@ export class BotService extends EventEmitter {
    * Returns default config if none exists.
    */
   async getScanConfig() {
-    // Find this bot's ID from the database
+    // Find this bot's ID from the database (WR-04: uniqueness via bot record lookup)
+    // Note: botConfig.username is unique per BotService instance since it's a singleton
     const botRecord = await db.query.bots.findFirst({
       where: eq(schema.bots.username, this.botConfig.username),
     });
