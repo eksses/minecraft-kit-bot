@@ -16,7 +16,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading dashboard...</div>;
+    return <div className="loading-state">Loading dashboard...</div>;
   }
 
   return (
@@ -49,7 +49,7 @@ export default function Dashboard() {
 
       <div className="section">
         <div className="section-header">Bot Status</div>
-        <div className="stats-grid" style={{marginBottom: 0}}>
+        <div className="stats-grid mb-0">
           <div className="stat-card stat-success">
             <div className="stat-value">{dashboard?.bots?.idle || 0}</div>
             <div className="stat-label">Idle</div>
