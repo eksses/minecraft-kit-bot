@@ -59,6 +59,25 @@ pluginStoreRoutes.post('/repos', requireAuth, async (c) => {
 });
 
 // ============================================================
+// Update a custom repository
+// ============================================================
+pluginStoreRoutes.put('/repos/:id', requireAuth, async (c) => {
+  const repoId = c.req.param('id');
+  const body = await c.req.json();
+
+  if (repoId === 'official') {
+    return c.json({ error: 'Cannot edit official repository' }, 400);
+  }
+
+  try {
+    const repo = await pluginStore.updateRepo(repoId, body);
+    return c.json(repo);
+  } catch (err) {
+    return c.json({ error: err.message }, 400);
+  }
+});
+
+// ============================================================
 // Remove a repository
 // ============================================================
 pluginStoreRoutes.delete('/repos/:id', requireAuth, async (c) => {

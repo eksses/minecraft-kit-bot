@@ -7,9 +7,9 @@
     "author": "MDB Team",
     "category": "demo",
     "tags": ["demo", "test", "comprehensive"],
-    "downloadUrl": "https://github.com/eksses/minecraft-kit-bot/raw/main/data/plugins/demo-everything.zip",
+    "downloadUrl": "https://github.com/eksses/minecraft-kit-bot/raw/dev/data/plugins/demo-everything.zip",
     "repository": "https://github.com/eksses/minecraft-kit-bot",
-    "homepage": "https://github.com/eksses/minecraft-kit-bot/tree/main/data/plugins/demo-everything",
+    "homepage": "https://github.com/eksses/minecraft-kit-bot/tree/dev/data/plugins/demo-everything",
     "icon": "Puzzle",
     "featured": true
   },
@@ -21,9 +21,9 @@
     "author": "MDB Team",
     "category": "demo",
     "tags": ["demo", "test", "github"],
-    "downloadUrl": "https://github.com/eksses/minecraft-kit-bot/raw/main/data/plugins/demo-github-repo.zip",
+    "downloadUrl": "https://github.com/eksses/minecraft-kit-bot/raw/dev/data/plugins/demo-github-repo.zip",
     "repository": "https://github.com/eksses/minecraft-kit-bot",
-    "homepage": "https://github.com/eksses/minecraft-kit-bot/tree/main/data/plugins/demo-github-repo",
+    "homepage": "https://github.com/eksses/minecraft-kit-bot/tree/dev/data/plugins/demo-github-repo",
     "icon": "Github",
     "featured": false
   }

@@ -10,6 +10,7 @@ export default function PluginStore() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('available');
   const [showAddRepo, setShowAddRepo] = useState(false);
+  const [editingRepo, setEditingRepo] = useState(null);
   const [repoForm, setRepoForm] = useState({ name: '', url: '' });
   const [installing, setInstalling] = useState(null);
   const [uninstalling, setUninstalling] = useState(null);
@@ -85,6 +86,32 @@ export default function PluginStore() {
       addToast({ type: 'error', title: `Failed to remove repo: ${err.message}` });
     }
   };
+
+  const handleEditRepo = (repo) => {
+    setEditingRepo(repo);
+    setRepoForm({ name: repo.name, url: repo.url });
+    setShowAddRepo(true);
+  };
+
+  const handleUpdateRepo = async (e) => {
+    e.preventDefault();
+    try {
+      await fetch(`/api/plugin-store/repos/${editingRepo.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(repoForm),
+      });
+      setShowAddRepo(false);
+      setEditingRepo(null);
+      setRepoForm({ name: '', url: '' });
+      addToast({ type: 'success', title: 'Repository updated' });
+      await loadAll();
+    } catch (err) {
+      addToast({ type: 'error', title: `Failed to update repo: ${err.message}` });
+    }
+  };
+
+  const isCustomRepo = (repoId) => repoId !== 'official';
 
   const isInstalled = (pluginId) => installed.some((p) => p.id === pluginId);
 
@@ -242,7 +269,7 @@ export default function PluginStore() {
         <div className="section">
           <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Repositories</span>
-            <button className="btn btn-primary btn-sm" onClick={() => setShowAddRepo(true)}>
+            <button className="btn btn-primary btn-sm" onClick={() => { setEditingRepo(null); setRepoForm({ name: '', url: '' }); setShowAddRepo(true); }}>
               Add Repository
             </button>
           </div>
@@ -250,17 +277,26 @@ export default function PluginStore() {
             {repos.map((repo) => (
               <div className="list-item" key={repo.id}>
                 <div className="list-item-info">
-                  <div className="list-item-name">{repo.name}</div>
+                  <div className="list-item-name">
+                    {repo.name}
+                    {!isCustomRepo(repo.id) && (
+                      <span style={{ marginLeft: '8px', fontSize: '11px', padding: '2px 6px', background: 'var(--status-online)', color: '#000', borderRadius: '4px' }}>
+                        Official
+                      </span>
+                    )}
+                  </div>
                   <div className="list-item-meta">{repo.url}</div>
                 </div>
-                <div>
-                  {repo.id !== 'official' && (
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleRemoveRepo(repo.id)}
-                    >
-                      Remove
-                    </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {isCustomRepo(repo.id) && (
+                    <>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleEditRepo(repo)}>
+                        Edit
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleRemoveRepo(repo.id)}>
+                        Delete
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -269,18 +305,18 @@ export default function PluginStore() {
         </div>
       )}
 
-      {/* Add Repository Drawer */}
+      {/* Add/Edit Repository Drawer */}
       {showAddRepo && (
-        <div className="drawer-overlay" onClick={() => setShowAddRepo(false)}>
+        <div className="drawer-overlay" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
           <div className="drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
-              <span className="drawer-title">Add Repository</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddRepo(false)}>
+              <span className="drawer-title">{editingRepo ? 'Edit Repository' : 'Add Repository'}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
                 ✕
               </button>
             </div>
             <div className="drawer-body">
-              <form onSubmit={handleAddRepo}>
+              <form onSubmit={editingRepo ? handleUpdateRepo : handleAddRepo}>
                 <div className="form-group">
                   <label className="form-label">Name</label>
                   <input
@@ -297,16 +333,16 @@ export default function PluginStore() {
                     type="url"
                     value={repoForm.url}
                     onChange={(e) => setRepoForm({ ...repoForm, url: e.target.value })}
-                    placeholder="https://plugins.example.com"
+                    placeholder="https://plugins.example.com/plugins.json"
                     required
                   />
                 </div>
                 <div className="flex gap-sm mt-md">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowAddRepo(false)}>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Add Repository
+                    {editingRepo ? 'Update Repository' : 'Add Repository'}
                   </button>
                 </div>
               </form>

@@ -17,7 +17,7 @@ const DEFAULT_REPOS = [
   {
     id: 'official',
     name: 'Official Repository',
-    url: 'https://raw.githubusercontent.com/eksses/minecraft-kit-bot/main/plugins.json',
+    url: 'https://raw.githubusercontent.com/eksses/minecraft-kit-bot/dev/plugins.json',
     enabled: true,
   },
 ];
@@ -146,6 +146,34 @@ class PluginStore {
     await this._saveRepos();
 
     console.log(`[PluginStore] Added repo: ${name} (${url})`);
+    return repo;
+  }
+
+  /**
+   * Update a custom plugin repository.
+   *
+   * @param {string} repoId
+   * @param {Object} updates - { name?, url? }
+   * @returns {Promise<Object>} Updated repo object
+   */
+  async updateRepo(repoId, updates) {
+    await this._ensureReposLoaded();
+
+    const repo = this.repos.find((r) => r.id === repoId);
+    if (!repo) {
+      throw new Error('Repository not found');
+    }
+
+    if (repoId === 'official') {
+      throw new Error('Cannot edit official repository');
+    }
+
+    if (updates.name) repo.name = updates.name;
+    if (updates.url) repo.url = updates.url;
+
+    await this._saveRepos();
+
+    console.log(`[PluginStore] Updated repo: ${repoId}`);
     return repo;
   }
 

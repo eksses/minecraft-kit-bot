@@ -9,6 +9,7 @@ import {
   LogOut,
   Gamepad2,
   Puzzle,
+  ShoppingCart,
 } from 'lucide-react';
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
   { path: '/fleet/servers', label: 'Servers', icon: Server },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
   { path: '/fleet/tasks', label: 'Tasks', icon: Package },
+  { path: '/plugin-store', label: 'Plugin Store', icon: ShoppingCart },
   { path: '/plugins', label: 'Plugins', icon: Puzzle },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
