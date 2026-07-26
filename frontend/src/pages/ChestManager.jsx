@@ -165,13 +165,13 @@ export default function ChestManager() {
   };
 
   if (loading && !selectedBotId) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+    return <div className="loading-state">Loading...</div>;
   }
 
   return (
     <div>
       {/* Bot Selector (D-14b) */}
-      <div className="form-group" style={{marginBottom: 'var(--space-lg)'}}>
+      <div className="form-group bot-selector">
         <label className="form-label">Bot</label>
         <select
           className="form-select"
@@ -220,36 +220,15 @@ export default function ChestManager() {
 
       {/* Scan Progress Indicator (D-17) */}
       {scanning && scanProgress && (
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--bg-surface-high)',
-          padding: 'var(--space-md)',
-          marginBottom: 'var(--space-lg)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-md)',
-        }}>
-          <div style={{
-            flex: 1,
-            height: '6px',
-            background: 'var(--bg-surface-high)',
-            overflow: 'hidden',
-          }}>
-            <div style={{
-              height: '100%',
-              background: 'var(--status-working)',
-              transition: 'width 0.3s ease',
+        <div className="scan-progress-container">
+          <div className="scan-progress-track">
+            <div className="scan-progress-fill" style={{
               width: scanProgress.total
                 ? `${(scanProgress.current / scanProgress.total) * 100}%`
                 : '100%',
             }} />
           </div>
-          <span style={{
-            fontSize: '13px',
-            color: 'var(--text-secondary)',
-            minWidth: '140px',
-            fontFamily: 'var(--font-mono)',
-          }}>
+          <span className="scan-progress-text">
             {scanProgress.phase === 'discovery'
               ? `Found ${scanProgress.found} chests...`
               : scanProgress.total
@@ -257,7 +236,7 @@ export default function ChestManager() {
                 : 'Processing...'
             }
           </span>
-          <button className="btn btn-danger btn-sm" onClick={handleAbortScan}>
+          <button className="btn btn-danger btn-sm" onClick={handleAbortScan} aria-label="Abort scan">
             Abort
           </button>
         </div>
@@ -265,17 +244,10 @@ export default function ChestManager() {
 
       {/* Scan Results Summary */}
       {scanResults && (
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--status-online)',
-          padding: 'var(--space-md)',
-          marginBottom: 'var(--space-lg)',
-          fontSize: '14px',
-          color: 'var(--status-online)',
-        }}>
+        <div className="scan-results-success">
           Scan complete: {scanResults.cataloged ?? 0} chests cataloged
           {scanResults.errors?.length > 0 && (
-            <span style={{color: 'var(--status-error)', marginLeft: 'var(--space-md)'}}>
+            <span className="scan-results-errors">
               {scanResults.errors.length} errors
             </span>
           )}
@@ -303,21 +275,21 @@ export default function ChestManager() {
           {chests.map((chest) => (
             <div key={chest.id} className="bot-card">
               <div className="bot-card-header">
-                <span style={{fontWeight: 600}}>{chest.name}</span>
+                <span className="bot-card-name">{chest.name}</span>
                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(chest.id)}>Delete</button>
               </div>
               <div className="bot-card-info">
-                <div style={{fontFamily: 'var(--font-mono)', fontSize: '13px'}}>
+                <div className="chest-coords">
                   {chest.x}, {chest.y}, {chest.z}
                 </div>
                 <div>{chest.itemName}</div>
                 {chest.itemCount !== undefined && (
-                  <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>
+                  <div className="chest-meta">
                     Count: {chest.itemCount}
                   </div>
                 )}
                 {chest.source && (
-                  <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>
+                  <div className="chest-meta">
                     Source: {chest.source}
                   </div>
                 )}
@@ -389,34 +361,31 @@ export default function ChestManager() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label" style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                <label className="form-label checkbox-label">
                   <input
                     type="checkbox"
                     checked={scanConfig.scanMarkedEnabled}
                     onChange={(e) => setScanConfig({...scanConfig, scanMarkedEnabled: e.target.checked})}
-                    style={{width: 'auto', height: 'auto'}}
                   />
                   Scan Marked Only (signs with #Name)
                 </label>
               </div>
               <div className="form-group">
-                <label className="form-label" style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                <label className="form-label checkbox-label">
                   <input
                     type="checkbox"
                     checked={scanConfig.autoScanOnConnect}
                     onChange={(e) => setScanConfig({...scanConfig, autoScanOnConnect: e.target.checked})}
-                    style={{width: 'auto', height: 'auto'}}
                   />
                   Auto-scan on bot connect
                 </label>
               </div>
               <div className="form-group">
-                <label className="form-label" style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                <label className="form-label checkbox-label">
                   <input
                     type="checkbox"
                     checked={scanConfig.allowUnnamedOrders}
                     onChange={(e) => setScanConfig({...scanConfig, allowUnnamedOrders: e.target.checked})}
-                    style={{width: 'auto', height: 'auto'}}
                   />
                   Allow orders from unnamed chests
                 </label>
