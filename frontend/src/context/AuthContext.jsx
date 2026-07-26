@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, realtimeClient } from '../services/api';
 
 const AuthContext = createContext(undefined);
 
@@ -14,7 +14,11 @@ export function AuthProvider({ children }) {
   const checkAuth = async () => {
     try {
       const res = await authAPI.me();
-      setUser(res.user || res);
+      const userData = res.user || res;
+      setUser(userData);
+      if (userData?.id) {
+        realtimeClient.setUserId(userData.id);
+      }
     } catch {
       setUser(null);
     } finally {
@@ -24,7 +28,11 @@ export function AuthProvider({ children }) {
   
   const login = async (username, password) => {
     const res = await authAPI.login(username, password);
-    setUser(res.user || res);
+    const userData = res.user || res;
+    setUser(userData);
+    if (userData?.id) {
+      realtimeClient.setUserId(userData.id);
+    }
   };
   
   const logout = async () => {

@@ -162,6 +162,11 @@ class RealtimeClient {
     this.subscribedBots = new Set();
     this.reconnectTimer = null;
     this.connected = false;
+    this._userId = null;
+  }
+
+  setUserId(userId) {
+    this._userId = userId;
   }
 
   connect() {
@@ -178,6 +183,10 @@ class RealtimeClient {
 
     this.ws.onopen = () => {
       this.connected = true;
+      // Authenticate with the server (CR-04)
+      if (this._userId) {
+        this.ws.send(JSON.stringify({ type: 'auth', userId: this._userId }));
+      }
       // Re-subscribe to previously subscribed bots
       for (const botId of this.subscribedBots) {
         this.ws.send(JSON.stringify({ type: 'subscribe_bot', botId }));

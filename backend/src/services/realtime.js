@@ -64,6 +64,11 @@ export class RealtimeServer {
         break;
 
       case 'subscribe_bot':
+        // Require auth before subscribing to bot events (CR-04)
+        if (!ws.userId) {
+          ws.send(JSON.stringify({ type: 'error', message: 'Authentication required before subscribing' }));
+          break;
+        }
         ws.subscribedBots.add(msg.botId);
         this.addBotClient(msg.botId, ws);
         
