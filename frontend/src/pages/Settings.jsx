@@ -44,7 +44,7 @@ export default function Settings() {
   };
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+    return <div className="loading-state">Loading...</div>;
   }
 
   return (
@@ -59,7 +59,7 @@ export default function Settings() {
 
       <div className="section">
         <div className="section-header">Users</div>
-        <div style={{overflowX: 'auto'}}>
+        <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
@@ -72,10 +72,10 @@ export default function Settings() {
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td style={{fontWeight: 600}}>{u.username}</td>
+                  <td className="user-row-name">{u.username}</td>
                   <td><span className={`role-badge role-${u.role}`}>{u.role}</span></td>
-                  <td style={{color: 'var(--text-muted)', fontSize: '13px'}}>{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td style={{textAlign: 'right'}}>
+                  <td className="user-row-date">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td className="user-row-actions">
                     <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id)}>Delete</button>
                   </td>
                 </tr>
