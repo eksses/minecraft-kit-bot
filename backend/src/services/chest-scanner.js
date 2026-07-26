@@ -113,8 +113,13 @@ export class ChestScanner extends EventEmitter {
     
     // Determine chest name
     if (!chestName) {
-      const primaryItem = contents.items[0]?.name || 'unknown';
-      chestName = `unnamed:${primaryItem}`;
+      const primaryItem = contents.items[0]?.name;
+      if (primaryItem) {
+        chestName = `unnamed:${primaryItem}`;
+      } else {
+        // IN-03: Use coordinates as unique name for empty chests
+        chestName = `empty:${pos.x},${pos.y},${pos.z}`;
+      }
     }
     
     // Save to database
