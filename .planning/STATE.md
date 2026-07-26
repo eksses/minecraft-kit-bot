@@ -25,6 +25,9 @@
   - Plan 02-03: Frontend Scan UI (Wave 3)
   - Verification: PASSED (10/10 must-haves)
   - Completed: 2026-07-26
+- **plugin-system**: IN PROGRESS
+  - Context: 03-CONTEXT.md (decisions locked)
+  - Next: Research & Planning
 
 ### Completed Work
 
