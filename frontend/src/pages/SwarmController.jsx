@@ -79,7 +79,7 @@ export default function SwarmController() {
   const getSwarmTasks = (id) => tasks.filter(t => t.swarmId === id);
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading swarms...</div>;
+    return <div className="loading-state">Loading swarms...</div>;
   }
 
   return (
@@ -125,7 +125,7 @@ export default function SwarmController() {
 
       <div className="grid-2col">
         <div>
-          <h2 style={{fontSize: '16px', fontWeight: 600, marginBottom: 'var(--space-md)'}}>Swarms</h2>
+          <h2 className="section-heading">Swarms</h2>
           {swarms.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-title">No swarms yet</div>
@@ -139,7 +139,7 @@ export default function SwarmController() {
                 onClick={() => setSelectedSwarm(swarm)}
               >
                 <div className="swarm-card-header">
-                  <span style={{fontSize: '16px', fontWeight: 600}}>{swarm.name}</span>
+                  <span className="swarm-card-name">{swarm.name}</span>
                   <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); handleDeleteSwarm(swarm.id); }}>Delete</button>
                 </div>
                 <div className="swarm-card-meta">
@@ -153,12 +153,12 @@ export default function SwarmController() {
         <div>
           {selectedSwarm ? (
             <div>
-              <h2 style={{fontSize: '16px', fontWeight: 600, marginBottom: 'var(--space-md)'}}>{selectedSwarm.name}</h2>
+              <h2 className="section-heading">{selectedSwarm.name}</h2>
 
               <div className="section">
                 <div className="section-header">Assigned Bots</div>
                 {getSwarmBots(selectedSwarm.id).length === 0 ? (
-                  <div style={{color: 'var(--text-muted)', fontSize: '14px'}}>No bots assigned</div>
+                  <div className="swarm-detail-text">No bots assigned</div>
                 ) : (
                   getSwarmBots(selectedSwarm.id).map((bot) => (
                     <div key={bot.id} className="list-item">
@@ -187,7 +187,7 @@ export default function SwarmController() {
               <div className="section">
                 <div className="section-header">Tasks</div>
                 {getSwarmTasks(selectedSwarm.id).length === 0 ? (
-                  <div style={{color: 'var(--text-muted)', fontSize: '14px'}}>No active tasks</div>
+                  <div className="swarm-detail-text">No active tasks</div>
                 ) : (
                   getSwarmTasks(selectedSwarm.id).map((task) => (
                     <div key={task.id} className="list-item">
