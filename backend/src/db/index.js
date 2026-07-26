@@ -137,7 +137,46 @@ export function initDatabase() {
       z INTEGER NOT NULL,
       item_name TEXT NOT NULL,
       description TEXT,
+      item_count INTEGER,
+      all_items TEXT,
+      source TEXT NOT NULL DEFAULT 'manual',
+      sign_data TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      last_scanned INTEGER,
+      bot_id TEXT REFERENCES bots(id) ON DELETE SET NULL,
       created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS scan_configs (
+      id TEXT PRIMARY KEY,
+      bot_id TEXT NOT NULL REFERENCES bots(id) ON DELETE CASCADE,
+      scan_marked_enabled INTEGER NOT NULL DEFAULT 0,
+      auto_scan_on_connect INTEGER NOT NULL DEFAULT 0,
+      scan_interval_ms INTEGER,
+      scan_radius INTEGER NOT NULL DEFAULT 32,
+      allow_unnamed_orders INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS plugins (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      version TEXT NOT NULL,
+      description TEXT,
+      author TEXT,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      installed_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      settings TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS plugin_settings (
+      plugin_id TEXT NOT NULL REFERENCES plugins(id) ON DELETE CASCADE,
+      key TEXT NOT NULL,
+      value TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (plugin_id, key)
     );
 
     CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id);
