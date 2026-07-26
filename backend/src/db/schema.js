@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, blob, primaryKey } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // ============================================================
@@ -215,4 +215,43 @@ export const scanConfigs = sqliteTable('scan_configs', {
 
 export const scanConfigsRelations = relations(scanConfigs, ({ one }) => ({
   bot: one(bots, { fields: [scanConfigs.botId], references: [bots.id] }),
+}));
+
+// ============================================================
+// Plugins Table
+// ============================================================
+export const plugins = sqliteTable('plugins', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  version: text('version').notNull(),
+  description: text('description'),
+  author: text('author'),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  installedAt: integer('installed_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  settings: text('settings'), // JSON stringified
+});
+
+// ============================================================
+// Plugin Settings Table
+// ============================================================
+export const pluginSettings = sqliteTable('plugin_settings', {
+  pluginId: text('plugin_id').notNull().references(() => plugins.id, { onDelete: 'cascade' }),
+  key: text('key').notNull(),
+  value: text('value'), // JSON stringified
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.pluginId, t.key] }),
+}));
+
+// ============================================================
+// Plugin Relations
+// ============================================================
+export const pluginsRelations = relations(plugins, ({ many }) => ({
+  settings: many(pluginSettings),
+}));
+
+export const pluginSettingsRelations = relations(pluginSettings, ({ one }) => ({
+  plugin: one(plugins, { fields: [pluginSettings.pluginId], references: [plugins.id] }),
 }));
