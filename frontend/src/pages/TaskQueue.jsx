@@ -38,7 +38,7 @@ export default function TaskQueue() {
   const filteredTasks = filter === 'ALL' ? tasks : tasks.filter(t => t.status === filter);
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading tasks...</div>;
+    return <div className="loading-state">Loading tasks...</div>;
   }
 
   return (
@@ -90,7 +90,7 @@ export default function TaskQueue() {
               <div className="task-details">
                 {task.assignedBotId && <div className="detail"><span className="detail-label">Bot</span><span className="detail-value">{task.assignedBotId}</span></div>}
                 {task.swarmId && <div className="detail"><span className="detail-label">Swarm</span><span className="detail-value">{task.swarmId}</span></div>}
-                {task.details && <div className="detail"><span className="detail-label">Details</span><span className="detail-value" style={{fontFamily: 'var(--font-mono)', fontSize: '12px'}}>{typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}</span></div>}
+                {task.details && <div className="detail"><span className="detail-label">Details</span><span className="detail-value mono-sm">{typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}</span></div>}
                 {task.errorMessage && <div className="detail"><span className="detail-label">Error</span><span className="detail-value text-danger">{task.errorMessage}</span></div>}
                 {task.retryCount > 0 && <div className="detail"><span className="detail-label">Retries</span><span className="detail-value">{task.retryCount}</span></div>}
               </div>
