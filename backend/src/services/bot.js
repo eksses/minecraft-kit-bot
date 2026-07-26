@@ -149,7 +149,12 @@ export class BotService extends EventEmitter {
     this.bot.pathfinder.setGoal(new goals.GoalNear(x, y, z, 1));
     
     await new Promise((resolve, reject) => {
-      this.bot.once('goal_reached', async () => {
+      let settled = false;
+      
+      const onGoalReached = async () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
         try {
           const chestBlock = this.bot.blockAt(chestPos);
           if (!chestBlock) throw new Error('Chest block not found');
@@ -166,9 +171,16 @@ export class BotService extends EventEmitter {
         } catch (error) {
           reject(error);
         }
-      });
+      };
       
-      setTimeout(() => reject(new Error('Pathfinding timeout')), 60000);
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.bot.removeListener('goal_reached', onGoalReached);
+        reject(new Error('Pathfinding timeout'));
+      }, 60000);
+      
+      this.bot.once('goal_reached', onGoalReached);
     });
   }
   

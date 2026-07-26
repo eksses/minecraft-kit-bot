@@ -141,12 +141,18 @@ export class ChestScanner extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.bot.pathfinder.setGoal(new goals.GoalNear(pos.x, pos.y, pos.z, 1));
       
-      const timeout = setTimeout(() => reject(new Error('Pathfinding timeout')), 60000);
-      
-      this.bot.once('goal_reached', () => {
+      const onGoalReached = () => {
         clearTimeout(timeout);
+        this.bot.removeListener('goal_reached', onGoalReached);
         resolve();
-      });
+      };
+      
+      const timeout = setTimeout(() => {
+        this.bot.removeListener('goal_reached', onGoalReached);
+        reject(new Error('Pathfinding timeout'));
+      }, 60000);
+      
+      this.bot.once('goal_reached', onGoalReached);
     });
   }
 
