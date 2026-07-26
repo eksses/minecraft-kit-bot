@@ -8,7 +8,7 @@
  */
 export function parseSignText(lines) {
   const result = {};
-  const regex = /#(\w+):([^\s#]+)/g;
+  const regex = /#(\w+):([^\s#]*)/g;
   
   for (const line of lines) {
     if (!line) continue;

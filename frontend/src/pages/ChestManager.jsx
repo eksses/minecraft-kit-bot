@@ -29,7 +29,9 @@ export default function ChestManager() {
 
   // Load bots list on mount
   useEffect(() => {
-    api.fleet.getBots().then(setBots).catch(() => {});
+    api.fleet.getBots().then(setBots).catch(() => {
+      addToast({ type: 'error', title: 'Failed to load bots' });
+    });
   }, []);
 
   // Load chests and scan config when bot is selected
