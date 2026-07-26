@@ -74,7 +74,7 @@ export default function BotControl() {
   };
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+    return <div className="loading-state">Loading...</div>;
   }
 
   return (
@@ -150,8 +150,8 @@ export default function BotControl() {
                   </div>
                 </div>
                 <div className="bot-card-info">
-                  <div style={{fontWeight: 600}}>{bot.name}</div>
-                  <div style={{fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)'}}>{bot.username}</div>
+                  <div className="bot-card-name">{bot.name}</div>
+                  <div className="bot-card-username">{bot.username}</div>
                   <div>{bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
                 </div>
                 {bot.liveStatus?.health != null && <HealthBar value={bot.liveStatus.health} />}
