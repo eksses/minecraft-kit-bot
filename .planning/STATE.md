@@ -18,11 +18,12 @@
   - Plan 01-02: Layout & Navigation (Wave 1)
   - Plan 01-03: Page Components & Error Handling (Wave 2)
   - Status: Ready to execute
-- **chest-scanner**: PLANNED (3 plans, 3 waves)
+- **chest-scanner**: COMPLETE (3 plans, 3 waves)
   - Plan 02-01: Schema & Scanner Core (Wave 1)
   - Plan 02-02: API Routes & WebSocket (Wave 2)
   - Plan 02-03: Frontend Scan UI (Wave 3)
-  - Status: Ready to execute
+  - Verification: PASSED (10/10 must-haves)
+  - Completed: 2026-07-26
 
 ### Completed Work
 
@@ -33,6 +34,16 @@
 - Implemented WebSocket chat relay
 - Fixed 8 code review issues (credentials, CORS, validation)
 - Pushed to GitHub
+- Phase 02: Chest Scanner & Auto-Discovery
+  - Extended chestLocations schema with scan metadata (7 new columns)
+  - Created scanConfigs table for per-bot settings
+  - Built ChestScanner service with pathfinding-based discovery
+  - Implemented #Key:Value sign text parser
+  - Added 8 bot-scanned API endpoints
+  - Integrated scanner into BotService with WebSocket progress
+  - Added post-delivery rescan to kit service
+  - Built frontend scan UI with bot selector, progress bar, config modal
+  - Fixed 15 code review issues (4 critical, 8 warnings, 3 info)
 
 ### Key Decisions
 
