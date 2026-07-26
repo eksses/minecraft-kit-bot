@@ -264,6 +264,20 @@ class RealtimeClient {
 export const realtimeClient = new RealtimeClient();
 
 // ============================================================
+// Plugin Store API
+// ============================================================
+export const pluginStoreAPI = {
+  getAvailable: () => request('/plugin-store/available'),
+  getInstalled: () => request('/plugin-store/installed'),
+  getRepos: () => request('/plugin-store/repos'),
+  addRepo: (name, url) => request('/plugin-store/repos', { method: 'POST', body: JSON.stringify({ name, url }) }),
+  removeRepo: (id) => request(`/plugin-store/repos/${id}`, { method: 'DELETE' }),
+  install: (id, downloadUrl) => request(`/plugin-store/install/${id}`, { method: 'POST', body: JSON.stringify({ downloadUrl }) }),
+  uninstall: (id) => request(`/plugin-store/uninstall/${id}`, { method: 'DELETE' }),
+  update: (id) => request(`/plugin-store/update/${id}`, { method: 'POST' }),
+};
+
+// ============================================================
 // Combined API Export
 // ============================================================
 export const api = {
@@ -273,5 +287,6 @@ export const api = {
   kits: kitAPI,
   config: configAPI,
   fleet: fleetAPI,
+  pluginStore: pluginStoreAPI,
   realtime: realtimeClient,
 };

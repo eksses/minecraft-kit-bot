@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import SwarmController from './pages/SwarmController';
 import ServerManager from './pages/ServerManager';
 import TaskQueue from './pages/TaskQueue';
+import PluginStore from './pages/PluginStore';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -43,6 +44,7 @@ function App() {
           <Route path="/fleet/servers" element={<ServerManager />} />
           <Route path="/fleet/swarms" element={<SwarmController />} />
           <Route path="/fleet/tasks" element={<TaskQueue />} />
+          <Route path="/plugins" element={<PluginStore />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/fleet" replace />} />
