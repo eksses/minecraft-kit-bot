@@ -128,20 +128,39 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
   }
 
   const bot = bots[0];
-  if (!bot.serverId) {
-    return c.json({ error: 'Bot has no server assigned' }, 400);
-  }
-
-  // Get server config
-  const servers = await db.select()
-    .from(schema.servers)
-    .where(eq(schema.servers.id, bot.serverId));
   
-  if (servers.length === 0) {
-    return c.json({ error: 'Server not found' }, 404);
+  // Get server config - either from assigned server or direct fields
+  let serverConfig;
+  
+  if (bot.serverId) {
+    // Legacy: use assigned server
+    const servers = await db.select()
+      .from(schema.servers)
+      .where(eq(schema.servers.id, bot.serverId));
+    
+    if (servers.length === 0) {
+      return c.json({ error: 'Server not found' }, 404);
+    }
+    const server = servers[0];
+    serverConfig = {
+      name: server.name,
+      host: server.host,
+      port: server.port,
+      version: server.version,
+      authType: server.authType,
+    };
+  } else if (bot.serverHost) {
+    // New: use direct server fields
+    serverConfig = {
+      name: bot.name + ' Server',
+      host: bot.serverHost,
+      port: bot.serverPort || 25565,
+      version: bot.serverVersion || 'auto',
+      authType: bot.authMode === 'OFFLINE' ? 'offline' : 'microsoft',
+    };
+  } else {
+    return c.json({ error: 'Bot has no server configured. Set server host directly or assign a server.' }, 400);
   }
-
-  const server = servers[0];
   
   // Start the bot
   try {
@@ -151,12 +170,10 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
       name: bot.name,
       username: bot.username,
     }, {
-      name: server.name,
-      host: server.host,
-      port: server.port,
-      version: server.version,
-      authType: server.authType,
+      ...serverConfig,
       passwordEncrypted: bot.passwordEncrypted,
+      authMode: bot.authMode,
+      authPassword: bot.authPassword,
     });
 
     // Update bot status in database

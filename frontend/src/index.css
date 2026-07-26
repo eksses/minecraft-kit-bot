@@ -371,7 +371,8 @@ select {
    ============================================ */
 .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .layout-sidebar {
@@ -391,7 +392,7 @@ select {
   flex: 1;
   margin-left: var(--sidebar-width);
   padding: var(--space-xl);
-  min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* Tablet: sidebar collapses to icon-only (64px) */
@@ -441,6 +442,11 @@ select {
     margin-left: 0;
     padding: var(--space-md);
     padding-bottom: calc(var(--bottom-nav-height) + var(--space-lg));
+  }
+
+  /* BotDetail has its own tab bar - hide the bottom nav */
+  .bot-panel ~ .bottom-nav {
+    display: none;
   }
 }
 
@@ -1643,4 +1649,610 @@ select {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
+}
+
+/* ============================================================
+   BOT PANEL - Game Hosting Panel Layout
+   ============================================================ */
+.bot-panel {
+  display: flex;
+  height: 100%;
+  gap: 0;
+}
+
+.bot-panel-sidebar {
+  width: 280px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.bot-panel-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.bot-panel-sidebar-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bot-panel-sidebar-name {
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bot-panel-sidebar-username {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.bot-panel-sidebar-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.bot-panel-sidebar-stats {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.bot-panel-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.bot-panel-stat:last-child {
+  margin-bottom: 0;
+}
+
+.bot-panel-stat-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bot-panel-nav {
+  flex: 1;
+  padding: var(--space-sm) 0;
+  overflow-y: auto;
+}
+
+.bot-panel-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.bot-panel-nav-item:hover {
+  background: var(--bg-surface-high);
+  color: var(--primary);
+}
+
+.bot-panel-nav-item.active {
+  background: var(--bg-surface-high);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.bot-panel-nav-badge {
+  margin-left: auto;
+  background: var(--bg-surface-highest);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.bot-panel-sidebar-footer {
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--outline-variant);
+}
+
+.bot-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+.bot-panel-section {
+  max-width: 800px;
+}
+
+.bot-panel-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.bot-panel-section-header .ml-auto {
+  margin-left: auto;
+}
+
+/* Chat container in bot panel */
+.bot-panel .chat-container {
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--outline-variant);
+  padding: var(--space-md);
+  background: var(--bg-surface);
+  margin-bottom: var(--space-sm);
+}
+
+/* ============================================================
+   MOBILE BOTTOM TAB BAR
+   ============================================================ */
+.bot-panel-tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bot-panel {
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .bot-panel-sidebar {
+    display: none !important;
+  }
+
+  .bot-panel-content {
+    padding: var(--space-md);
+    padding-bottom: 72px;
+  }
+
+  .bot-panel-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--outline-variant);
+    z-index: 100;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .bot-panel-tabbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-xs) var(--space-sm);
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 11px;
+    transition: color 0.1s;
+  }
+
+  .bot-panel-tabbar-item.active {
+    color: var(--primary);
+  }
+
+  .bot-panel-tabbar-item:hover {
+    color: var(--text-primary);
+  }
+}
+
+/* ============================================================
+   FORM HELPERS
+   ============================================================ */
+.form-divider {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-sm) 0;
+  margin: var(--space-sm) 0;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.form-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+  font-family: var(--font-mono);
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* ============================================================
+   SWARM CONTROLLER - Bot Grid & Cards
+   ============================================================ */
+.bot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-sm);
+}
+
+.swarm-bot-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+}
+
+.swarm-bot-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.swarm-bot-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.swarm-bot-card-body {
+  padding: var(--space-sm) var(--space-md);
+  flex: 1;
+}
+
+.swarm-bot-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  gap: var(--space-sm);
+}
+
+.swarm-bot-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 32px;
+}
+
+.swarm-bot-card-footer {
+  padding: var(--space-xs) var(--space-md);
+  border-top: 1px solid var(--outline-variant);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+  min-height: 28px;
+}
+
+/* Delivery status in swarm */
+.delivery-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-surface-high);
+  border: 1px solid var(--outline-variant);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.delivery-status-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.delivery-status-dot.idle { background: var(--text-muted); }
+.delivery-status-dot.working { background: var(--status-working); }
+.delivery-status-dot.error { background: var(--status-error); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bot-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   ANIMATIONS & EFFECTS
+   ============================================================ */
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade in up */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide in right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide in left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Pulse glow */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(0, 255, 65, 0.3); }
+}
+
+/* Scale up */
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Glow pulse for status indicators */
+@keyframes glowPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Spinner */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scan line effect */
+@keyframes scanLine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Apply animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.2s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Staggered fade in for lists */
+.stagger-item {
+  animation: fadeInUp 0.3s ease-out;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-glow {
+  transition: box-shadow 0.2s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 12px rgba(0, 255, 65, 0.2);
+}
+
+/* Active status pulse */
+.status-online-pulse {
+  animation: pulseGlow 2s ease-in-out infinite;
+  border-color: var(--status-online);
+}
+
+/* Scan progress animation */
+.scan-progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: scanLine 1.5s ease-in-out infinite;
+}
+
+/* Tab bar active indicator */
+.bot-panel-tabbar-item.active {
+  position: relative;
+}
+
+.bot-panel-tabbar-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--primary);
+}
+
+/* Sidebar nav item hover */
+.bot-panel-nav-item:hover {
+  position: relative;
+}
+
+.bot-panel-nav-item:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--primary);
+  opacity: 0.5;
+}
+
+/* Button click effect */
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Card hover effect */
+.list-item {
+  transition: background 0.15s ease;
+}
+
+.list-item:hover {
+  background: var(--bg-surface-high);
+}
+
+/* Status badge glow */
+.status-badge[data-status="ONLINE"] {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--bg-surface-high);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Toast animation */
+.toast-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Inventory slot hover */
+.inventory-slot:not(.empty):hover {
+  background: var(--bg-surface-highest);
+  cursor: pointer;
+}
+
+/* Chat message hover */
+.chat-line:hover {
+  background: var(--bg-surface-high);
+}
+
+/* Log line hover */
+.log-line:hover {
+  background: var(--bg-surface-high);
+}
+
+/* Smooth transitions for interactive elements */
+input, select, textarea {
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  background: var(--bg-surface-high);
 }

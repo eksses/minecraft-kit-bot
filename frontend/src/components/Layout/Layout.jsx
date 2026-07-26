@@ -6,6 +6,7 @@ import BottomNav from './BottomNav';
 export default function Layout() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const isBotDetail = /^\/fleet\/bots\/[^/]+$/.test(location.pathname);
 
   return (
     <div className="layout">
@@ -13,7 +14,7 @@ export default function Layout() {
       <main className="layout-main">
         <Outlet />
       </main>
-      <BottomNav currentPath={location.pathname} onLogout={logout} />
+      {!isBotDetail && <BottomNav currentPath={location.pathname} onLogout={logout} />}
     </div>
   );
 }

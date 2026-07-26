@@ -5,9 +5,6 @@ import {
   Server,
   Layers,
   Package,
-  Box,
-  ShoppingBag,
-  MessageSquare,
   Settings,
   LogOut,
   Gamepad2,
@@ -19,9 +16,6 @@ const navItems = [
   { path: '/fleet/servers', label: 'Servers', icon: Server },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
   { path: '/fleet/tasks', label: 'Tasks', icon: Package },
-  { path: '/chests', label: 'Chests', icon: Box },
-  { path: '/kits', label: 'Order Kit', icon: ShoppingBag },
-  { path: '/chat', label: 'Chat', icon: MessageSquare },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

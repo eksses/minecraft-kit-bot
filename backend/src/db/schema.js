@@ -43,6 +43,13 @@ export const bots = sqliteTable('bots', {
   name: text('name').notNull(),
   username: text('username').notNull(),
   passwordEncrypted: text('password_encrypted'),
+  // Direct server connection fields (no need to create server first)
+  serverHost: text('server_host'),
+  serverPort: integer('server_port').default(25565),
+  serverVersion: text('server_version').default('auto'),
+  // Auth mode for cracked servers
+  authMode: text('auth_mode', { enum: ['ONLINE', 'OFFLINE'] }).notNull().default('ONLINE'),
+  authPassword: text('auth_password'),
   status: text('status', { enum: ['IDLE', 'WORKING', 'ON_DELIVERY', 'BUSY', 'OFFLINE', 'ERROR'] }).notNull().default('OFFLINE'),
   currentX: integer('current_x'),
   currentY: integer('current_y'),

@@ -1,5 +1,4 @@
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
-import { configService } from '../services/config.js';
 import { db, schema } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
@@ -31,7 +30,6 @@ export const sessionMiddleware = async (c, next) => {
   }
   
   // Fallback to legacy session validation
-  const credentials = configService.getUICredentials();
   const isValid = sessionId.length > 10;
   
   if (isValid) {
@@ -39,7 +37,7 @@ export const sessionMiddleware = async (c, next) => {
     const legacySession = { 
       authenticated: true, 
       id: 'legacy-admin',
-      username: credentials.username,
+      username: 'admin',
       role: 'admin',
       sessionId 
     };

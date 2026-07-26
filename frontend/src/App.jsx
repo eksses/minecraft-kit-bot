@@ -4,10 +4,8 @@ import { ToastContainer } from './components/ToastContainer';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import FleetDashboard from './pages/FleetDashboard';
-import ChestManager from './pages/ChestManager';
-import KitOrder from './pages/KitOrder';
 import BotControl from './pages/BotControl';
-import Chat from './pages/Chat';
+import BotDetail from './pages/BotDetail';
 import Settings from './pages/Settings';
 import SwarmController from './pages/SwarmController';
 import ServerManager from './pages/ServerManager';
@@ -41,12 +39,10 @@ function App() {
           <Route path="/" element={<Navigate to="/fleet" replace />} />
           <Route path="/fleet" element={<FleetDashboard />} />
           <Route path="/fleet/bots" element={<BotControl />} />
+          <Route path="/fleet/bots/:botId" element={<BotDetail />} />
           <Route path="/fleet/servers" element={<ServerManager />} />
           <Route path="/fleet/swarms" element={<SwarmController />} />
           <Route path="/fleet/tasks" element={<TaskQueue />} />
-          <Route path="/chests" element={<ChestManager />} />
-          <Route path="/kits" element={<KitOrder />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/fleet" replace />} />

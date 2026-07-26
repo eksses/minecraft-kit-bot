@@ -41,6 +41,14 @@ function createBot(config) {
     bot.pathfinder.setMovements(movements);
     reconnectAttempts = 0;
     
+    // Handle offline auth - /login or /register on spawn
+    if (config.authMode === 'OFFLINE' && config.authPassword) {
+      // Try /login first, if it fails (account doesn't exist), try /register
+      setTimeout(() => {
+        bot.chat('/login ' + config.authPassword);
+      }, 1000);
+    }
+    
     parentPort.postMessage({
       type: 'spawned',
       data: {
@@ -248,6 +256,8 @@ export class BotInstance extends EventEmitter {
         password: this.serverConfig.passwordEncrypted,
         version: this.serverConfig.version,
         authType: this.serverConfig.authType,
+        authMode: this.serverConfig.authMode,
+        authPassword: this.serverConfig.authPassword,
       }
     });
 

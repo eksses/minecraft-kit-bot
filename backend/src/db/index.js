@@ -68,6 +68,11 @@ export function initDatabase() {
       name TEXT NOT NULL,
       username TEXT NOT NULL,
       password_encrypted TEXT,
+      server_host TEXT,
+      server_port INTEGER DEFAULT 25565,
+      server_version TEXT DEFAULT 'auto',
+      auth_mode TEXT NOT NULL DEFAULT 'ONLINE',
+      auth_password TEXT,
       status TEXT NOT NULL DEFAULT 'OFFLINE',
       current_x INTEGER,
       current_y INTEGER,
@@ -146,6 +151,26 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_bot_logs_bot_id ON bot_logs(bot_id);
     CREATE INDEX IF NOT EXISTS idx_chest_locations_user_id ON chest_locations(user_id);
   `);
+  
+  // Migration: Add new columns to bots table if they don't exist
+  const botColumns = sqlite.prepare("PRAGMA table_info(bots)").all();
+  const botColumnNames = botColumns.map(c => c.name);
+  
+  if (!botColumnNames.includes('server_host')) {
+    sqlite.exec(`ALTER TABLE bots ADD COLUMN server_host TEXT`);
+  }
+  if (!botColumnNames.includes('server_port')) {
+    sqlite.exec(`ALTER TABLE bots ADD COLUMN server_port INTEGER DEFAULT 25565`);
+  }
+  if (!botColumnNames.includes('server_version')) {
+    sqlite.exec(`ALTER TABLE bots ADD COLUMN server_version TEXT DEFAULT 'auto'`);
+  }
+  if (!botColumnNames.includes('auth_mode')) {
+    sqlite.exec(`ALTER TABLE bots ADD COLUMN auth_mode TEXT NOT NULL DEFAULT 'ONLINE'`);
+  }
+  if (!botColumnNames.includes('auth_password')) {
+    sqlite.exec(`ALTER TABLE bots ADD COLUMN auth_password TEXT`);
+  }
   
   // Create default admin user if not exists
   const existingUser = sqlite.prepare('SELECT id FROM users WHERE id = ?').get('legacy-admin');

@@ -13,18 +13,21 @@ minecraft-kit-bot/
 │       │   └── index.js       # Auto-migration, default user creation
 │       ├── services/
 │       │   ├── botLifecycle.js    # Worker thread bot isolation
+│       │   ├── chest-scanner.js   # Pathfinding-based chest discovery
 │       │   ├── swarmCoordinator.js # Task queue, load balancing, failover
 │       │   └── realtime.js        # WebSocket server for live updates
 │       ├── routes/
 │       │   ├── auth.js        # Session auth, user management, RBAC
 │       │   └── fleet.js       # Fleet API (servers, bots, swarms, tasks)
-│       └── middleware/
-│           └── session.js     # Cookie-based session validation
+│       ├── middleware/
+│       │   └── session.js     # Cookie-based session validation
+│       └── utils/
+│           └── sign-parser.js # Sign text parsing utility
 ├── frontend/                   # React SPA + PWA
 │   └── src/
 │       ├── main.jsx           # Entry (AuthProvider + ToastProvider + BrowserRouter)
-│       ├── App.jsx            # Router with 9 protected routes
-│       ├── index.css          # Obsidian Command design system (~21KB)
+│       ├── App.jsx            # Router with protected routes
+│       ├── index.css          # Obsidian Command design system
 │       ├── context/
 │       │   └── AuthContext.jsx # Cookie-based auth, handles {user:{}} response
 │       ├── services/
@@ -36,28 +39,22 @@ minecraft-kit-bot/
 │       │   │   ├── BottomNav.jsx  # Mobile bottom nav (4 items + More)
 │       │   │   └── MoreSheet.jsx  # Mobile nav sheet (full list + logout)
 │       │   ├── ui/
-│       │   │   └── StatusComponents.jsx # StatusBadge, HealthBar, FoodBar, BotCard, etc.
-│       │   ├── BotInspector.jsx  # Bot detail drawer (inventory, logs, commands)
+│       │   │   └── StatusComponents.jsx # StatusBadge, HealthBar, FoodBar, BotCard
 │       │   └── ToastContainer.jsx
 │       └── pages/
 │           ├── Login.jsx
 │           ├── FleetDashboard.jsx
 │           ├── BotControl.jsx
+│           ├── BotDetail.jsx      # Per-bot control panel (5 tabs)
 │           ├── SwarmController.jsx
 │           ├── TaskQueue.jsx
 │           ├── ServerManager.jsx
-│           ├── ChestManager.jsx
-│           ├── KitOrder.jsx
-│           ├── Chat.jsx
-│           ├── Settings.jsx
-│           └── Dashboard.jsx
+│           └── Settings.jsx
 ├── .planning/                  # Project planning documents
-│   ├── UI-SPEC.md             # Approved UI design contract
-│   └── phases/                # Implementation plans
 ├── docs/                       # Documentation
-├── chestData.json              # Legacy chest database (JSON)
+├── data/
+│   └── mcdb.db                 # SQLite database
 ├── .env                        # Environment config
-├── start.sh                    # Production start script
 ├── package.json                # Root package.json (npm run dev/start/build)
 └── README.md
 ```
@@ -70,12 +67,25 @@ minecraft-kit-bot/
 |-------|---------|
 | `users` | User accounts with roles (admin/operator/viewer) |
 | `servers` | Minecraft server configurations |
-| `bots` | Bot instances (name, username, server, status) |
+| `bots` | Bot instances (name, username, server, status, auth settings) |
 | `swarms` | Bot groups with load balancing config |
 | `bot_swarms` | Many-to-many: bots ↔ swarms |
 | `delivery_queue` | Task queue (type, status, assigned bot, details) |
 | `swarm_memory` | Persistent swarm coordination state |
 | `bot_logs` | Bot event logs |
+
+### Bot Schema Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | TEXT | Bot display name |
+| `username` | TEXT | Minecraft username |
+| `server_host` | TEXT | Server IP/hostname (direct connection) |
+| `server_port` | INTEGER | Server port (default 25565) |
+| `server_version` | TEXT | Minecraft version ('auto' for auto-detect) |
+| `auth_mode` | TEXT | ONLINE (premium) or OFFLINE (cracked) |
+| `auth_password` | TEXT | Login password for offline servers |
+| `status` | TEXT | ONLINE, OFFLINE, CONNECTING, ERROR |
 
 ## Backend Architecture
 
@@ -86,6 +96,15 @@ Each bot runs in an isolated **worker thread**:
 - Pathfinder plugin loaded after spawn
 - Movements set inside `spawn` event handler
 - Status streamed via WebSocket every 5s
+- Offline auth: executes `/login <password>` on spawn
+
+### ChestScanner Service
+
+- Pathfinding-based chest discovery
+- Sign text parsing (#Key:Value format)
+- Per-bot scan configuration
+- WebSocket progress updates
+- Auto-rescan after deliveries
 
 ### SwarmCoordinator
 
@@ -99,6 +118,7 @@ Each bot runs in an isolated **worker thread**:
 WebSocket server on same HTTP server:
 - Bot status streaming (health, food, position, inventory)
 - Chat message relay
+- Scan progress updates
 - Heartbeat/ping-pong keepalive
 
 ### Fleet API Routes
@@ -123,6 +143,9 @@ WebSocket server on same HTTP server:
 | `/api/fleet/tasks/:id/cancel` | POST | Cancel task |
 | `/api/fleet/chests` | GET/POST | Chest locations |
 | `/api/fleet/chests/:id` | DELETE | Delete chest |
+| `/api/fleet/chests/:botId/scan` | POST | Trigger scan |
+| `/api/fleet/chests/:botId/scan-status` | GET | Get scan status |
+| `/api/fleet/chests/:botId/scan-config` | GET/PUT | Scan configuration |
 | `/api/fleet/memory` | GET/POST | Swarm memory |
 
 ## Frontend Architecture
@@ -147,37 +170,40 @@ WebSocket server on same HTTP server:
 |------|------|-------------|
 | Login | `/login` | Centered card login form |
 | Fleet Dashboard | `/fleet` | Stats grid, bot list, swarm list |
-| Bots | `/fleet/bots` | Bot cards with health/food bars |
+| Bots | `/fleet/bots` | Bot CRUD with inline server fields |
+| Bot Detail | `/fleet/bots/:id` | Per-bot control panel (5 tabs) |
 | Servers | `/fleet/servers` | Server configuration cards |
 | Swarms | `/fleet/swarms` | Two-column swarm management |
 | Tasks | `/fleet/tasks` | Filter chips, task cards |
-| Chests | `/chests` | Chest location management |
-| Order Kit | `/kits` | Kit ordering form |
-| Chat | `/chat` | WebSocket real-time chat |
 | Settings | `/settings` | User management table |
 
 ### Navigation
 
 - **Desktop:** Fixed 280px sidebar with Lucide icons
 - **Mobile:** Bottom nav (Dashboard, Bots, Tasks, More) + MoreSheet with full nav list
+- **Bot Detail:** Bottom tab bar (Console, Chests, Inventory, Settings, Logs)
 
 ## Data Flow
 
-### Kit Order Flow
+### Bot Start Flow (Direct Connection)
 
-1. User submits order on `/kits` page
-2. Frontend calls `api.fleet.createTask()`
-3. Backend creates task in `delivery_queue` table
-4. SwarmCoordinator assigns task to best available bot
-5. BotLifecycleManager executes task in worker thread
-6. Bot pathfinds to chest, withdraws items, whispers player, sends TPA
-7. Task marked as COMPLETED or FAILED
+1. User creates bot with server IP, port, version, auth mode
+2. Frontend calls `api.fleet.createBot()` with server fields
+3. Backend stores bot with server connection details
+4. User clicks Start → `api.fleet.startBot(botId)`
+5. Backend spawns worker thread with server connection params
+6. Worker connects to Minecraft server
+7. On spawn: if offline mode, executes `/login <password>`
+8. Status streamed via WebSocket
 
-### Bot Status Flow
+### Chest Scan Flow
 
-1. Bot worker thread emits status events
-2. RealtimeServer broadcasts via WebSocket
-3. Frontend receives and updates UI in real-time
+1. User triggers scan on BotDetail page
+2. Frontend calls `api.chests.triggerScan(botId, radius)`
+3. Backend starts ChestScanner in worker thread
+4. Scanner pathfinds to chests, reads signs, stores locations
+5. Progress streamed via WebSocket
+6. Chests displayed on BotDetail page
 
 ### Auth Flow
 
