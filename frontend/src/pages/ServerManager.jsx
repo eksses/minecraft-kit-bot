@@ -42,7 +42,7 @@ export default function ServerManager() {
   };
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+    return <div className="loading-state">Loading...</div>;
   }
 
   return (
@@ -115,14 +115,14 @@ export default function ServerManager() {
                     <span className="status-dot" style={{background: 'var(--status-online)'}}></span>
                     <span>Online</span>
                   </span>
-                  <span style={{fontWeight: 600}}>{server.name}</span>
+                  <span className="bot-card-name">{server.name}</span>
                 </div>
                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(server.id)}>Delete</button>
               </div>
               <div className="bot-card-info">
-                <div style={{fontFamily: 'var(--font-mono)', fontSize: '13px'}}>{server.host}:{server.port}</div>
+                <div className="bot-card-host">{server.host}:{server.port}</div>
                 <div>v{server.version}</div>
-                <div style={{textTransform: 'capitalize'}}>{server.authType}</div>
+                <div className="bot-card-meta">{server.authType}</div>
               </div>
             </div>
           ))}
