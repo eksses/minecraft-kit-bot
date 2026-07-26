@@ -10,6 +10,7 @@ import { kitRoutes } from './routes/kits.js';
 import { configRoutes } from './routes/config.js';
 import { integrationRoutes } from './routes/integrations.js';
 import { fleetRoutes } from './routes/fleet.js';
+import { pluginRoutes } from './routes/plugins.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -44,6 +45,9 @@ export function createApp() {
   
   // New fleet management routes
   app.route('/api/fleet', fleetRoutes);
+  
+  // Plugin management routes
+  app.route('/api/plugins', pluginRoutes);
   
   app.get('*', serveStatic({ root: DIST_PATH }));
   
