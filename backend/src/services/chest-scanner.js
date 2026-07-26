@@ -277,11 +277,12 @@ export class ChestScanner extends EventEmitter {
   }
 
   async markChestUnavailable(x, y, z) {
-    // Update status to unavailable in database
+    const botId = this.bot._botId;
     await this.db.update(chestLocations)
       .set({ status: 'unavailable' })
       .where(
         and(
+          eq(chestLocations.botId, botId),
           eq(chestLocations.x, x),
           eq(chestLocations.y, y),
           eq(chestLocations.z, z)
@@ -290,7 +291,7 @@ export class ChestScanner extends EventEmitter {
   }
 
   async updateChestCount(x, y, z, count) {
-    // Update itemCount and lastScanned in database
+    const botId = this.bot._botId;
     await this.db.update(chestLocations)
       .set({ 
         itemCount: count,
@@ -298,6 +299,7 @@ export class ChestScanner extends EventEmitter {
       })
       .where(
         and(
+          eq(chestLocations.botId, botId),
           eq(chestLocations.x, x),
           eq(chestLocations.y, y),
           eq(chestLocations.z, z)
