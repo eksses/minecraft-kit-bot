@@ -25,11 +25,13 @@
   - Plan 02-03: Frontend Scan UI (Wave 3)
   - Verification: PASSED (10/10 must-haves)
   - Completed: 2026-07-26
-- **plugin-system**: IN PROGRESS (4 plans, 3 waves)
-  - Plan 03-01: Plugin Schema & Core Loader (Wave 1) ✅ COMPLETE
-  - Plan 03-02: Plugin Worker Thread & API (Wave 2) — Next
+- **plugin-system**: COMPLETE (4 plans, 3 waves)
+  - Plan 03-01: Plugin Schema & Core Loader (Wave 1)
+  - Plan 03-02: Plugin Worker Thread & API (Wave 2)
   - Plan 03-03: Plugin UI Registry & Settings (Wave 2)
   - Plan 03-04: Plugin Store & Management UI (Wave 3)
+  - Verification: PASSED
+  - Completed: 2026-07-26
 
 ### Completed Work
 
@@ -40,11 +42,18 @@
 - Implemented WebSocket chat relay
 - Fixed 8 code review issues (credentials, CORS, validation)
 - Pushed to GitHub
-- Phase 03 Plan 01: Plugin Schema & Core Loader
+- Phase 03: Plugin System
   - Added plugins and pluginSettings tables to drizzle schema
   - Created plugin-manifest.js with parseManifest and validateManifest
   - Built PluginLoader service with worker_threads for isolated plugin execution
-  - Hot-reload togglePlugin method for enabling/disabling plugins at runtime
+  - Built PluginAPI context factory with full API surface (app, db, events, bots, websocket, ui, settings, logger)
+  - Created plugin management REST routes (CRUD, toggle, settings)
+  - Built PluginUIRegistry service for registering nav items, routes, settings panels, widgets
+  - Created plugin UI registry API routes
+  - Built frontend PluginLoader component with React context
+  - Built PluginStore service for marketplace (discover, install, uninstall, update)
+  - Created plugin store API routes
+  - Built PluginStore UI page with Available/Installed/Repositories tabs
 - Phase 02: Chest Scanner & Auto-Discovery
   - Extended chestLocations schema with scan metadata (7 new columns)
   - Created scanConfigs table for per-bot settings
