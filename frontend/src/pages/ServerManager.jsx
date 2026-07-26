@@ -111,7 +111,10 @@ export default function ServerManager() {
             <div key={server.id} className="bot-card">
               <div className="bot-card-header">
                 <div className="flex items-center gap-sm">
-                  <span className="status-dot" style={{background: 'var(--status-online)'}}></span>
+                  <span className="status-badge">
+                    <span className="status-dot" style={{background: 'var(--status-online)'}}></span>
+                    <span>Online</span>
+                  </span>
                   <span style={{fontWeight: 600}}>{server.name}</span>
                 </div>
                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(server.id)}>Delete</button>
