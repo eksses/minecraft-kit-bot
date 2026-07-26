@@ -1,227 +1,121 @@
-# Integration Guide — MDB v3.0
+# Integration Guide
 
-How to add new platform integrations to the Minecraft Kit Delivery Bot.
+Want to add something to MDB? Here's how.
 
----
+## Adding a New Page
 
-## Architecture Overview
+1. Create the page in `frontend/src/pages/YourPage.jsx`
+2. Add a route in `frontend/src/App.jsx`
+3. Add navigation links in `Sidebar.jsx` and `BottomNav.jsx`
+4. That's it — the page is now part of the app
 
-Integrations follow a plugin-based architecture. Each integration is a self-contained module that implements the Integration Interface. The integration router discovers all integrations and connects them to the bot.
+## Adding a New API Endpoint
 
----
+1. Open `backend/src/routes/fleet.js`
+2. Add your route handler
+3. If you need database access, import from `../db/index.js`
+4. If you need bot control, use `botLifecycle` from `../services/botLifecycle.js`
 
-## Integration Interface
-
-Every integration must implement the following interface:
-
-```javascript
-module.exports = {
-  name: 'my-integration',
-  version: '1.0.0',
-
-  async onStart(bot, config, utils) {
-    // Initialize connection, set up listeners
-  },
-
-  async onStop(bot) {
-    // Clean up connections, listeners
-  },
-
-  async onMessage(bot, message) {
-    // Handle incoming messages from the platform
-  },
-
-  async onEvent(bot, event, data) {
-    // Handle bot events (spawn, death, chat, etc.)
-  }
-};
-```
-
-### Parameters
-
-- **bot** — The Mineflayer bot instance. Use `bot.chat()` to send messages, `bot.whisper(user, msg)` to send DMs.
-- **config** — Integration-specific configuration loaded from the database or config file.
-- **utils** — Shared utilities: `logger`, `database`, `takeItemFromChest`, etc.
-
----
-
-## Integration Discovery
-
-The bot loads integrations automatically from the `integrations/` directory:
+Example:
 
 ```javascript
-const fs = require('fs');
-const path = require('path');
-
-const integrationDir = path.join(__dirname, 'integrations');
-const integrations = {};
-
-fs.readdirSync(integrationDir).forEach((folder) => {
-  const integrationPath = path.join(integrationDir, folder, 'index.js');
-  if (fs.existsSync(integrationPath)) {
-    const integration = require(integrationPath);
-    integrations[integration.name] = integration;
-    console.log(`Loaded integration: ${integration.name} v${integration.version}`);
-  }
+app.get('/api/fleet/my-endpoint', async (c) => {
+  const db = c.get('db');
+  // Your logic here
+  return c.json({ data: 'hello' });
 });
 ```
 
----
+## Adding WebSocket Events
 
-## Adding a New Integration — Step by Step
-
-### Step 1: Create the Integration Folder
-
-```bash
-mkdir -p integrations/discord
-```
-
-### Step 2: Create `index.js`
+1. Open `backend/src/services/realtime.js`
+2. Use `broadcast()` to send events to all connected clients
 
 ```javascript
-// integrations/discord/index.js
-const { DiscordJSHandler } = require('./handler');
+const { broadcast } = require('./realtime');
 
-module.exports = {
-  name: 'discord',
-  version: '1.0.0',
-
-  async onStart(bot, config, utils) {
-    this.handler = new DiscordJSHandler(bot, config, utils);
-    await this.handler.start();
-  },
-
-  async onStop(bot) {
-    await this.handler.stop();
-  },
-
-  async onMessage(bot, message) {
-    await this.handler.handleMessage(message);
-  },
-
-  async onEvent(bot, event, data) {
-    await this.handler.handleEvent(event, data);
-  }
-};
+// Send an event
+broadcast({
+  type: 'my_event',
+  data: 'whatever you want'
+});
 ```
 
-### Step 3: Create `handler.js`
+## Working with the Bot
+
+Each bot runs in its own worker thread. To interact with a bot:
+
+1. Get the bot instance from `botLifecycle`
+2. Use Mineflayer's API to control it
 
 ```javascript
-// integrations/discord/handler.js
-const { Client, GatewayIntentBits } = require('discord.js');
-
-class DiscordJSHandler {
-  constructor(bot, config, utils) {
-    this.bot = bot;
-    this.config = config;
-    this.utils = utils;
-    this.client = null;
-  }
-
-  async start() {
-    this.client = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-      ]
-    });
-
-    this.client.on('ready', () => {
-      console.log(`Discord connected as ${this.client.user.tag}`);
-    });
-
-    this.client.on('interactionCreate', async (interaction) => {
-      if (!interaction.isChatInputCommand()) return;
-      // Handle slash commands
-    });
-
-    await this.client.login(this.config.token);
-  }
-
-  async stop() {
-    if (this.client) await this.client.destroy();
-  }
-
-  async handleMessage(message) {
-    this.bot.chat(message.content);
-  }
-
-  async handleEvent(event, data) {
-    this.client.channels.cache.get(this.config.channelId)?.send(data);
-  }
-}
-
-module.exports = { DiscordJSHandler };
-```
-
-### Step 4: Create `config.json`
-
-```json
-{
-  "token": "YOUR_DISCORD_BOT_TOKEN",
-  "guildId": "YOUR_SERVER_ID",
-  "channelId": "YOUR_CHANNEL_ID"
+const bot = botLifecycle.getBot(botId);
+if (bot) {
+  bot.chat('Hello world!');
+  // bot.pathfinder, bot.inventory, etc.
 }
 ```
 
-### Step 5: Register the Integration
+## Database Changes
 
-Add a configuration page in the frontend to toggle the integration.
+If you need to add a table or column:
 
----
+1. Edit `backend/src/db/schema.js`
+2. Add a migration in `backend/src/db/index.js` (check if table/column exists first)
+3. The migration runs automatically on server start
 
-## Existing Integration: Discord (Planned)
+## Design System
 
-### Features to Implement
+All styling uses CSS custom properties. Check `frontend/src/index.css` for the full list.
 
-- **Slash Commands:**
-  - `/kits` — List available kits
-  - `/order <kit> <amount> <player>` — Order a kit
-  - `/status` — Check bot status
+**Key colors:**
+- `--bg` — Page background
+- `--bg-surface` — Card/panel background
+- `--primary` — Main text color
+- `--status-online` — Green (#00ff41)
+- `--status-warning` — Amber (#ffb000)
+- `--status-error` — Red (#ff3131)
 
-- **Button Interactions:**
-  - Kit cards with order buttons
-  - Admin buttons for bot control
+**Adding a new component:**
+1. Create it in `frontend/src/components/ui/`
+2. Use existing components as reference
+3. Use CSS classes, not inline styles
 
-- **Embed Messages:**
-  - Order confirmations
-  - Bot status embeds
-  - Error notifications
+## Testing
 
-### Discord Bot Permissions
+We don't have a test suite yet (it's on the roadmap). For now:
 
-```json
-{
-  "permissions": ["SendMessages", "UseApplicationCommands", "EmbedLinks"],
-  "bot_public": false,
-  "bot_require_code_grant": false
-}
+1. Start the dev server: `npm run dev`
+2. Test your changes manually
+3. Check the browser console for errors
+4. Test on mobile (responsive design)
+
+## Common Patterns
+
+**Loading state:**
+```jsx
+if (loading) return <div className="loading-state">Loading...</div>;
 ```
 
----
+**Empty state:**
+```jsx
+<div className="empty-state">
+  <div className="empty-state-title">Nothing here yet</div>
+  <div className="empty-state-text">Create something to get started</div>
+</div>
+```
 
-## Integration Checklist
+**Toast notifications:**
+```jsx
+const { addToast } = useToast();
+addToast({ type: 'success', title: 'It worked!' });
+addToast({ type: 'error', title: 'Something broke' });
+```
 
-Before creating a new integration, make sure you have:
+**API calls:**
+```jsx
+import { api } from '../services/api';
 
-- [ ] Read the Integration Interface specification
-- [ ] Set up your platform's SDK/framework
-- [ ] Created `integrations/<name>/index.js`
-- [ ] Created `integrations/<name>/handler.js`
-- [ ] Added configuration schema
-- [ ] Added a frontend page for configuration
-- [ ] Tested the integration end-to-end
-- [ ] Documented the integration
-
----
-
-## Sharing Integrations
-
-Integrations can be shared by including them in the `integrations/` folder. The integration router discovers them automatically on startup. To share with the community:
-
-1. Fork the repository
-2. Add your integration under `integrations/<name>/`
-3. Submit a PR
-4. Your integration will appear in the dashboard automatically
+const data = await api.fleet.getBots();
+await api.fleet.startBot(botId);
+```

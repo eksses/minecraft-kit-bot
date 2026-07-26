@@ -1,122 +1,60 @@
-# Tech Stack Policy — MDB v3.0
+# Tech Stack
 
-This document defines the technology stack for MDB and rules that are non-negotiable.
+Here's what MDB is built with and why.
 
----
+## The Basics
 
-## The Stack
+| Layer | What We Use | Why |
+|-------|-------------|-----|
+| **Frontend** | React 18 + Vite | Fast builds, great DX, no bloat |
+| **Backend** | Hono | Lightweight, fast, works everywhere |
+| **Database** | SQLite + Drizzle ORM | Zero config, portable, type-safe queries |
+| **Bot Framework** | Mineflayer + pathfinder | Battle-tested, handles Minecraft protocol |
+| **Real-time** | WebSocket | Live updates without polling |
+| **Auth** | Cookie sessions | Simple, secure, no third-party dependencies |
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| **Frontend** | React 18 (Vite) | Component-driven SPA, plain JavaScript |
-| **PWA** | Vite PWA Plugin | Service workers, manifest, offline support |
-| **Backend** | Hono | Lightweight, fast, serverless-compatible |
-| **Bot Framework** | Mineflayer + mineflayer-pathfinder | Standard Minecraft bot library |
-| **Database** | SQLite + Drizzle ORM | Zero setup, portable, type-safe queries |
-| **Real-time** | WebSocket | Live bot status, chat, inventory |
-| **Auth** | Cookie-based sessions with RBAC | No third-party auth providers |
-| **Styling** | CSS custom properties | Obsidian Command design system |
-| **Language** | JavaScript (ES2022+) | No TypeScript/TSX — ever |
-| **API** | REST + WebSocket | Simple, universal, debuggable |
-| **Process Manager** | PM2 (production) | Auto-restart, clustering, logging |
-| **Reverse Proxy** | Nginx | SSL termination, proxying |
+## Hard Rules
 
----
+These are non-negotiable. If you're contributing, please respect them:
 
-## Non-Negotiable Rules
+- **JavaScript only** — No TypeScript, no TSX files
+- **No Next.js** — We use Vite + React SPA
+- **No Firebase or FCM** — Web Push API only
+- **No biometrics** — Session-based auth only
+- **No heavy build tools** — Vite is all we need
+- **No CSS-in-JS** — Plain CSS with custom properties
+- **No emojis in code** — Lucide icons only
 
-### No TypeScript or TSX
+## Design System
 
-MDB is **JavaScript only**. No TypeScript, no TSX, no `*.ts` or `*.tsx` files. Plain JavaScript keeps the barrier to entry low and the codebase accessible.
+We use something called **Obsidian Command**. It's a dark, terminal-inspired look:
 
-### No Next.js
+- **Background:** `#141313` (almost black)
+- **Surface:** `#201f1f` (dark gray)
+- **Primary:** `#ffffff` (white text)
+- **Status colors:** Green for online, amber for warning, red for errors
+- **No rounded corners** — Everything is sharp (0px radius)
+- **No shadows** — Flat design only
+- **48px touch targets** — Mobile-friendly
 
-Next.js is not part of MDB. It is a real-time bot control application with a single-page dashboard. A standalone React app served by Hono provides everything we need.
+## Database Tables
 
-### Backend: Hono Only
+| Table | What It Stores |
+|-------|----------------|
+| `users` | Login accounts with roles |
+| `servers` | Minecraft server configs |
+| `bots` | Your bot instances |
+| `swarms` | Bot groups |
+| `delivery_queue` | Tasks waiting to run |
+| `swarm_memory` | Coordination state |
+| `bot_logs` | Event history |
 
-The backend is **Hono** — lightweight, fast, and serverless-compatible. Express.js is no longer used as of v3.0.
+## Why These Choices?
 
-### No Meta-Frameworks
+**SQLite over PostgreSQL:** We wanted zero-config setup. SQLite just works — no server to install, no credentials to manage. The database file is portable.
 
-No Nuxt, SvelteKit, Astro, Remix, Redwood, or similar. The frontend is a vanilla React SPA with Vite.
+**Hono over Express:** Hono is faster, smaller, and has better TypeScript support (even though we're not using TypeScript). It's also more modern.
 
-### No Heavy Build Tooling
+**Mineflayer over mineflayer-wrapper:** Direct control over the bot, no abstraction layers getting in the way.
 
-No custom Babel or Webpack configs. Vite is the dev tool and build tool. That's it.
-
-### No Third-Party Auth Providers
-
-No Google OAuth, GitHub OAuth, or similar. All authentication stays within the application using session-based login with hashed passwords.
-
-### No Biometric or Fingerprint Auth
-
-No WebAuthn, no fingerprint scanning, no Face ID. Authentication is username/password with role-based session management.
-
-### No Firebase or Cloud Notification Services
-
-No Firebase Cloud Messaging, no OneSignal, no third-party notification services. Push notifications are handled via the browser's native Web Push API.
-
----
-
-## Database
-
-MDB uses **SQLite with Drizzle ORM** for structured data:
-
-| Table | Purpose |
-|-------|---------|
-| `users` | User accounts with roles |
-| `servers` | Minecraft server configurations |
-| `bots` | Bot instances |
-| `swarms` | Bot groups with load balancing |
-| `bot_swarms` | Many-to-many: bots ↔ swarms |
-| `delivery_queue` | Task queue |
-| `swarm_memory` | Persistent swarm state |
-| `bot_logs` | Bot event logs |
-
-### Legacy Support
-
-`chestData.json` is still supported for development. The system auto-migrates from JSON to SQLite on first run.
-
----
-
-## Frontend Rules
-
-- React.js only (no TSX)
-- Vite as the build tool
-- Component-driven architecture
-- CSS custom properties for theming
-- Responsive design, mobile-first
-- PWA-capable (installable on mobile/desktop)
-- No framework abstractions — just React + CSS
-
----
-
-## Design System: Obsidian Command
-
-| Token | Value |
-|-------|-------|
-| Background | `#141313` |
-| Surface | `#201f1f` |
-| Border | `#2a2a2a` |
-| Primary | `#ffffff` |
-| Status Online | `#00ff41` |
-| Status Warning | `#ffb000` |
-| Status Error | `#ff3131` |
-| Corner Radius | 0px |
-| Shadows | None |
-| Touch Targets | 48px |
-| Typography | Inter + JetBrains Mono |
-
----
-
-## Adding New Dependencies
-
-Before adding any npm package, consider:
-
-1. Does an existing dependency already solve this?
-2. Can this be implemented in 10 lines of plain JS?
-3. Does this introduce a framework or build step that didn't exist before?
-4. Does this introduce TypeScript or TSX?
-
-If the answer to #3 or #4 is yes, discuss it first.
+**CSS over Tailwind/CSS-in-JS:** We wanted full control over the design system without runtime overhead or build complexity.

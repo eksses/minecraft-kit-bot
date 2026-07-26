@@ -1,120 +1,83 @@
-# Plans & Discussion — MDB v3.0
+# Plans & Design Decisions
 
-This document discusses the architectural plans, rationale, and design decisions for MDB.
+This document captures the key decisions we've made and why.
 
----
+## Why Hono Over Express?
 
-## Why MDB v3.0
+Express is great but showing its age. Hono is:
+- **Faster** — Benchmarks show 2-3x throughput
+- **Smaller** — 14KB vs 200KB+ dependencies
+- **Modern** — Built for ESM, works with workers
+- **TypeScript-ready** — Even though we're using JavaScript
 
-### The Problem with v2.0
+## Why SQLite Over PostgreSQL?
 
-The v2.0 codebase worked for a single bot on a single server. But it had limitations:
+We wanted **zero-config** setup. SQLite means:
+- No database server to install
+- No credentials to manage
+- The database file is portable (just copy `data/mcdb.db`)
+- Works great for single-server deployments
 
-- Monolithic `server.js` (301 lines doing everything)
-- Flat JSON file database with no concurrency safety
-- No multi-bot support
-- No swarm capability
-- EJS templates with no SPA
-- No role-based access control
+If we need to scale to multiple servers later, we can migrate to PostgreSQL.
 
-### What v3.0 Delivers
+## Why Worker Threads for Bots?
 
-A system that is:
+Each bot runs in its isolated worker thread because:
+- **Stability** — One bot crashing doesn't take down others
+- **Performance** — Bots don't block each other
+- **Safety** — Bot code can't access the main process
 
-1. **Modular** — Every feature is a self-contained module
-2. **Scalable** — Run one bot or fifty bots from a single dashboard
-3. **Resilient** — Worker thread isolation, auto-reconnect, fault-tolerant queue
-4. **Accessible** — React SPA that works on mobile and desktop
-5. **Secure** — Role-based access with admin, operator, and viewer roles
-6. **Intelligent** — Swarm coordination with load balancing and failover
+## Why No TypeScript?
 
----
+The team prefers JavaScript for:
+- **Faster development** — No type annotations, no compilation
+- **Simpler debugging** — What you see is what you run
+- **Lower barrier** — Easier for contributors
 
-## Architecture Decisions
+We might add TypeScript later if the codebase grows复杂.
 
-### Why Hono over Express
+## Why Obsidian Command Design?
 
-Hono is lighter, faster, and serverless-compatible. It provides the same API patterns as Express with better performance. The switch from Express to Hono reduced the backend bundle size significantly.
+The UI is inspired by Minecraft's aesthetic:
+- **Dark theme** — Easy on the eyes during long sessions
+- **Sharp corners** — Matches Minecraft's block-based world
+- **No shadows** — Clean, flat design
+- **Monospace fonts** — Terminal-like feel for power users
 
-### Why SQLite + Drizzle ORM
+## Why Cookie Sessions Over JWT?
 
-SQLite requires zero setup and is portable. Drizzle ORM provides type-safe queries without TypeScript. This combination gives us the simplicity of a file database with the structure of a real database.
+Cookies are simpler and more secure:
+- **HttpOnly** — Can't be stolen by JavaScript
+- **Secure** — Sent only over HTTPS in production
+- **SameSite** — Protects against CSRF
+- **No token storage** — Browser handles it automatically
 
-### Why Worker Threads for Bots
+## Why Remove Old Pages?
 
-Each Mineflayer bot runs in an isolated worker thread. This prevents one bot's crash from affecting others. It also allows for better resource management and cleanup.
+We removed Chat, ChestManager, Dashboard, and KitOrder because:
+- **Chat** — Now integrated into BotDetail
+- **ChestManager** — Chests are managed per-bot in BotDetail
+- **Dashboard** — Replaced by FleetDashboard
+- **KitOrder** — Functionality moved to Tasks
 
-### Why Obsidian Command Design
+This simplifies navigation and reduces code duplication.
 
-The design system follows Minecraft's block-based aesthetic with sharp corners (0px), no shadows, and a terminal-inspired color palette. This creates a "command center" feel appropriate for a bot management platform.
+## Future Considerations
 
-### Why CSS Custom Properties over CSS-in-JS
+**Multi-server scaling:**
+If we need to run bots across multiple machines, we'd:
+1. Switch to PostgreSQL
+2. Add Redis for WebSocket pub/sub
+3. Use message queue for bot commands
 
-CSS custom properties provide runtime theming without JavaScript overhead. They're faster than CSS-in-JS libraries and don't require a build step. The Obsidian Command design system is implemented entirely with CSS variables.
+**Mobile app:**
+If we build a native app, we'd:
+1. Use React Native
+2. Share business logic with the web app
+3. Keep the Hono backend as-is
 
----
-
-## Design System
-
-### Obsidian Command
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| Background | `#141313` | Main canvas |
-| Surface | `#201f1f` | Cards, panels |
-| Border | `#2a2a2a` | Card borders, dividers |
-| Primary | `#ffffff` | Text, icons, active states |
-| Status Online | `#00ff41` | Bot online, success |
-| Status Warning | `#ffb000` | Bot working, pending |
-| Status Error | `#ff3131` | Bot error, offline |
-| Corner Radius | 0px | Sharp corners (Minecraft blocks) |
-| Shadows | None | Flat design only |
-| Touch Targets | 48px | Mobile accessibility |
-| Typography | Inter + JetBrains Mono | UI + code/data |
-
----
-
-## Future Plans
-
-### Discord Integration
-
-The first integration will be Discord with:
-- Slash commands (`/kits`, `/order`, `/status`)
-- Button interactions for kit management
-- Embed messages for order confirmations
-
-### Production Hardening
-
-- PM2 process manager for auto-restart
-- Health checks and monitoring
-- Rate limiting and input validation
-- Security headers and CORS
-- Backup system for database
-
-### Mobile App
-
-Native mobile experience via React Native or Capacitor with:
-- Push notifications
-- Offline kit ordering
-- App store deployment
-
----
-
-## Discussion
-
-### Should we keep JSON support alongside the database?
-
-**Yes.** The database is the primary storage, but JSON export/import remains supported for:
-- Backup and migration
-- Quick sharing of chest configs
-- CI/CD pipeline configuration
-
-### Should PM2 be required?
-
-**No, but recommended.** The system works with Node.js directly for development. PM2 is an optional production process manager.
-
-### How do we handle backward compatibility?
-
-- API endpoints remain compatible
-- `chestData.json` is auto-imported on first database migration
-- Web dashboard stays accessible during transitions
+**Plugin system:**
+If we want extensibility, we'd:
+1. Add a plugin API in the backend
+2. Create a plugin manifest format
+3. Build a plugin marketplace in the UI
