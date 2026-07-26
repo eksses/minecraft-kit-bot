@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFile, writeFile, access } from 'fs/promises';
 import { join } from 'path';
 import { botService } from './bot.js';
 import { chestService } from './chest.js';
@@ -42,7 +42,7 @@ export const kitService = {
       timestamp: new Date().toISOString(),
     };
     
-    this.saveOrder(order);
+    await this.saveOrder(order);
     return order;
   },
   
@@ -61,10 +61,8 @@ export const kitService = {
    * Get chests that haven't been scanned recently or are unavailable.
    * Queries the database for per-bot chest data.
    */
-  getUnscannedChests() {
-    // Query all chests from database that need rescanning
-    // (never scanned or marked unavailable)
-    const allChests = db.select().from(schema.chestLocations).all();
+  async getUnscannedChests() {
+    const allChests = await db.select().from(schema.chestLocations);
     return allChests
       .filter((chest) => !chest.lastScanned || chest.status === 'unavailable')
       .map((chest) => ({
@@ -85,7 +83,7 @@ export const kitService = {
    * @returns {Promise<Array>} Results for each chest rescan
    */
   async scanUnavailableChests() {
-    const unavailable = this.getUnscannedChests();
+    const unavailable = await this.getUnscannedChests();
     const results = [];
     
     for (const chest of unavailable) {
@@ -100,20 +98,20 @@ export const kitService = {
     return results;
   },
   
-  getOrderHistory() {
-    if (!existsSync(ORDERS_FILE)) return [];
+  async getOrderHistory() {
     try {
-      const data = readFileSync(ORDERS_FILE, 'utf-8');
+      await access(ORDERS_FILE);
+      const data = await readFile(ORDERS_FILE, 'utf-8');
       return JSON.parse(data);
     } catch {
       return [];
     }
   },
   
-  saveOrder(order) {
-    const orders = this.getOrderHistory();
+  async saveOrder(order) {
+    const orders = await this.getOrderHistory();
     orders.unshift(order);
     if (orders.length > 1000) orders.length = 1000;
-    writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2), 'utf-8');
+    await writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2), 'utf-8');
   },
 };
