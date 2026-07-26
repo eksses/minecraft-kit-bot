@@ -20,14 +20,14 @@ export default function PluginStore() {
 
   const loadAll = async () => {
     try {
-      const [avail, inst, repoList] = await Promise.all([
+      const [availRes, instRes, repoRes] = await Promise.all([
         api.pluginStore.getAvailable(),
         api.pluginStore.getInstalled(),
         api.pluginStore.getRepos(),
       ]);
-      setAvailable(avail);
-      setInstalled(inst);
-      setRepos(repoList);
+      setAvailable(availRes.plugins || []);
+      setInstalled(instRes.plugins || []);
+      setRepos(repoRes.repos || []);
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to load plugin store' });
     } finally {

@@ -10,7 +10,7 @@ export const pluginStoreRoutes = new Hono();
 pluginStoreRoutes.get('/available', requireAuth, async (c) => {
   try {
     const available = await pluginStore.getAvailable();
-    return c.json(available);
+    return c.json({ plugins: available });
   } catch (err) {
     return c.json({ error: err.message }, 500);
   }
@@ -22,7 +22,7 @@ pluginStoreRoutes.get('/available', requireAuth, async (c) => {
 pluginStoreRoutes.get('/installed', requireAuth, async (c) => {
   try {
     const installed = await pluginStore.getInstalled();
-    return c.json(installed);
+    return c.json({ plugins: installed });
   } catch (err) {
     return c.json({ error: err.message }, 500);
   }
@@ -34,7 +34,7 @@ pluginStoreRoutes.get('/installed', requireAuth, async (c) => {
 pluginStoreRoutes.get('/repos', requireAuth, async (c) => {
   try {
     const repos = await pluginStore.getRepos();
-    return c.json(repos);
+    return c.json({ repos: repos });
   } catch (err) {
     return c.json({ error: err.message }, 500);
   }

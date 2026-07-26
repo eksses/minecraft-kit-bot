@@ -1,0 +1,8 @@
+[
+  {
+    "id": "official",
+    "name": "Official Repository",
+    "url": "https://raw.githubusercontent.com/eksses/minecraft-kit-bot/main/plugins.json",
+    "enabled": true
+  }
+]
