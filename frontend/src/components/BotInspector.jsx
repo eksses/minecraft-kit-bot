@@ -135,7 +135,7 @@ export default function BotInspector({ botId, onClose }) {
                 placeholder="/say hello"
                 className="command-input flex-1"
               />
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" aria-label="Send command">
                 <Send size={16} />
               </button>
             </form>

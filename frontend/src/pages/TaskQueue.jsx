@@ -48,7 +48,7 @@ export default function TaskQueue() {
           <h1 className="page-title">Task Queue</h1>
           <p className="page-subtitle">Monitor and manage delivery tasks</p>
         </div>
-        <button className="btn btn-secondary btn-sm" onClick={loadTasks}>
+        <button className="btn btn-secondary btn-sm" onClick={loadTasks} aria-label="Refresh">
           <RefreshCw size={16} />
         </button>
       </div>

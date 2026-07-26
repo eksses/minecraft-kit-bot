@@ -85,7 +85,7 @@ export default function BotControl() {
           <p className="page-subtitle">Manage your Minecraft bots</p>
         </div>
         <div className="flex gap-sm">
-          <button className="btn btn-secondary btn-sm" onClick={loadData}>
+          <button className="btn btn-secondary btn-sm" onClick={loadData} aria-label="Refresh">
             <RefreshCw size={16} />
           </button>
           <button className="btn btn-primary" onClick={() => setShowAdd(true)}>Add Bot</button>
