@@ -14,10 +14,8 @@ initDatabase();
 // Start swarm coordinator
 swarmCoordinator.start();
 
-// Start plugin loader (scans and loads plugins)
-pluginLoader.start().catch(err => {
-  console.error('[PluginLoader] Failed to start:', err.message);
-});
+// Start plugin loader BEFORE creating app so plugin routes are mounted
+await pluginLoader.start();
 
 const app = createApp();
 

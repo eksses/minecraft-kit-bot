@@ -1,11 +1,11 @@
 import { readdir, stat, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { Worker } from 'worker_threads';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { db, schema } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import { parseManifest, validateManifest } from '../utils/plugin-manifest.js';
+import { pluginAPI } from './plugin-api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,16 +13,16 @@ const __dirname = dirname(__filename);
 const PLUGINS_DIR = process.env.PLUGINS_DIR || join(__dirname, '../../../data/plugins');
 
 /**
- * PluginLoader - Scans, loads, and manages plugin worker threads.
+ * PluginLoader - Scans, loads, and manages plugins via dynamic import.
  *
  * On startup it scans data/plugins/, reads each plugin's manifest,
- * syncs state to the database, and spawns a worker thread for each
- * enabled plugin.
+ * syncs state to the database, and loads each enabled plugin by
+ * dynamically importing its entry file and calling the default export.
  */
 class PluginLoader {
   constructor() {
-    /** @type {Map<string, Worker>} pluginId → Worker */
-    this.workers = new Map();
+    /** @type {Set<string>} IDs of currently loaded plugins */
+    this.loaded = new Set();
     /** @type {Map<string, Object>} pluginId → manifest */
     this.manifests = new Map();
     this.running = false;
@@ -45,34 +45,22 @@ class PluginLoader {
     await this._syncDatabase(pluginDirs);
     await this._loadEnabledPlugins();
 
-    console.log(`[PluginLoader] Initialised – ${this.workers.size} plugin(s) running`);
+    console.log(`[PluginLoader] Initialised – ${this.loaded.size} plugin(s) running`);
   }
 
   /**
-   * Gracefully stop all running plugin workers.
+   * Gracefully stop all loaded plugins.
    */
   async stop() {
     this.running = false;
-    const stops = [];
-    for (const [id, worker] of this.workers) {
-      stops.push(
-        new Promise((resolve) => {
-          worker.once('exit', resolve);
-          worker.terminate();
-        }).then(() => {
-          console.log(`[PluginLoader] Stopped plugin: ${id}`);
-        })
-      );
+    for (const pluginId of [...this.loaded]) {
+      await this._stopPlugin(pluginId);
     }
-    await Promise.all(stops);
-    this.workers.clear();
+    this.loaded.clear();
   }
 
   /**
    * Toggle a plugin on/off (hot-reload).
-   *
-   * @param {string} pluginId
-   * @param {boolean} enabled
    */
   async togglePlugin(pluginId, enabled) {
     const now = new Date();
@@ -126,7 +114,6 @@ class PluginLoader {
 
   /**
    * Ensure every discovered plugin exists in the DB.
-   * Plugins not on disk are left untouched (may have been uninstalled manually).
    */
   async _syncDatabase(pluginDirs) {
     const now = new Date();
@@ -138,7 +125,6 @@ class PluginLoader {
       });
 
       if (existing) {
-        // Update version / meta if changed
         await db
           .update(schema.plugins)
           .set({
@@ -181,10 +167,10 @@ class PluginLoader {
   }
 
   /**
-   * Spawn a worker thread for a single plugin.
+   * Dynamically import and call a plugin's default export.
    */
   async _startPlugin(pluginId) {
-    if (this.workers.has(pluginId)) return;
+    if (this.loaded.has(pluginId)) return;
 
     const manifest = this.manifests.get(pluginId);
     if (!manifest) {
@@ -193,30 +179,27 @@ class PluginLoader {
     }
 
     const pluginDir = join(PLUGINS_DIR, manifest.id);
-    const entryPath = join(pluginDir, manifest.entry);
+    const entryFile = manifest.entry || 'index.js';
+    const entryPath = join(pluginDir, entryFile);
 
     try {
-      const worker = new Worker(entryPath, {
-        workerData: {
-          pluginId,
-          pluginDir,
-          manifest,
-        },
-      });
+      // Create the plugin API context (Hono sub-router, events, settings, etc.)
+      const ctx = pluginAPI.initContext(pluginId, pluginDir);
 
-      worker.on('error', (err) => {
-        console.error(`[PluginLoader] Plugin ${pluginId} worker error:`, err.message);
-        this.workers.delete(pluginId);
-      });
+      // Dynamically import the plugin's default export
+      const mod = await import(entryPath);
+      const pluginFn = mod.default || mod;
 
-      worker.on('exit', (code) => {
-        if (this.workers.has(pluginId)) {
-          console.warn(`[PluginLoader] Plugin ${pluginId} exited with code ${code}`);
-          this.workers.delete(pluginId);
-        }
-      });
+      if (typeof pluginFn !== 'function') {
+        throw new Error('Plugin entry does not export a function');
+      }
 
-      this.workers.set(pluginId, worker);
+      // Call the plugin with its context
+      pluginFn(ctx);
+
+      // Mount plugin routes onto the main app
+      // (This is done later in app.js after all plugins are loaded)
+      this.loaded.add(pluginId);
       console.log(`[PluginLoader] Started plugin: ${pluginId}`);
     } catch (err) {
       console.error(`[PluginLoader] Failed to start plugin ${pluginId}:`, err.message);
@@ -224,18 +207,14 @@ class PluginLoader {
   }
 
   /**
-   * Terminate a single plugin worker.
+   * Unload a plugin.
    */
   async _stopPlugin(pluginId) {
-    const worker = this.workers.get(pluginId);
-    if (!worker) return;
+    if (!this.loaded.has(pluginId)) return;
 
-    await new Promise((resolve) => {
-      worker.once('exit', resolve);
-      worker.terminate();
-    });
-
-    this.workers.delete(pluginId);
+    pluginAPI.removeContext(pluginId);
+    this.loaded.delete(pluginId);
+    console.log(`[PluginLoader] Stopped plugin: ${pluginId}`);
   }
 }
 

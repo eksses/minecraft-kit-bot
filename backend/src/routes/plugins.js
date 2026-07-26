@@ -11,7 +11,7 @@ export const pluginRoutes = new Hono();
 // ============================================================
 pluginRoutes.get('/', requireAuth, async (c) => {
   const plugins = await db.query.plugins.findMany();
-  return c.json(plugins);
+  return c.json({ plugins });
 });
 
 // ============================================================

@@ -5,7 +5,7 @@
  * It's a simple plugin that demonstrates basic functionality.
  */
 
-module.exports = function(pluginContext) {
+export default function(pluginContext) {
   const { app, logger, settings } = pluginContext;
   
   logger.info('GitHub Repo Test Plugin loaded!');

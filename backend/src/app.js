@@ -13,6 +13,7 @@ import { fleetRoutes } from './routes/fleet.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { pluginUIRoutes } from './routes/plugin-ui.js';
 import { pluginStoreRoutes } from './routes/plugin-store.js';
+import { pluginAPI } from './services/plugin-api.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -56,6 +57,12 @@ export function createApp() {
 
   // Plugin store routes
   app.route('/api/plugin-store', pluginStoreRoutes);
+  
+  // Mount plugin-specific routes (each plugin gets /api/plugins/:pluginId/*)
+  for (const [pluginId, ctx] of pluginAPI.contexts) {
+    app.route(`/api/plugins/${pluginId}`, ctx.app);
+    console.log(`[App] Mounted routes for plugin: ${pluginId}`);
+  }
   
   app.get('*', serveStatic({ root: DIST_PATH }));
   

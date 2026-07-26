@@ -12,7 +12,7 @@
  * - UI registration (nav items, routes, settings panels, widgets)
  */
 
-module.exports = function(pluginContext) {
+export default function(pluginContext) {
   const { app, db, events, bots, websocket, ui, settings, logger } = pluginContext;
   
   logger.info('Demo Everything Plugin loaded!');
