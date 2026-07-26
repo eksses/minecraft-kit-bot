@@ -283,6 +283,11 @@ select {
   border: 1px solid var(--bg-surface-high);
   border-radius: 0;
   padding: var(--space-lg);
+  transition: border-color var(--transition);
+}
+
+.card:hover {
+  border-color: #444444;
 }
 
 .card-header {
