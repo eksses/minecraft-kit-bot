@@ -37,7 +37,7 @@ export default function FleetDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center" style={{minHeight: '60vh', color: 'var(--text-muted)'}}>
+      <div className="flex items-center justify-center loading-state">
         Loading fleet data...
       </div>
     );
@@ -79,7 +79,7 @@ export default function FleetDashboard() {
         <div className="section-header">
           <span>Task Queue</span>
         </div>
-        <div className="stats-grid" style={{marginBottom: 0}}>
+        <div className="stats-grid mb-0">
           <div className="stat-card">
             <div className="stat-value">{dashboard?.tasks?.pending || 0}</div>
             <div className="stat-label">Pending</div>
@@ -118,7 +118,7 @@ export default function FleetDashboard() {
                   <div className="avatar">{bot.name.charAt(0)}</div>
                   <div>
                     <div className="list-item-name">{bot.name}</div>
-                    <div className="list-item-meta" style={{fontFamily: 'var(--font-mono)', fontSize: '12px'}}>
+                    <div className="list-item-meta mono-sm">
                       {bot.username}
                     </div>
                   </div>
@@ -151,10 +151,10 @@ export default function FleetDashboard() {
                     {swarm.stats?.totalBots || 0} bots &middot; {swarm.loadBalancing}
                   </div>
                 </div>
-                <div style={{textAlign: 'right'}}>
-                  <span className="text-success" style={{fontSize: '13px'}}>{swarm.stats?.idleBots || 0} idle</span>
-                  <span style={{margin: '0 6px', color: 'var(--outline-variant)'}}>/</span>
-                  <span className="text-warning" style={{fontSize: '13px'}}>{swarm.stats?.activeTasks || 0} active</span>
+                <div className="text-right">
+                  <span className="text-success text-sm">{swarm.stats?.idleBots || 0} idle</span>
+                  <span className="separator">/</span>
+                  <span className="text-warning text-sm">{swarm.stats?.activeTasks || 0} active</span>
                 </div>
               </div>
             ))}
