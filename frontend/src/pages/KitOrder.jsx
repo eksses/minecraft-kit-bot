@@ -40,7 +40,7 @@ export default function KitOrder() {
   };
 
   if (loading) {
-    return <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading...</div>;
+    return <div className="loading-state">Loading...</div>;
   }
 
   return (
@@ -52,7 +52,7 @@ export default function KitOrder() {
         </div>
       </div>
 
-      <div className="card" style={{maxWidth: '500px'}}>
+      <div className="card form-card">
         <div className="card-header">
           <span className="card-title">Create Delivery Order</span>
         </div>
