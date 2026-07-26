@@ -281,6 +281,7 @@ export const pluginStoreAPI = {
 // Combined API Export
 // ============================================================
 export const api = {
+  request,
   auth: authAPI,
   bot: botAPI,
   chests: chestAPI,

@@ -17,8 +17,7 @@ export default function Plugins() {
 
   const loadPlugins = async () => {
     try {
-      const res = await fetch('/api/plugins');
-      const data = await res.json();
+      const data = await api.pluginStore.getInstalled();
       setPlugins(data.plugins || []);
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to load plugins' });
@@ -29,9 +28,8 @@ export default function Plugins() {
 
   const loadPluginSettings = async (pluginId) => {
     try {
-      const res = await fetch(`/api/plugins/${pluginId}/settings`);
-      const data = await res.json();
-      setPluginSettings(prev => ({ ...prev, [pluginId]: data.settings || {} }));
+      const res = await api.request(`/plugins/${pluginId}/settings`);
+      setPluginSettings(prev => ({ ...prev, [pluginId]: res.settings || {} }));
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to load settings' });
     }
@@ -39,9 +37,8 @@ export default function Plugins() {
 
   const handleToggle = async (pluginId, enabled) => {
     try {
-      await fetch(`/api/plugins/${pluginId}/toggle`, {
+      await api.request(`/plugins/${pluginId}/toggle`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled })
       });
       addToast({ type: 'success', title: `Plugin ${enabled ? 'enabled' : 'disabled'}` });
@@ -54,7 +51,7 @@ export default function Plugins() {
   const handleUninstall = async (pluginId) => {
     if (!confirm(`Uninstall ${pluginId}? This will remove all plugin files.`)) return;
     try {
-      await fetch(`/api/plugin-store/uninstall/${pluginId}`, { method: 'DELETE' });
+      await api.pluginStore.uninstall(pluginId);
       addToast({ type: 'success', title: 'Plugin uninstalled' });
       await loadPlugins();
     } catch (err) {
@@ -65,9 +62,8 @@ export default function Plugins() {
   const handleSaveSettings = async (pluginId) => {
     setSaving(pluginId);
     try {
-      await fetch(`/api/plugins/${pluginId}/settings`, {
+      await api.request(`/plugins/${pluginId}/settings`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pluginSettings[pluginId] || {})
       });
       addToast({ type: 'success', title: 'Settings saved' });
