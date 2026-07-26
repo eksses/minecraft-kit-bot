@@ -60,7 +60,7 @@ export default function BotInspector({ botId, onClose }) {
     return (
       <div className="drawer-overlay" onClick={onClose}>
         <div className="drawer" onClick={(e) => e.stopPropagation()}>
-          <div style={{padding: '48px', textAlign: 'center', color: 'var(--text-muted)'}}>Loading bot data...</div>
+          <div className="drawer-loading">Loading bot data...</div>
         </div>
       </div>
     );
@@ -92,11 +92,11 @@ export default function BotInspector({ botId, onClose }) {
             </div>
           </div>
 
-          <div style={{fontSize: '14px', marginBottom: 'var(--space-md)'}}>
-            <div><span style={{color: 'var(--text-muted)'}}>Username:</span> {bot.username}</div>
-            <div><span style={{color: 'var(--text-muted)'}}>Server:</span> {bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
-            <div style={{fontFamily: 'var(--font-mono)', fontSize: '13px'}}>
-              <span style={{color: 'var(--text-muted)'}}>Position:</span>{' '}
+          <div className="bot-detail-info">
+            <div><span className="bot-detail-label">Username:</span> {bot.username}</div>
+            <div><span className="bot-detail-label">Server:</span> {bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
+            <div className="bot-detail-position">
+              <span className="bot-detail-label">Position:</span>{' '}
               {bot.liveStatus?.position
                 ? `${Math.round(bot.liveStatus.position.x)}, ${Math.round(bot.liveStatus.position.y)}, ${Math.round(bot.liveStatus.position.z)}`
                 : 'N/A'}
@@ -107,7 +107,7 @@ export default function BotInspector({ botId, onClose }) {
           {bot.liveStatus?.food != null && <FoodBar value={bot.liveStatus.food} />}
 
           <div className="mt-md">
-            <h3 style={{fontSize: '14px', fontWeight: 600, marginBottom: 'var(--space-sm)'}}>Inventory</h3>
+            <h3 className="inv-heading">Inventory</h3>
             <div className="inventory-grid">
               {Array.from({ length: 36 }, (_, i) => {
                 const item = inventory.find(inv => inv.slot === i);
@@ -126,7 +126,7 @@ export default function BotInspector({ botId, onClose }) {
           </div>
 
           <div className="mt-md">
-            <h3 style={{fontSize: '14px', fontWeight: 600, marginBottom: 'var(--space-sm)'}}>Command</h3>
+            <h3 className="inv-heading">Command</h3>
             <form onSubmit={handleSendCommand} className="flex gap-sm">
               <input
                 type="text"
@@ -142,10 +142,10 @@ export default function BotInspector({ botId, onClose }) {
           </div>
 
           <div className="mt-md">
-            <h3 style={{fontSize: '14px', fontWeight: 600, marginBottom: 'var(--space-sm)'}}>Logs</h3>
-            <div style={{maxHeight: '200px', overflowY: 'auto', background: 'var(--bg)', border: '1px solid var(--bg-surface-high)', padding: 'var(--space-sm)'}}>
+            <h3 className="inv-heading">Logs</h3>
+            <div className="log-container">
               {logs.length === 0 ? (
-                <div style={{color: 'var(--text-muted)', fontSize: '13px'}}>No logs available</div>
+                <div className="text-muted text-sm">No logs available</div>
               ) : (
                 logs.slice(0, 20).map((log, i) => (
                   <div key={i} className="log-line">
