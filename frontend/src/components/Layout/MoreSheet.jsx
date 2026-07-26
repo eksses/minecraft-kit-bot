@@ -71,9 +71,8 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
         ))}
         <div className="more-sheet-footer">
           <button
-            className="more-nav-item"
+            className="more-nav-item logout-btn"
             onClick={() => { onClose(); onLogout(); }}
-            style={{width: '100%', color: 'var(--status-error)'}}
           >
             <LogOut size={20} />
             <span>Logout</span>

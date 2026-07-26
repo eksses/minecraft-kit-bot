@@ -104,7 +104,7 @@ export function BotCard({ bot, onStart, onStop, onDelete }) {
       
       <div className="bot-card-info">
         <div><strong>{bot.name}</strong></div>
-        <div style={{fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)'}}>{bot.username}</div>
+        <div className="bot-card-username">{bot.username}</div>
         <div>{bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
       </div>
       
@@ -118,8 +118,8 @@ export function SwarmCard({ swarm, onClick }) {
   return (
     <div className="swarm-card" onClick={onClick}>
       <div className="swarm-card-header">
-        <h3 style={{fontSize: '16px', fontWeight: 600}}>{swarm.name}</h3>
-        <span style={{fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)'}}>
+        <h3 className="swarm-card-name">{swarm.name}</h3>
+        <span className="form-label">
           {swarm.loadBalancing}
         </span>
       </div>
@@ -129,11 +129,11 @@ export function SwarmCard({ swarm, onClick }) {
           <span className="swarm-stat-label">Bots</span>
         </div>
         <div className="swarm-stat">
-          <span className="swarm-stat-value" style={{color: 'var(--status-online)'}}>{swarm.stats?.idleBots || 0}</span>
+          <span className="swarm-stat-value text-success">{swarm.stats?.idleBots || 0}</span>
           <span className="swarm-stat-label">Idle</span>
         </div>
         <div className="swarm-stat">
-          <span className="swarm-stat-value" style={{color: 'var(--status-warning)'}}>{swarm.stats?.activeTasks || 0}</span>
+          <span className="swarm-stat-value text-warning">{swarm.stats?.activeTasks || 0}</span>
           <span className="swarm-stat-label">Active</span>
         </div>
       </div>

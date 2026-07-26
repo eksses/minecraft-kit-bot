@@ -1346,7 +1346,162 @@ select {
 .text-danger { color: var(--status-error); }
 .text-primary { color: var(--primary); }
 .max-w-md { max-width: 500px; }
+.mb-0 { margin-bottom: 0; }
+.text-right { text-align: right; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; }
+.mono-sm { font-family: var(--font-mono); font-size: 12px; }
+.mono-md { font-family: var(--font-mono); font-size: 13px; }
+.capitalize { text-transform: capitalize; }
+.overflow-x-auto { overflow-x: auto; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* Loading State */
+.loading-state {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Separator */
+.separator {
+  margin: 0 6px;
+  color: var(--outline-variant);
+}
+
+/* Drawer Loading */
+.drawer-loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Section Heading */
+.section-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+/* Table Wrapper */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+/* User Table */
+.user-row-name { font-weight: 600; }
+.user-row-date { color: var(--text-muted); font-size: 13px; }
+.user-row-actions { text-align: right; }
+
+/* Bot Card */
+.bot-card-name { font-weight: 600; }
+.bot-card-username { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.bot-card-host { font-family: var(--font-mono); font-size: 13px; }
+.bot-card-meta { text-transform: capitalize; }
+
+/* Chest Card */
+.chest-coords { font-family: var(--font-mono); font-size: 13px; }
+.chest-meta { font-size: 12px; color: var(--text-muted); }
+
+/* Swarm Card */
+.swarm-card-name { font-size: 16px; font-weight: 600; }
+.swarm-detail-text { color: var(--text-muted); font-size: 14px; }
+
+/* Bot Inspector */
+.bot-detail-label { color: var(--text-muted); }
+.bot-detail-info { font-size: 14px; margin-bottom: var(--space-md); }
+.bot-detail-position { font-family: var(--font-mono); font-size: 13px; }
+
+/* Log Container */
+.log-container {
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--bg-surface-high);
+  padding: var(--space-sm);
+}
+
+/* Scan Progress */
+.scan-progress-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-surface-high);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.scan-progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-surface-high);
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: var(--status-working);
+  transition: width 0.3s ease;
+}
+
+.scan-progress-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 140px;
+  font-family: var(--font-mono);
+}
+
+/* Scan Results */
+.scan-results-success {
+  background: var(--bg-surface);
+  border: 1px solid var(--status-online);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: 14px;
+  color: var(--status-online);
+}
+
+.scan-results-errors {
+  color: var(--status-error);
+  margin-left: var(--space-md);
+}
+
+/* Bot Selector Form Group */
+.bot-selector {
+  margin-bottom: var(--space-lg);
+}
+
+/* Checkbox Label */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  width: auto;
+  height: auto;
+}
+
+/* Logout Button */
+.logout-btn {
+  width: 100%;
+  color: var(--status-error);
+}
+
+/* Form Card */
+.form-card {
+  max-width: 500px;
+}
+
+/* Inventory Section Heading */
+.inv-heading {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar {

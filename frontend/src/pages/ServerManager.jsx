@@ -111,8 +111,8 @@ export default function ServerManager() {
             <div key={server.id} className="bot-card">
               <div className="bot-card-header">
                 <div className="flex items-center gap-sm">
-                  <span className="status-badge">
-                    <span className="status-dot" style={{background: 'var(--status-online)'}}></span>
+                  <span className="status-badge status-online">
+                    <span className="status-dot"></span>
                     <span>Online</span>
                   </span>
                   <span className="bot-card-name">{server.name}</span>
