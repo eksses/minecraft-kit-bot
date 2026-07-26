@@ -25,9 +25,12 @@
   - Plan 02-03: Frontend Scan UI (Wave 3)
   - Verification: PASSED (10/10 must-haves)
   - Completed: 2026-07-26
-- **plugin-system**: IN PROGRESS
-  - Context: 03-CONTEXT.md (decisions locked)
-  - Next: Research & Planning
+- **plugin-system**: PLANNED (4 plans, 3 waves)
+  - Plan 03-01: Plugin Schema & Core Loader (Wave 1)
+  - Plan 03-02: Plugin Worker Thread & API (Wave 2)
+  - Plan 03-03: Plugin UI Registry & Settings (Wave 2)
+  - Plan 03-04: Plugin Store & Management UI (Wave 3)
+  - Next: Execute with `/gsd-execute-phase 03`
 
 ### Completed Work
 
