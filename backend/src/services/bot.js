@@ -5,6 +5,7 @@ import { EventEmitter } from 'events';
 import { chestService } from './chest.js';
 import { configService } from './config.js';
 import { ChestScanner } from './chest-scanner.js';
+import { openChestSafely } from '../utils/chest-helpers.js';
 import { db, schema } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 
@@ -137,6 +138,119 @@ export class BotService extends EventEmitter {
     });
   }
   
+  /**
+   * Safely and reliably pathfind to a target block/coordinate with pre-checks, movement tuning, fallback retry, and cleanup.
+   */
+  async pathTo(pos, range = 2.0, timeoutMs = 25000) {
+    if (!this.bot || !this.bot.pathfinder) {
+      throw new Error('Bot pathfinder is not initialized');
+    }
+
+    const targetVec = { x: Number(pos.x), y: Number(pos.y), z: Number(pos.z) };
+
+    // 1. Distance pre-check: if bot is already standing next to target (<= 2.3 blocks), no pathing needed
+    if (this.bot.entity?.position) {
+      const currentDist = this.bot.entity.position.distanceTo(targetVec);
+      if (currentDist <= Math.max(range, 2.0) + 0.3) {
+        if (this.bot.pathfinder.isMoving()) {
+          this.bot.pathfinder.stop();
+        }
+        return;
+      }
+    }
+
+    // Tune pathfinder movements for smooth, collision-free walking
+    if (this.bot.pathfinder.movements) {
+      this.bot.pathfinder.movements.canDig = false;
+      this.bot.pathfinder.movements.scafoldingBlocks = [];
+      this.bot.pathfinder.movements.allowSprinting = false;
+      this.bot.pathfinder.movements.allowFreeMotion = true;
+      this.bot.pathfinder.movements.allowParkour = true;
+    }
+
+    const attemptPathing = (goal, timeoutMs) => {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+
+        const finish = (err) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (this.bot) {
+            this.bot.removeListener('goal_reached', onGoalReached);
+            this.bot.removeListener('path_stop', onPathStop);
+            this.bot.removeListener('path_reset', onPathReset);
+          }
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        };
+
+        const onGoalReached = () => finish();
+
+        const onPathStop = () => {
+          if (this.bot?.entity?.position && this.bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+            finish();
+          } else {
+            finish(new Error('Pathfinding stopped before reaching goal'));
+          }
+        };
+
+        const onPathReset = (reason) => {
+          if (reason === 'goal_updated' || reason === 'did_not_converge') {
+            finish(new Error(`Pathfinding reset: ${reason}`));
+          }
+        };
+
+        const timer = setTimeout(() => {
+          if (this.bot?.pathfinder) {
+            this.bot.pathfinder.stop();
+          }
+          finish(new Error(`Pathfinding timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+
+        this.bot.once('goal_reached', onGoalReached);
+        this.bot.once('path_stop', onPathStop);
+        this.bot.once('path_reset', onPathReset);
+
+        this.bot.pathfinder.setGoal(goal);
+      });
+    };
+
+    // 2. Primary attempt: GoalGetToBlock or GoalNear(2.0)
+    const primaryGoal = (typeof goals.GoalGetToBlock === 'function')
+      ? new goals.GoalGetToBlock(targetVec.x, targetVec.y, targetVec.z)
+      : new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, range);
+
+    try {
+      await attemptPathing(primaryGoal, Math.floor(timeoutMs * 0.6));
+      return;
+    } catch (primaryErr) {
+      // Check if bot reached close enough distance during primary attempt
+      if (this.bot.entity?.position) {
+        if (this.bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+          if (this.bot.pathfinder.isMoving()) this.bot.pathfinder.stop();
+          return;
+        }
+      }
+
+      // 3. Fallback attempt: GoalNear with larger range (2.5)
+      const fallbackGoal = new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, Math.max(range, 2.5));
+      try {
+        await attemptPathing(fallbackGoal, Math.floor(timeoutMs * 0.4));
+        return;
+      } catch (_) {
+        if (this.bot.entity?.position && this.bot.entity.position.distanceTo(targetVec) <= 3.0) {
+          if (this.bot.pathfinder.isMoving()) this.bot.pathfinder.stop();
+          return;
+        }
+        throw new Error(`Could not pathfind to (${targetVec.x}, ${targetVec.y}, ${targetVec.z}): ${primaryErr.message}`);
+      }
+    }
+  }
+
   async takeItemFromChest(chestName, amount, player) {
     if (!this.bot || !this.connected) throw new Error('Bot not connected');
     
@@ -146,42 +260,22 @@ export class BotService extends EventEmitter {
     const { x, y, z, item } = chestData;
     const chestPos = new Vec3(x, y, z);
     
-    this.bot.pathfinder.setGoal(new goals.GoalNear(x, y, z, 1));
+    await this.pathTo(chestPos, 1);
     
-    await new Promise((resolve, reject) => {
-      let settled = false;
-      
-      const onGoalReached = async () => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
-        try {
-          const chestBlock = this.bot.blockAt(chestPos);
-          if (!chestBlock) throw new Error('Chest block not found');
-          
-          const chest = await this.bot.openContainer(chestBlock);
-          await chest.withdraw(this.bot.registry.itemsByName[item].id, null, amount);
-          chest.close();
-          
-          this.bot.chat(`/w ${player} Took ${amount} ${item} from "${chestName}" chest.`);
-          this.bot.chat(`/tpa ${player}`);
-          
-          this.bot.pathfinder.setGoal(null);
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        this.bot.removeListener('goal_reached', onGoalReached);
-        reject(new Error('Pathfinding timeout'));
-      }, 60000);
-      
-      this.bot.once('goal_reached', onGoalReached);
-    });
+    const chestBlock = this.bot.blockAt(chestPos);
+    if (!chestBlock) throw new Error('Chest block not found');
+    
+    const chest = await openChestSafely(this.bot, chestBlock);
+    if (!chest) throw new Error('Failed to open chest container safely');
+    
+    const itemDef = this.bot.registry.itemsByName[item];
+    if (!itemDef) throw new Error(`Item "${item}" not found in Minecraft registry`);
+    
+    await chest.withdraw(itemDef.id, null, amount);
+    chest.close();
+    
+    this.bot.chat(`/w ${player} Took ${amount} ${item} from "${chestName}" chest.`);
+    this.bot.chat(`/tpa ${player}`);
   }
   
   // ============================================================

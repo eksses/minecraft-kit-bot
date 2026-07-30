@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { Vec3 } from 'vec3';
 import { parseSignText, extractChestName } from '../utils/sign-parser.js';
+import { openChestSafely } from '../utils/chest-helpers.js';
 import pathfinderModule from 'mineflayer-pathfinder';
 import { chestLocations } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -50,6 +51,7 @@ export class ChestScanner extends EventEmitter {
         
         results.found++;
         this.emit('progress', { phase: 'scanning', current: results.found, total: chestBlocks.length });
+        await new Promise(r => setTimeout(r, 200));
       }
 
       this.emit('complete', results);
@@ -61,10 +63,10 @@ export class ChestScanner extends EventEmitter {
   }
 
   /**
-   * Find all chest and trapped_chest blocks within radius.
+   * Find all chest and trapped_chest blocks within radius, sorted nearest to farthest.
    */
   findChestBlocks(radius) {
-    const botPos = this.bot.entity.position;
+    const botPos = this.bot.entity?.position;
     const blocks = [];
     
     for (let x = -radius; x <= radius; x++) {
@@ -79,6 +81,10 @@ export class ChestScanner extends EventEmitter {
       }
     }
     
+    if (botPos && typeof botPos.distanceTo === 'function') {
+      blocks.sort((a, b) => botPos.distanceTo(a.position) - botPos.distanceTo(b.position));
+    }
+
     return blocks;
   }
 
@@ -106,8 +112,9 @@ export class ChestScanner extends EventEmitter {
       }
     }
     
-    // Open container and read contents
-    const container = await this.bot.openContainer(block);
+    // Open container and read contents safely
+    const container = await openChestSafely(this.bot, block);
+    if (!container) throw new Error(`Could not open container at (${pos.x}, ${pos.y}, ${pos.z})`);
     const contents = this.readContainerContents(container);
     container.close();
     
@@ -140,25 +147,113 @@ export class ChestScanner extends EventEmitter {
   }
 
   /**
-   * Pathfind to a position using GoalNear.
+   * Pathfind to a chest position with distance pre-check, GoalGetToBlock, movement tuning, and fallback pathing.
    */
-  pathTo(pos) {
-    return new Promise((resolve, reject) => {
-      this.bot.pathfinder.setGoal(new goals.GoalNear(pos.x, pos.y, pos.z, 1));
-      
-      const onGoalReached = () => {
-        clearTimeout(timeout);
-        this.bot.removeListener('goal_reached', onGoalReached);
-        resolve();
-      };
-      
-      const timeout = setTimeout(() => {
-        this.bot.removeListener('goal_reached', onGoalReached);
-        reject(new Error('Pathfinding timeout'));
-      }, 60000);
-      
-      this.bot.once('goal_reached', onGoalReached);
-    });
+  async pathTo(pos, range = 2.0, timeoutMs = 25000) {
+    if (!this.bot || !this.bot.pathfinder) {
+      throw new Error('Bot pathfinder is not initialized');
+    }
+
+    const targetVec = { x: Number(pos.x), y: Number(pos.y), z: Number(pos.z) };
+
+    // 1. Distance pre-check: if bot is already standing next to target (<= 2.3 blocks), no pathing needed
+    if (this.bot.entity?.position) {
+      const currentDist = this.bot.entity.position.distanceTo(targetVec);
+      if (currentDist <= Math.max(range, 2.0) + 0.3) {
+        if (this.bot.pathfinder.isMoving()) {
+          this.bot.pathfinder.stop();
+        }
+        return;
+      }
+    }
+
+    // Tune pathfinder movements
+    if (this.bot.pathfinder.movements) {
+      this.bot.pathfinder.movements.canDig = false;
+      this.bot.pathfinder.movements.scafoldingBlocks = [];
+      this.bot.pathfinder.movements.allowSprinting = false;
+      this.bot.pathfinder.movements.allowFreeMotion = true;
+      this.bot.pathfinder.movements.allowParkour = true;
+    }
+
+    const attemptPathing = (goal, timeoutMs) => {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+
+        const finish = (err) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (this.bot) {
+            this.bot.removeListener('goal_reached', onGoalReached);
+            this.bot.removeListener('path_stop', onPathStop);
+            this.bot.removeListener('path_reset', onPathReset);
+          }
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        };
+
+        const onGoalReached = () => finish();
+
+        const onPathStop = () => {
+          if (this.bot?.entity?.position && this.bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+            finish();
+          } else {
+            finish(new Error('Pathfinding stopped before reaching goal'));
+          }
+        };
+
+        const onPathReset = (reason) => {
+          if (reason === 'goal_updated' || reason === 'did_not_converge') {
+            finish(new Error(`Pathfinding reset: ${reason}`));
+          }
+        };
+
+        const timer = setTimeout(() => {
+          if (this.bot?.pathfinder) {
+            this.bot.pathfinder.stop();
+          }
+          finish(new Error(`Pathfinding timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+
+        this.bot.once('goal_reached', onGoalReached);
+        this.bot.once('path_stop', onPathStop);
+        this.bot.once('path_reset', onPathReset);
+
+        this.bot.pathfinder.setGoal(goal);
+      });
+    };
+
+    // 2. Primary attempt: GoalGetToBlock or GoalNear(2.0)
+    const primaryGoal = (typeof goals.GoalGetToBlock === 'function')
+      ? new goals.GoalGetToBlock(targetVec.x, targetVec.y, targetVec.z)
+      : new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, range);
+
+    try {
+      await attemptPathing(primaryGoal, Math.floor(timeoutMs * 0.6));
+      return;
+    } catch (primaryErr) {
+      if (this.bot.entity?.position && this.bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+        if (this.bot.pathfinder.isMoving()) this.bot.pathfinder.stop();
+        return;
+      }
+
+      // 3. Fallback attempt: GoalNear with larger range (2.5)
+      const fallbackGoal = new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, Math.max(range, 2.5));
+      try {
+        await attemptPathing(fallbackGoal, Math.floor(timeoutMs * 0.4));
+        return;
+      } catch (_) {
+        if (this.bot.entity?.position && this.bot.entity.position.distanceTo(targetVec) <= 3.0) {
+          if (this.bot.pathfinder.isMoving()) this.bot.pathfinder.stop();
+          return;
+        }
+        throw new Error(`Could not pathfind to (${targetVec.x}, ${targetVec.y}, ${targetVec.z}): ${primaryErr.message}`);
+      }
+    }
   }
 
   /**
@@ -275,9 +370,10 @@ export class ChestScanner extends EventEmitter {
       return { status: 'unavailable', reason: 'Chest not found at position' };
     }
     
-    // Read contents
+    // Read contents safely
     await this.pathTo(pos);
-    const container = await this.bot.openContainer(block);
+    const container = await openChestSafely(this.bot, block);
+    if (!container) return { status: 'unavailable', reason: 'Failed to open chest container safely' };
     const contents = this.readContainerContents(container);
     container.close();
     

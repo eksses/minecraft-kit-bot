@@ -234,47 +234,117 @@ parentPort.on('message', (msg) => {
   }
 });
 
+async function openChestSafely(bot, block) {
+  if (!block) return null;
+  try {
+    if (bot.pathfinder) {
+      bot.pathfinder.stop();
+    }
+    if (typeof bot.unequip === 'function') {
+      try { await bot.unequip('hand'); } catch (_) {}
+    }
+    if (typeof bot.setControlState === 'function') {
+      bot.setControlState('sneak', false);
+    }
+    const distance = bot.entity && bot.entity.position ? bot.entity.position.distanceTo(block.position) : 0;
+    if (distance > 2.5 && bot.pathfinder) {
+      const goal = (typeof goals.GoalGetToBlock === 'function')
+        ? new goals.GoalGetToBlock(block.position.x, block.position.y, block.position.z)
+        : new goals.GoalNear(block.position.x, block.position.y, block.position.z, 2.0);
+
+      await new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          bot.removeListener('goal_reached', finish);
+          bot.removeListener('path_stop', finish);
+          resolve();
+        };
+
+        const timer = setTimeout(() => {
+          if (bot.pathfinder) bot.pathfinder.stop();
+          finish();
+        }, 10000);
+
+        bot.once('goal_reached', finish);
+        bot.once('path_stop', finish);
+        bot.pathfinder.setGoal(goal);
+      });
+      bot.pathfinder.stop();
+    }
+    if (typeof bot.lookAt === 'function' && block.position && typeof block.position.offset === 'function') {
+      await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
+    }
+    if (typeof bot.waitForTicks === 'function') {
+      await bot.waitForTicks(3);
+    } else {
+      await new Promise(r => setTimeout(r, 150));
+    }
+
+    if (bot.currentWindow) {
+      try { bot.close(bot.currentWindow); } catch (_) {}
+    }
+
+    const container = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (bot.currentWindow) {
+          try { bot.close(bot.currentWindow); } catch (_) {}
+        }
+        reject(new Error('Container open timeout (server did not send windowOpen)'));
+      }, 5000);
+
+      bot.openContainer(block).then((c) => {
+        clearTimeout(timer);
+        resolve(c);
+      }).catch((err) => {
+        clearTimeout(timer);
+        if (bot.currentWindow) {
+          try { bot.close(bot.currentWindow); } catch (_) {}
+        }
+        reject(err);
+      });
+    });
+
+    return container;
+  } catch (err) {
+    console.error('Failed to open chest safely:', err.message);
+    return null;
+  }
+}
+
 async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
   try {
     const chestPos = new (require('vec3').Vec3)(x, y, z);
-    bot.pathfinder.setGoal(new goals.GoalNear(x, y, z, 1));
+    await pathTo(bot, chestPos, 1);
 
-    await new Promise((resolve, reject) => {
-      bot.once('goal_reached', async () => {
-        try {
-          const chestBlock = bot.blockAt(chestPos);
-          if (!chestBlock) throw new Error('Chest block not found at (' + x + ',' + y + ',' + z + ')');
-          const chest = await bot.openContainer(chestBlock);
+    const chestBlock = bot.blockAt(chestPos);
+    if (!chestBlock) throw new Error('Chest block not found at (' + x + ',' + y + ',' + z + ')');
+    const chest = await openChestSafely(bot, chestBlock);
+    if (!chest) throw new Error('Failed to open chest container at (' + x + ',' + y + ',' + z + ')');
 
-          const itemKey = (itemName || '').toLowerCase().replace(/ /g, '_');
-          const itemDef = (bot.registry && bot.registry.itemsByName[itemKey]) ||
-                          (bot.registry && bot.registry.itemsByName[itemName]);
-          const itemId = itemDef ? itemDef.id : (chest.containerItems && chest.containerItems()[0] ? chest.containerItems()[0].type : null);
+    const itemKey = (itemName || '').toLowerCase().replace(/ /g, '_');
+    const itemDef = (bot.registry && bot.registry.itemsByName[itemKey]) ||
+                    (bot.registry && bot.registry.itemsByName[itemName]);
+    const itemId = itemDef ? itemDef.id : (chest.containerItems && chest.containerItems()[0] ? chest.containerItems()[0].type : null);
 
-          if (itemId == null) {
-            chest.close();
-            throw new Error('Item ' + itemName + ' not found in registry or chest');
-          }
+    if (itemId == null) {
+      chest.close();
+      throw new Error('Item ' + itemName + ' not found in registry or chest');
+    }
 
-          await chest.withdraw(itemId, null, count || 1);
-          chest.close();
+    await chest.withdraw(itemId, null, count || 1);
+    chest.close();
 
-          if (playerName) {
-            bot.chat('/w ' + playerName + ' Took ' + (count || 1) + ' ' + itemName + ' from chest.');
-            bot.chat('/tpa ' + playerName);
-          }
+    if (playerName) {
+      bot.chat('/w ' + playerName + ' Took ' + (count || 1) + ' ' + itemName + ' from chest.');
+      bot.chat('/tpa ' + playerName);
+    }
 
-          bot.pathfinder.setGoal(null);
-          parentPort.postMessage({
-            type: 'item_taken',
-            data: { itemName, count: count || 1, playerName, success: true }
-          });
-          resolve();
-        } catch (error) {
-          bot.pathfinder.setGoal(null);
-          reject(error);
-        }
-      });
+    parentPort.postMessage({
+      type: 'item_taken',
+      data: { itemName, count: count || 1, playerName, success: true }
     });
   } catch (err) {
     parentPort.postMessage({
@@ -322,6 +392,7 @@ async function handleScan(bot, radius, scanMarkedOnly) {
       
       const percent = Math.round(((i + 1) / total) * 100);
       parentPort.postMessage({ type: 'scan_progress', data: { phase: 'scanning', percent, current: i + 1, total } });
+      await new Promise(r => setTimeout(r, 200));
     }
     
     parentPort.postMessage({ type: 'scan_complete', data: { found: results.length, chests: results } });
@@ -333,7 +404,7 @@ async function handleScan(bot, radius, scanMarkedOnly) {
 }
 
 function findChestBlocks(bot, radius) {
-  const botPos = bot.entity.position;
+  const botPos = bot.entity ? bot.entity.position : null;
   const blocks = [];
   
   for (let x = -radius; x <= radius; x++) {
@@ -346,6 +417,10 @@ function findChestBlocks(bot, radius) {
         }
       }
     }
+  }
+  
+  if (botPos && typeof botPos.distanceTo === 'function') {
+    blocks.sort((a, b) => botPos.distanceTo(a.position) - botPos.distanceTo(b.position));
   }
   
   return blocks;
@@ -502,23 +577,107 @@ function readContainerContents(bot, container) {
   return { items, totalSlots: container.slots.length };
 }
 
-async function pathTo(bot, pos) {
-  return new Promise((resolve, reject) => {
-    bot.pathfinder.setGoal(new goals.GoalNear(pos.x, pos.y, pos.z, 1));
-    
-    const onGoalReached = () => {
-      clearTimeout(timeout);
-      bot.removeListener('goal_reached', onGoalReached);
-      resolve();
-    };
-    
-    const timeout = setTimeout(() => {
-      bot.removeListener('goal_reached', onGoalReached);
-      reject(new Error('Pathfinding timeout'));
-    }, 60000);
-    
-    bot.once('goal_reached', onGoalReached);
-  });
+async function pathTo(bot, pos, range = 2.0, timeoutMs = 25000) {
+  if (!bot || !bot.pathfinder) {
+    throw new Error('Bot pathfinder is not initialized');
+  }
+
+  const targetVec = { x: Number(pos.x), y: Number(pos.y), z: Number(pos.z) };
+
+  if (bot.entity && bot.entity.position) {
+    const currentDist = bot.entity.position.distanceTo(targetVec);
+    if (currentDist <= Math.max(range, 2.0) + 0.3) {
+      if (bot.pathfinder.isMoving()) {
+        bot.pathfinder.stop();
+      }
+      return;
+    }
+  }
+
+  if (bot.pathfinder.movements) {
+    bot.pathfinder.movements.canDig = false;
+    bot.pathfinder.movements.scafoldingBlocks = [];
+    bot.pathfinder.movements.allowSprinting = false;
+    bot.pathfinder.movements.allowFreeMotion = true;
+    bot.pathfinder.movements.allowParkour = true;
+  }
+
+  const attemptPathing = (goal, timeoutMs) => {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+
+      const finish = (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (bot) {
+          bot.removeListener('goal_reached', onGoalReached);
+          bot.removeListener('path_stop', onPathStop);
+          bot.removeListener('path_reset', onPathReset);
+        }
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      };
+
+      const onGoalReached = () => finish();
+
+      const onPathStop = () => {
+        if (bot.entity && bot.entity.position && bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+          finish();
+        } else {
+          finish(new Error('Pathfinding stopped before reaching goal'));
+        }
+      };
+
+      const onPathReset = (reason) => {
+        if (reason === 'goal_updated' || reason === 'did_not_converge') {
+          finish(new Error('Pathfinding reset: ' + reason));
+        }
+      };
+
+      const timer = setTimeout(() => {
+        if (bot && bot.pathfinder) {
+          bot.pathfinder.stop();
+        }
+        finish(new Error('Pathfinding timeout after ' + timeoutMs + 'ms'));
+      }, timeoutMs);
+
+      bot.once('goal_reached', onGoalReached);
+      bot.once('path_stop', onPathStop);
+      bot.once('path_reset', onPathReset);
+
+      bot.pathfinder.setGoal(goal);
+    });
+  };
+
+  const primaryGoal = (typeof goals.GoalGetToBlock === 'function')
+    ? new goals.GoalGetToBlock(targetVec.x, targetVec.y, targetVec.z)
+    : new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, range);
+
+  try {
+    await attemptPathing(primaryGoal, Math.floor(timeoutMs * 0.6));
+    return;
+  } catch (primaryErr) {
+    if (bot.entity && bot.entity.position && bot.entity.position.distanceTo(targetVec) <= Math.max(range, 2.0) + 0.5) {
+      if (bot.pathfinder.isMoving()) bot.pathfinder.stop();
+      return;
+    }
+
+    const fallbackGoal = new goals.GoalNear(targetVec.x, targetVec.y, targetVec.z, Math.max(range, 2.5));
+    try {
+      await attemptPathing(fallbackGoal, Math.floor(timeoutMs * 0.4));
+      return;
+    } catch (_) {
+      if (bot.entity && bot.entity.position && bot.entity.position.distanceTo(targetVec) <= 3.0) {
+        if (bot.pathfinder.isMoving()) bot.pathfinder.stop();
+        return;
+      }
+      throw new Error('Could not pathfind to (' + targetVec.x + ',' + targetVec.y + ',' + targetVec.z + '): ' + primaryErr.message);
+    }
+  }
 }
 
 async function scanSingleChest(bot, blockInfo, scanMarkedOnly) {
@@ -542,7 +701,8 @@ async function scanSingleChest(bot, blockInfo, scanMarkedOnly) {
     }
   }
   
-  const container = await openContainerWithRetry(bot, block, 2);
+  const container = await openChestSafely(bot, block);
+  if (!container) return null;
   const contents = readContainerContents(bot, container);
   container.close();
   
