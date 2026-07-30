@@ -40,6 +40,7 @@ export class TradingService extends EventEmitter {
   }
 
   async findChestByName(botId, chestName) {
+    if (!chestName) return null;
     const normalizedName = chestName.toLowerCase().replace(/ /g, '_');
 
     const chests = await db.query.chestLocations.findMany({

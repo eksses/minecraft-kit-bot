@@ -237,7 +237,7 @@ async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
     
     if (playerName) {
       bot.chat('/w ' + playerName + ' Here is ' + (count || 1) + ' ' + itemName + '!');
-      bot.chat('tpa ' + playerName);
+      bot.chat('/tpa ' + playerName);
     }
     
     parentPort.postMessage({

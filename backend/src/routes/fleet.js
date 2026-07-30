@@ -61,9 +61,62 @@ function wireBotEvents(bot) {
   });
 }
 
-botLifecycleManager.on('bot:spawned', (data) => {
+botLifecycleManager.on('bot:spawned', async (data) => {
   const bot = botLifecycleManager.getBot(data.botId);
-  if (bot) wireBotEvents(bot);
+  if (bot) {
+    wireBotEvents(bot);
+
+    // Auto-seed chestData.json
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const possiblePaths = [
+        path.join(process.cwd(), 'chestData.json'),
+        path.join(process.cwd(), '../chestData.json'),
+        '/root/minecraft-kit-bot/chestData.json'
+      ];
+      
+      let chestDataStr = null;
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          chestDataStr = await fs.promises.readFile(p, 'utf8');
+          break;
+        }
+      }
+
+      if (chestDataStr) {
+        const chestData = JSON.parse(chestDataStr);
+        for (const [key, val] of Object.entries(chestData)) {
+          const existing = await db.query.chestLocations.findFirst({
+            where: and(
+              eq(schema.chestLocations.botId, bot.id),
+              eq(schema.chestLocations.name, key)
+            )
+          });
+          
+          if (!existing) {
+            await db.insert(schema.chestLocations).values({
+              id: randomUUID(),
+              userId: bot.userId,
+              botId: bot.id,
+              name: key,
+              x: val.x,
+              y: val.y,
+              z: val.z,
+              itemName: val.item,
+              itemCount: 1,
+              status: 'active',
+              createdAt: new Date(),
+            });
+            console.log(`[Seed] Seeded chest ${key} for bot ${bot.name}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Seed] Error seeding chestData.json', e.message);
+    }
+  }
 });
 
 // Wire up any already-running bots
@@ -658,7 +711,8 @@ fleetRoutes.post('/bots/:id/trade', requireAuth, async (c) => {
   const user = c.get('session');
   const botId = c.req.param('id');
   const body = await c.req.json();
-  const { itemName, playerName, count } = body;
+  const { chestName, itemName, playerName, count } = body;
+  const targetChestName = chestName || itemName;
 
   const bot = botLifecycleManager.getBot(botId);
   if (!bot) {
@@ -672,7 +726,7 @@ fleetRoutes.post('/bots/:id/trade', requireAuth, async (c) => {
   const { TradingService } = await import('../services/tradingService.js');
   const tradingService = new TradingService(botLifecycleManager);
   
-  const result = await tradingService.fulfillOrder(botId, playerName || 'player', itemName, count || 1);
+  const result = await tradingService.fulfillOrder(botId, playerName || 'player', targetChestName, count || 1);
   return c.json(result);
 });
 
