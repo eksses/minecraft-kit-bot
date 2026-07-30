@@ -107,7 +107,7 @@ function createBot(config) {
   });
 
   bot.on('messagestr', (message) => {
-    const tradeMatch = message.match(/(?:\\[trade\\]|\\/trade)\\s+(.+)/i);
+    const tradeMatch = message.match(/(?:\[trade\]|\/trade)\s+(.+)/i);
     if (tradeMatch) {
       parentPort.postMessage({
         type: 'trade_request',
