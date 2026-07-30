@@ -27,11 +27,14 @@ bot.loadPlugin(pathfinder);
 // Initialize other modules
 
 
+let transferModule = null;
+
 // Consolidated event handlers
 bot.on('spawn', () => {
     console.log(`${process.env.BOTNAME} spawned.`);
     bot.chat(`/login ${process.env.PASSWORD}`);
-   kitListModule.loadKitsData();
+    kitListModule.loadKitsData();
+    transferModule = require('./transfer')(bot);
 
     // Move forward for 10 seconds
     bot.setControlState('forward', true);
@@ -40,10 +43,40 @@ bot.on('spawn', () => {
     }, 10000); // 10 seconds
 });
 
+const handleChatDeliveryCommand = async (username, message) => {
+    if (!message || username === bot.username) return;
+    const trimmed = message.trim();
+
+    if (trimmed === '!list' || trimmed === '!kits') {
+        const available = Object.keys(transferModule?.chestsData || {}).join(', ');
+        bot.chat(`/w ${username} Available kits: ${available || 'None'}`);
+        return;
+    }
+
+    const match = trimmed.match(/^(?:!kit|!deliver|!get|\/trade|!trade)\s+(.+)$/i);
+    if (match) {
+        const chestName = match[1].trim();
+        if (transferModule) {
+            try {
+                bot.chat(`/w ${username} Processing delivery for kit "${chestName}"...`);
+                await transferModule.takeItemFromChest(chestName, 1, username);
+            } catch (err) {
+                bot.chat(`/w ${username} Error delivering "${chestName}": ${err.message}`);
+            }
+        }
+    }
+};
+
+bot.on('chat', (username, message) => {
+    handleChatDeliveryCommand(username, message);
+});
+
 bot.on('whisper', (username, message) => {
     if (message.startsWith('!w')) {
         const whisperMessage = message.substring(3).trim();
         bot.chat(whisperMessage);
+    } else {
+        handleChatDeliveryCommand(username, message);
     }
 });
 
