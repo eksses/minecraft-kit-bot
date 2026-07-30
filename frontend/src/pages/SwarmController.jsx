@@ -252,12 +252,15 @@ export default function SwarmController() {
           {selectedSwarm ? (
             <div className="space-y-4">
               {/* Back button (mobile only) */}
-              <button
-                className="lg:hidden flex items-center gap-1 text-sm text-mdb-text-muted hover:text-mdb-text transition-colors"
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={ChevronLeft}
                 onClick={() => setSelectedSwarm(null)}
+                className="lg:hidden"
               >
-                <ChevronLeft size={16} /> Back to swarms
-              </button>
+                Back to swarms
+              </Button>
 
               {/* Swarm header */}
               <div className="flex items-center justify-between">
@@ -327,13 +330,16 @@ export default function SwarmController() {
 
               {/* Broadcast */}
               <Card>
-                <button
-                  className="flex items-center justify-between w-full text-left"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={broadcastOpen ? ArrowDown : ArrowDown}
                   onClick={() => setBroadcastOpen(o => !o)}
+                  className="w-full justify-between px-0"
                 >
                   <span className="text-sm font-semibold">Broadcast Command</span>
                   <ArrowDown size={16} className={`text-mdb-text-muted transition-transform ${broadcastOpen ? 'rotate-180' : ''}`} />
-                </button>
+                </Button>
                 {broadcastOpen && (
                   <form onSubmit={handleBroadcast} className="flex gap-2 mt-3">
                     <Input

@@ -398,12 +398,13 @@ function UsersTab({ users, onAdd, onDelete, showAdd, setShowAdd, form, setForm }
                   </td>
                   <td className="text-mdb-text-muted text-sm px-5 h-12">{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td className="text-right px-5 h-12">
-                    <button
-                      className="text-sm font-medium text-mdb-text-muted hover:text-mdb-error hover:bg-mdb-error/10 px-3 py-1.5 rounded-lg transition-colors"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => onDelete(u.id)}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

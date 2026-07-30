@@ -214,18 +214,15 @@ export default function BotDetail() {
       </div>
 
       <form onSubmit={handleConsoleSubmit} className="flex gap-2 items-center">
-        <button
+        <Button
           type="button"
+          variant={consoleMode === 'command' ? 'success' : 'primary'}
+          size="sm"
           onClick={() => setConsoleMode(m => m === 'chat' ? 'command' : 'chat')}
-          className={`h-10 px-3 rounded-lg text-xs font-bold font-mono transition-colors shrink-0 ${
-            consoleMode === 'command'
-              ? 'bg-amber-500/15 text-amber-400 border border-amber-400/30'
-              : 'bg-mdb-primary/15 text-mdb-primary border border-mdb-primary/30'
-          }`}
-          title={consoleMode === 'chat' ? 'Switch to / command mode' : 'Switch to Say mode'}
+          className="shrink-0 font-mono"
         >
           {consoleMode === 'chat' ? 'Say' : '/'}
-        </button>
+        </Button>
         <Input
           value={consoleInput}
           onChange={(e) => setConsoleInput(e.target.value)}
@@ -373,13 +370,15 @@ export default function BotDetail() {
             ]}
           />
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={showDeliveryAdvanced ? ChevronDown : ChevronRight}
             onClick={() => setShowDeliveryAdvanced(!showDeliveryAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium text-mdb-text-secondary hover:text-mdb-text transition-colors"
+            className="px-0"
           >
-            {showDeliveryAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             Advanced
-          </button>
+          </Button>
 
           {showDeliveryAdvanced && (
             <div className="space-y-3 pl-1">
@@ -410,6 +409,15 @@ export default function BotDetail() {
 
   return (
     <div className="flex h-full gap-0">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface border-b border-mdb-border flex items-center gap-3 px-4 z-40">
+        <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate(-1)} />
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate">{bot.name}</div>
+        </div>
+        <StatusBadge status={status} />
+      </div>
+
       {/* Desktop Sidebar */}
       <div className="w-[280px] bg-mdb-surface border-r border-mdb-border flex flex-col shrink-0 max-md:hidden">
         <div className="flex items-center gap-2 p-4 border-b border-mdb-border">
@@ -463,9 +471,9 @@ export default function BotDetail() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
+      <div className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6 pt-[72px] md:pt-6">
         {/* Mobile Tabs */}
-        <div className="md:hidden mb-4 sticky top-0 z-10 bg-mdb-bg">
+        <div className="md:hidden mb-4 sticky top-[56px] z-10 bg-mdb-bg pt-2">
           <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="pills" />
         </div>
 
@@ -497,7 +505,7 @@ function SettingsSection({ title, variant = 'default', defaultOpen = true, child
     <Card>
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center justify-between w-full px-5 py-4 ${open ? 'border-b border-mdb-border' : ''}`}
+        className={`flex items-center justify-between w-full px-5 py-4 text-left ${open ? 'border-b border-mdb-border' : ''}`}
       >
         <h3 className={`text-sm font-semibold ${isDanger ? 'text-mdb-error' : 'text-mdb-text'}`}>{title}</h3>
         {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}

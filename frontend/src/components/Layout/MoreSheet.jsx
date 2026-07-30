@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { Button } from '../ui';
 import {
   Settings,
   ShoppingCart,
@@ -63,13 +64,15 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
               <span>{label}</span>
             </NavLink>
           ))}
-          <button
-            className="flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium w-full text-mdb-error bg-transparent cursor-pointer hover:bg-mdb-surface-high transition-colors duration-150"
+          <Button
+            variant="danger"
+            size="lg"
+            icon={LogOut}
             onClick={() => { onClose(); onLogout(); }}
+            className="w-full justify-start"
           >
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
+            Logout
+          </Button>
         </div>
       </div>
       <style>{`

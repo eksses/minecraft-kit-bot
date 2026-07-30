@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { IconButton } from '../ui';
 import {
   LayoutDashboard,
   Bot,
@@ -64,14 +65,13 @@ export default function Sidebar({ currentPath, user, onLogout }) {
             </div>
             <div className="text-xs text-mdb-text-muted truncate">{user?.role}</div>
           </div>
-          <button
-            className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-mdb-text-muted hover:text-mdb-error hover:bg-mdb-surface-high transition-colors"
+          <IconButton
+            icon={LogOut}
+            size="sm"
             onClick={onLogout}
-            aria-label="Logout"
-            title="Logout"
-          >
-            <LogOut size={16} />
-          </button>
+            className="text-mdb-text-muted hover:text-mdb-error"
+            tooltip="Logout"
+          />
         </div>
         <div className="hidden max-[1025px]:flex items-center justify-center">
           <div className="w-8 h-8 rounded-full bg-mdb-surface-high flex items-center justify-center text-xs font-medium text-mdb-primary">
