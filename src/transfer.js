@@ -42,7 +42,20 @@ module.exports = (bot) => {
         botInstance.once('goal_reached', async () => {
           try {
             const chestBlock = botInstance.blockAt(chestPos);
-            const chest = await botInstance.openContainer(chestBlock);
+            if (!chestBlock) throw new Error(`Chest block at (${chestPos.x}, ${chestPos.y}, ${chestPos.z}) not found.`);
+
+            botInstance.clearControlStates();
+            const topFace = new Vec3(0, 1, 0);
+            try {
+              await botInstance.lookAt(chestPos.offset(0.5, 0.95, 0.5));
+            } catch (_) {}
+
+            let chest;
+            if (typeof botInstance.openChest === 'function') {
+              chest = await botInstance.openChest(chestBlock, topFace);
+            } else {
+              chest = await botInstance.openContainer(chestBlock, topFace);
+            }
 
             const item = chestData.item;
             await chest.withdraw(botInstance.registry.itemsByName[item].id, null, amount);

@@ -240,19 +240,22 @@ async function openContainerWithRetry(bot, block, maxRetries = 3) {
   // Clear any control states (e.g. sneaking/forward) that block right-click on Paper/Spigot
   bot.clearControlStates();
 
+  const topFace = new (require('vec3').Vec3)(0, 1, 0);
   let lastErr = null;
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      // Aim at top lid of chest (0.5, 0.95, 0.5) to avoid wall signs attached to sides
       try {
-        await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
+        await bot.lookAt(block.position.offset(0.5, 0.95, 0.5));
       } catch (_) {}
 
       await new Promise(r => setTimeout(r, 250 * attempt));
 
       if (typeof bot.openChest === 'function') {
-        return await bot.openChest(block);
+        return await bot.openChest(block, topFace);
       } else {
-        return await bot.openContainer(block);
+        return await bot.openContainer(block, topFace);
       }
     } catch (err) {
       lastErr = err;
