@@ -316,6 +316,27 @@ async function openChestSafely(bot, block) {
 
 async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
   try {
+    const { deliveryEngine } = await import('./deliveryEngine.js');
+    const deliveryConfig = deliveryEngine.getConfig();
+
+    if (deliveryConfig.DELIVERY_MODE === 'ELYTRA') {
+      const targetCoords = deliveryEngine.resolveTargetCoordinates({ x, y, z });
+      if (playerName) {
+        bot.chat('/w ' + playerName + ' Initiating Elytra kit delivery for "' + itemName + '" to (' + targetCoords.x + ', ' + targetCoords.z + ')...');
+      }
+
+      const fakeChestService = { get: () => ({ x, y, z, item: itemName }) };
+      await deliveryEngine.prepareBaseAndPurify(bot, fakeChestService, [itemName], targetCoords);
+      await deliveryEngine.executeFlightAndDelivery(bot, targetCoords, [itemName]);
+      await deliveryEngine.executePostDeliveryRoutine(bot);
+
+      parentPort.postMessage({
+        type: 'item_taken',
+        data: { itemName, count: count || 1, playerName, success: true }
+      });
+      return;
+    }
+
     const chestPos = new (require('vec3').Vec3)(x, y, z);
     await pathTo(bot, chestPos, 1);
 

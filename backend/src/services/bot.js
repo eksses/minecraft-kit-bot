@@ -273,8 +273,19 @@ export class BotService extends EventEmitter {
     if (!chestData) throw new Error(`Chest "${chestName}" not found`);
     
     const { x, y, z, item } = chestData;
+
+    if (this.deliveryEngine && this.deliveryEngine.getConfig().DELIVERY_MODE === 'ELYTRA') {
+      const targetCoords = this.deliveryEngine.resolveTargetCoordinates({ x, y, z });
+      if (player) {
+        this.bot.chat(`/w ${player} Initiating Elytra kit delivery for "${chestName}" to (${targetCoords.x}, ${targetCoords.z})...`);
+      }
+      await this.deliveryEngine.prepareBaseAndPurify(this.bot, chestService, [item], targetCoords);
+      await this.deliveryEngine.executeFlightAndDelivery(this.bot, targetCoords, [item]);
+      await this.deliveryEngine.executePostDeliveryRoutine(this.bot);
+      return;
+    }
+
     const chestPos = new Vec3(x, y, z);
-    
     await this.pathTo(chestPos, 1);
     
     const chestBlock = this.bot.blockAt(chestPos);

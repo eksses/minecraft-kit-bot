@@ -39,11 +39,13 @@ export class ChestScanner extends EventEmitter {
       this.emit('progress', { phase: 'discovery', found: chestBlocks.length });
 
       // Step 2: Pathfind to each chest and read contents
+      const scannedKeys = new Set();
       for (const block of chestBlocks) {
         if (this.abortController.signal.aborted) break;
         
         try {
           await this.scanSingleChest(block, options);
+          scannedKeys.add(`${block.position.x},${block.position.y},${block.position.z}`);
           results.cataloged++;
         } catch (err) {
           results.errors.push({ position: block.position, error: err.message });
@@ -52,6 +54,30 @@ export class ChestScanner extends EventEmitter {
         results.found++;
         this.emit('progress', { phase: 'scanning', current: results.found, total: chestBlocks.length });
         await new Promise(r => setTimeout(r, 200));
+      }
+
+      // Step 3: Clean up stale/missing chests within scanned radius
+      if (this.bot._botId && this.bot.entity?.position) {
+        const { chestService } = await import('./chest.js');
+        const botPos = this.bot.entity.position;
+        const allBotChests = await this.db.query.chestLocations.findMany({
+          where: (chestLocations, { eq }) => eq(chestLocations.botId, this.bot._botId),
+        });
+
+        for (const chest of allBotChests) {
+          const dx = Math.abs(chest.x - botPos.x);
+          const dy = Math.abs(chest.y - botPos.y);
+          const dz = Math.abs(chest.z - botPos.z);
+          if (dx <= radius && dy <= radius && dz <= radius) {
+            const key = `${chest.x},${chest.y},${chest.z}`;
+            if (!scannedKeys.has(key)) {
+              await this.db.delete(chestLocations).where(eq(chestLocations.id, chest.id));
+              if (chest.name) {
+                try { chestService.delete(chest.name); } catch (_) {}
+              }
+            }
+          }
+        }
       }
 
       this.emit('complete', results);
@@ -314,27 +340,45 @@ export class ChestScanner extends EventEmitter {
    * Save or update chest in database.
    */
   async saveChestToDb(chestData) {
-    // Upsert logic: check if chest exists at this position FOR THIS BOT
-    // Critical: scope by botId — two bots can have chests at same coordinates
-    const existing = await this.db.query.chestLocations.findFirst({
-      where: (chestLocations, { and, eq }) =>
+    const { chestService } = await import('./chest.js');
+
+    // Query existing chests by (x,y,z) OR by name for this bot to prevent duplicate entries
+    const existingList = await this.db.query.chestLocations.findMany({
+      where: (chestLocations, { and, eq, or }) =>
         and(
           eq(chestLocations.botId, chestData.botId),
-          eq(chestLocations.x, chestData.x),
-          eq(chestLocations.y, chestData.y),
-          eq(chestLocations.z, chestData.z)
+          or(
+            and(
+              eq(chestLocations.x, chestData.x),
+              eq(chestLocations.y, chestData.y),
+              eq(chestLocations.z, chestData.z)
+            ),
+            eq(chestLocations.name, chestData.name)
+          )
         ),
     });
 
-    if (existing) {
+    const primary = existingList[0];
+
+    if (primary) {
       await this.db.update(chestLocations)
         .set({
+          name: chestData.name,
+          x: chestData.x,
+          y: chestData.y,
+          z: chestData.z,
+          itemName: chestData.item,
           itemCount: chestData.itemCount,
           allItems: JSON.stringify(chestData.allItems),
           lastScanned: chestData.lastScanned,
           status: chestData.status,
         })
-        .where(eq(chestLocations.id, existing.id));
+        .where(eq(chestLocations.id, primary.id));
+
+      // Remove extra duplicate rows
+      for (let i = 1; i < existingList.length; i++) {
+        await this.db.delete(chestLocations).where(eq(chestLocations.id, existingList[i].id));
+      }
     } else {
       await this.db.insert(chestLocations).values({
         id: crypto.randomUUID(),
@@ -353,6 +397,16 @@ export class ChestScanner extends EventEmitter {
         lastScanned: chestData.lastScanned,
         botId: chestData.botId,
         createdAt: Date.now(),
+      });
+    }
+
+    // Save/update in chestData.json
+    if (chestData.name && chestData.item && !chestData.name.startsWith('empty:')) {
+      chestService.save(chestData.name, {
+        x: chestData.x,
+        y: chestData.y,
+        z: chestData.z,
+        item: chestData.item,
       });
     }
   }
