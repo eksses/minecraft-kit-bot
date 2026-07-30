@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { useToast } from '../components/ToastContainer';
-import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, ChevronUp, ChevronRight, Box, Trash2, Shield, Plus } from 'lucide-react';
+import { useRealtime } from '../hooks/useRealtime';
+import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, Box, Trash2, Shield, Plus, ChevronRight } from 'lucide-react';
 import { Button, Card, CardHeader, Input, Select, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge } from '../components/ui';
 import DeliverModal from '../components/DeliverModal';
 
@@ -23,8 +24,8 @@ export default function BotDetail() {
   const [chests, setChests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('console');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const chatEndRef = useRef(null);
   const { addToast } = useToast();
 
@@ -59,6 +60,9 @@ export default function BotDetail() {
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
 
+  // Realtime subscription for chat
+  const rt = useRealtime([botId], []);
+
   useEffect(() => {
     if (botId) loadBotData();
   }, [botId]);
@@ -68,14 +72,14 @@ export default function BotDetail() {
   }, [chatMessages]);
 
   useEffect(() => {
-    if (!botId) return;
-    const unsub = api.realtime.on('chat', (msg) => {
+    if (!botId || !rt?.on) return;
+    const unsub = rt.on('chat', (msg) => {
       if (msg.botId === botId) {
         setChatMessages(prev => [...prev.slice(-100), { ...msg, timestamp: Date.now() }]);
       }
     });
     return unsub;
-  }, [botId]);
+  }, [botId, rt]);
 
   const loadBotData = async () => {
     try {
@@ -206,15 +210,15 @@ export default function BotDetail() {
   const isOnline = !['OFFLINE', 'ERROR'].includes(status);
 
   const renderConsole = () => (
-    <div className="flex flex-col flex-1 min-h-0 max-w-[800px]">
-      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-4 font-mono text-xs space-y-0.5 min-h-[200px]">
+    <div className="flex flex-col flex-1 min-h-0 max-w-[800px] mx-auto w-full">
+      <div className="flex-1 overflow-y-auto bg-[#07090e] border border-slate-800/80 rounded-xl p-4 mb-3 font-mono text-xs text-slate-400 min-h-[200px]">
         {chatMessages.length === 0 ? (
-          <div className="text-mdb-text-muted py-8 text-center">No messages yet. Send a message or command below.</div>
+          <div className="text-slate-500 py-8 text-center">No messages yet. Send a message or command below.</div>
         ) : (
           chatMessages.map((msg, i) => (
-            <div key={i} className="py-0.5 hover:bg-mdb-surface-high rounded px-1 -mx-1">
-              <span className="text-mdb-text-muted mr-2">[{new Date(msg.timestamp).toLocaleTimeString()}]</span>
-              <span className={`font-semibold ${msg.sender === 'you' ? 'text-mdb-primary' : ''}`}>{msg.sender}:</span>
+            <div key={i} className="py-0.5 hover:bg-slate-800/50 rounded px-1 -mx-1">
+              <span className="text-slate-500 mr-2">[{new Date(msg.timestamp).toLocaleTimeString()}]</span>
+              <span className={`font-semibold ${msg.sender === 'you' ? 'text-emerald-400' : ''}`}>{msg.sender}:</span>
               {msg.mode === 'command' && <span className="text-amber-400 mr-1">/</span>}
               {' '}{msg.message}
             </div>
@@ -223,7 +227,7 @@ export default function BotDetail() {
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleConsoleSubmit} className="w-full h-12 bg-[#0d1017] border border-slate-800 rounded-xl p-1.5 flex items-center gap-2 focus-within:border-emerald-500/50 transition-colors shadow-lg shrink-0">
+      <form onSubmit={handleConsoleSubmit} className="w-full h-12 bg-[#131824] border border-slate-700/60 rounded-xl p-1.5 flex items-center gap-2 focus-within:border-emerald-500/60 transition-colors shadow-lg shrink-0">
         <button
           type="button"
           onClick={() => setConsoleMode(m => m === 'chat' ? 'command' : 'chat')}
@@ -251,7 +255,7 @@ export default function BotDetail() {
   );
 
   const renderDelivery = () => (
-    <div className="max-w-[800px] space-y-4">
+    <div className="max-w-[800px] mx-auto w-full space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Box size={16} /> Chests ({chests.length})
@@ -269,7 +273,7 @@ export default function BotDetail() {
             showValue
           />
           {scanProgress.found != null && (
-            <p className="text-xs text-mdb-text-muted mt-2">{scanProgress.found} chests found</p>
+            <p className="text-xs text-slate-500 mt-2">{scanProgress.found} chests found</p>
           )}
         </Card>
       )}
@@ -287,9 +291,9 @@ export default function BotDetail() {
             <Card key={i} padding="sm" className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{chest.name}</div>
-                <div className="text-xs text-mdb-text-muted font-mono">
+                <div className="text-xs text-slate-500 font-mono">
                   {chest.x}, {chest.y}, {chest.z}
-                  {chest.itemName && <span className="ml-2 text-mdb-text-secondary">{chest.itemName}{chest.itemCount != null ? ` x${chest.itemCount}` : ''}</span>}
+                  {chest.itemName && <span className="ml-2 text-slate-400">{chest.itemName}{chest.itemCount != null ? ` x${chest.itemCount}` : ''}</span>}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -306,20 +310,20 @@ export default function BotDetail() {
   );
 
   const renderInventory = () => (
-    <div className="max-w-[800px]">
+    <div className="max-w-[800px] mx-auto w-full">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Package size={16} /> Inventory ({inventory.length} items)
       </h2>
       <div className="overflow-x-auto pb-2">
-        <div className="grid grid-cols-9 gap-px bg-mdb-border rounded-xl border border-mdb-border overflow-hidden min-w-[460px]">
+        <div className="grid grid-cols-9 gap-px bg-slate-800/50 rounded-xl border border-slate-800/50 overflow-hidden min-w-[460px]">
           {Array.from({ length: 36 }, (_, i) => {
             const item = inventory.find(inv => inv.slot === i);
             return (
-              <div key={i} className={`aspect-square bg-mdb-bg flex items-center justify-center flex-col p-0.5 min-h-[44px] ${item ? 'bg-mdb-surface' : ''}`}>
+              <div key={i} className={`aspect-square bg-[#07090e] flex items-center justify-center flex-col p-0.5 min-h-[44px] ${item ? 'bg-slate-900/50' : ''}`}>
                 {item ? (
                   <>
-                    <span className="font-mono text-[9px] text-mdb-text-muted text-center overflow-hidden text-ellipsis whitespace-nowrap w-full">{item.name}</span>
-                    {item.count > 1 && <span className="font-mono text-[11px] font-bold text-mdb-text">{item.count}</span>}
+                    <span className="font-mono text-[9px] text-slate-500 text-center overflow-hidden text-ellipsis whitespace-nowrap w-full">{item.name}</span>
+                    {item.count > 1 && <span className="font-mono text-[11px] font-bold text-slate-100">{item.count}</span>}
                   </>
                 ) : null}
               </div>
@@ -369,7 +373,7 @@ export default function BotDetail() {
   };
 
   const renderWhitelist = () => (
-    <div className="max-w-[800px] space-y-4">
+    <div className="max-w-[800px] mx-auto w-full space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Shield size={16} /> Whitelist ({whitelist.length})
@@ -384,35 +388,35 @@ export default function BotDetail() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Username</th>
-                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Role</th>
-                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Added By</th>
-                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted border-b border-mdb-border"></th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Username</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Role</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Added By</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-800/50"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-mdb-border">
+            <tbody className="divide-y divide-slate-800/50">
               {whitelist.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-mdb-text-muted">
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
                     No players whitelisted. Click "Add Player" above to grant access.
                   </td>
                 </tr>
               ) : (
                 whitelist.map((p) => (
-                  <tr key={p.id || p.playerName} className="hover:bg-mdb-surface-high transition-colors">
-                    <td className="font-medium px-4 h-11 text-sm text-mdb-text">{p.playerName}</td>
+                  <tr key={p.id || p.playerName} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="font-medium px-4 h-11 text-sm text-slate-100">{p.playerName}</td>
                     <td className="px-4 h-11 text-sm">
                       <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
                         p.role === 'admin'
-                          ? 'bg-mdb-primary/15 text-mdb-primary'
+                          ? 'bg-emerald-500/20 text-emerald-400'
                           : p.role === 'vip'
-                          ? 'bg-amber-500/15 text-amber-400'
-                          : 'bg-mdb-surface-high text-mdb-text-muted'
+                          ? 'bg-amber-500/20 text-amber-400'
+                          : 'bg-slate-800 text-slate-500'
                       }`}>
                         {p.role ? p.role.toUpperCase() : 'USER'}
                       </span>
                     </td>
-                    <td className="text-mdb-text-muted text-sm px-4 h-11">{p.addedBy || 'system'}</td>
+                    <td className="text-slate-500 text-sm px-4 h-11">{p.addedBy || 'system'}</td>
                     <td className="text-right px-4 h-11 space-x-2">
                       <Button variant="secondary" size="sm" onClick={() => { setEditingPlayer(p); setWhitelistForm({ playerName: p.playerName, role: p.role }); setShowAddWhitelist(true); }}>
                         Edit
@@ -463,7 +467,7 @@ export default function BotDetail() {
   );
 
   const renderSettings = () => (
-    <div className="max-w-[800px] space-y-6">
+    <div className="max-w-[800px] mx-auto w-full space-y-6">
       <SettingsSection title="Scan Config" defaultOpen>
         <div className="space-y-4">
           <Input
@@ -549,7 +553,7 @@ export default function BotDetail() {
 
       <SettingsSection title="Danger Zone" variant="danger" defaultOpen>
         <div className="space-y-3">
-          <p className="text-xs text-mdb-text-muted">Force-stop or restart the bot. Use only when the bot is stuck.</p>
+          <p className="text-xs text-slate-500">Force-stop or restart the bot. Use only when the bot is stuck.</p>
           <div className="flex gap-2">
             <Button variant="danger" icon={Square} onClick={handleStop} disabled={!isOnline}>Force Stop</Button>
             <Button variant="secondary" icon={RefreshCw} onClick={async () => { await handleStop(); setTimeout(handleStart, 1000); }} disabled={!isOnline}>Restart</Button>
@@ -560,127 +564,144 @@ export default function BotDetail() {
   );
 
   return (
-    <div className="flex h-full gap-0">
-      {/* Mobile Top Navigation Header with Contextual Dropdown */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface/95 backdrop-blur-md border-b border-mdb-border flex items-center justify-between px-3 z-40">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+    <div className="flex flex-col h-screen w-full bg-[#0a0d14] text-slate-100 overflow-hidden">
+      
+      {/* MOBILE TOP HEADER with Contextual Dropdown */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0f131d] border-b border-slate-800/80 flex items-center justify-between px-4 py-3 shrink-0 h-14">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back to Bots" />
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <span className="text-slate-400 text-sm font-medium truncate shrink-0">{bot.name}</span>
-            <span className="text-slate-600 text-sm shrink-0">/</span>
-            <div className="relative min-w-0 flex-1">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center gap-2 bg-mdb-surface-high text-white text-sm font-semibold rounded-lg pl-3 pr-2 py-1.5 border border-mdb-border hover:border-mdb-border-hover transition-colors text-left"
-              >
+          
+          {/* Context Switcher Trigger */}
+          <div className="relative flex-1 min-w-0">
+            <button 
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full flex items-center gap-2 text-sm font-semibold hover:opacity-80 transition-opacity bg-slate-900/50 border border-slate-800/60 rounded-lg pl-3 pr-2 py-1.5 text-left"
+            >
+              <span className="text-slate-400 truncate">{bot.name}</span>
+              <span className="text-slate-600 shrink-0">/</span>
+              <span className="text-emerald-400 flex items-center gap-1.5 shrink-0">
                 {TAB_ITEMS.find(t => t.id === activeTab) && (() => {
                   const TabIcon = TAB_ITEMS.find(t => t.id === activeTab).icon;
-                  return <TabIcon size={14} className="text-mdb-primary shrink-0" />;
+                  return <TabIcon size={14} className="text-emerald-400 shrink-0" />;
                 })()}
-                <span className="truncate">{TAB_ITEMS.find(t => t.id === activeTab)?.label}</span>
-                <ChevronDown size={14} className={`ml-auto text-mdb-text-muted shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {dropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-60 bg-[#131722] border border-slate-700/80 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-800/50 animate-scale-up">
-                    <div className="py-1">
-                      {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
-                        <button
-                          key={id}
-                          onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
-                          className={`w-full h-11 px-4 flex items-center justify-between text-sm font-medium transition-colors ${
-                            activeTab === id
-                              ? 'text-emerald-400 bg-emerald-500/10'
-                              : 'text-slate-300 hover:bg-slate-800/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Icon size={16} className={activeTab === id ? 'text-emerald-400' : 'text-slate-400'} />
-                            <span>{label}</span>
-                          </div>
-                          {id === 'delivery' && chests.length > 0 && (
-                            <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 rounded-full font-bold">{chests.length}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 ml-2">
-          <StatusBadge status={status} />
-          {isOnline ? (
-            <Button size="sm" variant="danger" icon={Square} onClick={handleStop} />
-          ) : (
-            <Button size="sm" variant="success" icon={Play} onClick={handleStart} />
-          )}
-        </div>
-      </div>
+                {TAB_ITEMS.find(t => t.id === activeTab)?.label}
+              </span>
+              <ChevronDown size={14} className={`ml-auto text-slate-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-      {/* Desktop Sidebar */}
-      <div className="w-[280px] bg-mdb-surface border-r border-mdb-border flex flex-col shrink-0 max-md:hidden">
-        <div className="flex items-center gap-2 p-4 border-b border-mdb-border">
-          <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back" />
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate">{bot.name}</div>
-            <div className="font-mono text-xs text-mdb-text-muted">{bot.username}</div>
-          </div>
-        </div>
-        <div className="flex items-center justify-between py-2.5 px-4 border-b border-mdb-border">
-          <StatusBadge status={status} />
-          {isOnline ? (
-            <Button size="sm" variant="danger" icon={Square} onClick={handleStop}>Stop</Button>
-          ) : (
-            <Button size="sm" variant="success" icon={Play} onClick={handleStart}>Start</Button>
-          )}
-        </div>
-        {isOnline && (
-          <div className="py-2.5 px-4 border-b border-mdb-border space-y-1.5">
-            {bot.liveStatus?.health != null && <HealthBar value={bot.liveStatus.health} />}
-            {bot.liveStatus?.food != null && <FoodBar value={bot.liveStatus.food} />}
-            {bot.liveStatus?.position && (
-              <div className="text-xs text-mdb-text-muted font-mono">
-                {Math.round(bot.liveStatus.position.x)}, {Math.round(bot.liveStatus.position.y)}, {Math.round(bot.liveStatus.position.z)}
-              </div>
+            {/* OPAQUE DROPDOWN MENU */}
+            {dropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-[#131824] border border-slate-700/80 rounded-xl shadow-2xl z-50 overflow-hidden py-1 animate-scale-up">
+                  {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
+                      className={`w-full h-11 px-4 flex items-center justify-between text-xs font-medium transition-colors ${
+                        activeTab === id
+                          ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-400'
+                          : 'text-slate-300 hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon size={16} className={activeTab === id ? 'text-emerald-400' : 'text-slate-400'} />
+                        <span>{label}</span>
+                      </div>
+                      {id === 'delivery' && chests.length > 0 && (
+                        <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 rounded-full font-bold">{chests.length}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
-        )}
-        <nav className="flex-1 py-2 overflow-y-auto">
-          {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`flex items-center gap-2.5 min-h-[44px] w-full py-2 px-4 text-sm transition-colors ${
-                activeTab === id
-                  ? 'bg-mdb-surface-high text-mdb-primary font-medium'
-                  : 'text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high'
-              }`}
-              onClick={() => setActiveTab(id)}
-            >
-              <Icon size={16} />
-              <span>{label}</span>
-              {id === 'delivery' && chests.length > 0 && (
-                <span className="ml-auto bg-mdb-primary/10 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="py-2 px-4 border-t border-mdb-border">
-          <Button variant="ghost" size="sm" icon={RefreshCw} onClick={loadBotData} className="w-full">Refresh</Button>
         </div>
+
+        {/* Status Pill & Power Button */}
+        <div className="flex items-center gap-3 shrink-0 ml-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 border border-slate-700/60 rounded-full text-[11px] font-medium text-slate-300">
+            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+            {isOnline ? 'ONLINE' : 'OFFLINE'}
+          </div>
+          <Button
+            size="sm"
+            variant={isOnline ? 'danger' : 'success'}
+            icon={isOnline ? Square : Play}
+            onClick={isOnline ? handleStop : handleStart}
+          />
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden pt-14 md:pt-0">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="hidden md:flex w-[280px] bg-slate-950/50 border-r border-slate-800/50 flex flex-col shrink-0">
+          <div className="flex items-center gap-2 p-4 border-b border-slate-800/50">
+            <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back" />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">{bot.name}</div>
+              <div className="font-mono text-xs text-slate-500">{bot.username}</div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between py-2.5 px-4 border-b border-slate-800/50">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 border border-slate-700/60 rounded-full text-[11px] font-medium text-slate-300">
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+              {isOnline ? 'ONLINE' : 'OFFLINE'}
+            </div>
+            {isOnline ? (
+              <Button size="sm" variant="danger" icon={Square} onClick={handleStop}>Stop</Button>
+            ) : (
+              <Button size="sm" variant="success" icon={Play} onClick={handleStart}>Start</Button>
+            )}
+          </div>
+          {isOnline && (
+            <div className="py-2.5 px-4 border-b border-slate-800/50 space-y-1.5">
+              {bot.liveStatus?.health != null && <HealthBar value={bot.liveStatus.health} />}
+              {bot.liveStatus?.food != null && <FoodBar value={bot.liveStatus.food} />}
+              {bot.liveStatus?.position && (
+                <div className="text-xs text-slate-500 font-mono">
+                  {Math.round(bot.liveStatus.position.x)}, {Math.round(bot.liveStatus.position.y)}, {Math.round(bot.liveStatus.position.z)}
+                </div>
+              )}
+            </div>
+          )}
+          <nav className="flex-1 py-2 overflow-y-auto">
+            {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                className={`flex items-center gap-2.5 min-h-[44px] w-full py-2 px-4 text-sm transition-colors ${
+                  activeTab === id
+                    ? 'bg-emerald-500/10 text-emerald-400 font-medium border-l-2 border-emerald-400'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                }`}
+                onClick={() => setActiveTab(id)}
+              >
+                <Icon size={16} className={activeTab === id ? 'text-emerald-400' : 'text-slate-400'} />
+                <span>{label}</span>
+                {id === 'delivery' && chests.length > 0 && (
+                  <span className="ml-auto bg-emerald-500/20 text-emerald-400 text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
+                )}
+              </button>
+            ))}
+          </nav>
+          <div className="py-2 px-4 border-t border-slate-800/50">
+            <Button variant="ghost" size="sm" icon={RefreshCw} onClick={loadBotData} className="w-full">Refresh</Button>
+          </div>
+        </aside>
+
+        {/* CONTENT AREA */}
+        <main className="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6 min-h-0">
+          {activeTab === 'console' && renderConsole()}
+          {activeTab === 'delivery' && renderDelivery()}
+          {activeTab === 'inventory' && renderInventory()}
+          {activeTab === 'whitelist' && renderWhitelist()}
+          {activeTab === 'settings' && renderSettings()}
+        </main>
       </div>
 
-      {/* Content Area */}
-      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6`}>
-        {activeTab === 'console' && renderConsole()}
-        {activeTab === 'delivery' && renderDelivery()}
-        {activeTab === 'inventory' && renderInventory()}
-        {activeTab === 'whitelist' && renderWhitelist()}
-        {activeTab === 'settings' && renderSettings()}
-      </div>
+      {/* MOBILE BOTTOM NAV - only visible on mobile, not on BotDetail */}
+      {/* BottomNav is handled by Layout - hidden on BotDetail */}
 
       {deliverChest && (
         <DeliverModal
@@ -704,12 +725,12 @@ function SettingsSection({ title, variant = 'default', defaultOpen = true, child
     <Card>
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center justify-between w-full px-5 py-4 text-left ${open ? 'border-b border-mdb-border' : ''}`}
+        className={`flex items-center justify-between w-full px-5 py-4 text-left ${open ? 'border-b border-slate-800/50' : ''}`}
       >
-        <h3 className={`text-base font-semibold ${isDanger ? 'text-mdb-error' : 'text-mdb-text'}`}>{title}</h3>
-        {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}
+        <h3 className={`text-sm font-semibold ${isDanger ? 'text-red-400' : 'text-slate-100'}`}>{title}</h3>
+        {open ? <ChevronDown size={16} className="text-slate-500" /> : <ChevronRight size={16} className="text-slate-500" />}
       </button>
-      {open && children}
+      {open && <div className="p-5">{children}</div>}
     </Card>
   );
 }
