@@ -1,27 +1,16 @@
 import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Bot,
-  Server,
-  Layers,
-  Package,
   Settings,
-  X,
-  LogOut,
-  Puzzle,
   ShoppingCart,
+  Puzzle,
+  LogOut,
 } from 'lucide-react';
 
 const moreItems = [
-  { path: '/fleet', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/fleet/bots', label: 'Bots', icon: Bot },
-  { path: '/fleet/servers', label: 'Servers', icon: Server },
-  { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
-  { path: '/fleet/tasks', label: 'Tasks', icon: Package },
+  { path: '/settings', label: 'Settings', icon: Settings },
   { path: '/plugin-store', label: 'Plugin Store', icon: ShoppingCart },
   { path: '/plugins', label: 'Plugins', icon: Puzzle },
-  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
@@ -37,39 +26,45 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[100] flex items-end justify-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/50 animate-fade-in" />
       <div
-        className="w-full max-h-[85vh] bg-mdb-surface border-t border-mdb-surface-high overflow-y-auto py-4"
+        className="relative w-full bg-mdb-surface rounded-t-2xl overflow-y-auto animate-slide-up"
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          animation: 'slideUp 0.25s ease-out',
+        }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-mdb-surface-high">
-          <span className="text-base font-semibold">Navigation</span>
-          <button
-            className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
+        <div className="flex items-center justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-mdb-surface-high" />
         </div>
-        {moreItems.map(({ path, label, icon: Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === '/fleet'}
-            onClick={onClose}
-            className={({ isActive }) => `flex items-center gap-2 px-6 h-12 text-sm font-medium no-underline transition-all ${isActive ? 'bg-mdb-surface-high text-mdb-primary' : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-primary'} [&>svg]:w-5 [&>svg]:h-5`}
-          >
-            <Icon size={20} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-        <div className="px-6 py-4 border-t border-mdb-surface-high mt-2">
+        <div className="px-4 pb-6">
+          {moreItems.map(({ path, label, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end={path === '/fleet'}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium no-underline transition-all duration-150 ${
+                  isActive
+                    ? 'bg-mdb-surface-high text-mdb-primary'
+                    : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'
+                }`
+              }
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
           <button
-            className="flex items-center gap-2 px-6 h-12 text-sm font-medium w-full text-mdb-status-error bg-transparent border-none cursor-pointer hover:bg-mdb-surface-high"
+            className="flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium w-full text-mdb-error bg-transparent cursor-pointer hover:bg-mdb-surface-high transition-colors duration-150"
             onClick={() => { onClose(); onLogout(); }}
           >
             <LogOut size={20} />
@@ -77,6 +72,12 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
           </button>
         </div>
       </div>
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

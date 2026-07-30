@@ -116,39 +116,43 @@ export default function Settings() {
   }
 
   const renderGeneral = () => (
-    <div className="bg-mdb-surface border border-mdb-surface-high p-6">
-      <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">General Settings</div>
+    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
+      <div className="text-base font-semibold mb-4">General Settings</div>
       <div className="flex gap-4 mb-4">
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Server Port</label>
-          <input type="number" value={generalForm.SERVER_PORT} onChange={(e) => setGeneralForm({ ...generalForm, SERVER_PORT: e.target.value })} placeholder="8081" />
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Server Port</label>
+          <input type="number" value={generalForm.SERVER_PORT} onChange={(e) => setGeneralForm({ ...generalForm, SERVER_PORT: e.target.value })} placeholder="8081" className="h-10" />
         </div>
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">WebSocket Port</label>
-          <input type="number" value={generalForm.WS_PORT} onChange={(e) => setGeneralForm({ ...generalForm, WS_PORT: e.target.value })} placeholder="3000" />
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">WebSocket Port</label>
+          <input type="number" value={generalForm.WS_PORT} onChange={(e) => setGeneralForm({ ...generalForm, WS_PORT: e.target.value })} placeholder="3000" className="h-10" />
         </div>
       </div>
-      <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-2" onClick={handleSaveGeneral} disabled={savingGeneral}>
+      <button
+        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
+        onClick={handleSaveGeneral}
+        disabled={savingGeneral}
+      >
         {savingGeneral ? 'Saving...' : 'Save General Settings'}
       </button>
     </div>
   );
 
   const renderBot = () => (
-    <div className="bg-mdb-surface border border-mdb-surface-high p-6">
-      <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Default Bot Settings</div>
+    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
+      <div className="text-base font-semibold mb-4">Default Bot Settings</div>
       <div className="mb-4">
-        <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Default Host</label>
-        <input type="text" value={botForm.IP} onChange={(e) => setBotForm({ ...botForm, IP: e.target.value })} placeholder="6b6t.org" />
+        <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Host</label>
+        <input type="text" value={botForm.IP} onChange={(e) => setBotForm({ ...botForm, IP: e.target.value })} placeholder="6b6t.org" className="h-10" />
       </div>
       <div className="flex gap-4 mb-4">
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Default Port</label>
-          <input type="number" value={botForm.PORT} onChange={(e) => setBotForm({ ...botForm, PORT: e.target.value })} placeholder="25565" />
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Port</label>
+          <input type="number" value={botForm.PORT} onChange={(e) => setBotForm({ ...botForm, PORT: e.target.value })} placeholder="25565" className="h-10" />
         </div>
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Default Version</label>
-          <select value={botForm.VERSION} onChange={(e) => setBotForm({ ...botForm, VERSION: e.target.value })}>
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Version</label>
+          <select value={botForm.VERSION} onChange={(e) => setBotForm({ ...botForm, VERSION: e.target.value })} className="h-10">
             <option value="auto">Auto Detect</option>
             <option value="1.21.4">1.21.4</option>
             <option value="1.21.3">1.21.3</option>
@@ -169,27 +173,31 @@ export default function Settings() {
           </select>
         </div>
       </div>
-      <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-2" onClick={handleSaveBot} disabled={savingBot}>
+      <button
+        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
+        onClick={handleSaveBot}
+        disabled={savingBot}
+      >
         {savingBot ? 'Saving...' : 'Save Bot Defaults'}
       </button>
     </div>
   );
 
   const renderDelivery = () => (
-    <div className="bg-mdb-surface border border-mdb-surface-high p-6">
-      <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Delivery Configuration</div>
+    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
+      <div className="text-base font-semibold mb-4">Delivery Configuration</div>
 
       <div className="flex gap-4 mb-4">
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Delivery Mode</label>
-          <select value={deliveryForm.DELIVERY_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, DELIVERY_MODE: e.target.value })}>
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Delivery Mode</label>
+          <select value={deliveryForm.DELIVERY_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, DELIVERY_MODE: e.target.value })} className="h-10">
             <option value="TPA">TPA (Teleport Request)</option>
             <option value="ELYTRA">ELYTRA (Autonomous Flight)</option>
           </select>
         </div>
         <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Target Coord Mode</label>
-          <select value={deliveryForm.TARGET_COORD_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, TARGET_COORD_MODE: e.target.value })}>
+          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Target Coord Mode</label>
+          <select value={deliveryForm.TARGET_COORD_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, TARGET_COORD_MODE: e.target.value })} className="h-10">
             <option value="USER">USER (Direct Coordinates)</option>
             <option value="RANDOM_REGION">RANDOM_REGION (Bounded Region)</option>
           </select>
@@ -197,73 +205,83 @@ export default function Settings() {
       </div>
 
       <div className="mb-4">
-        <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Post Delivery Action</label>
-        <select value={deliveryForm.POST_DELIVERY_ACTION} onChange={(e) => setDeliveryForm({ ...deliveryForm, POST_DELIVERY_ACTION: e.target.value })}>
+        <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Post Delivery Action</label>
+        <select value={deliveryForm.POST_DELIVERY_ACTION} onChange={(e) => setDeliveryForm({ ...deliveryForm, POST_DELIVERY_ACTION: e.target.value })} className="h-10">
           <option value="FLY_HOME">FLY_HOME (Fly back to base)</option>
           <option value="ECHEST_SAVE_AND_DIE">ECHEST_SAVE_AND_DIE (Stash gear in EChest then suicide)</option>
           <option value="DIRECT_DIE">DIRECT_DIE (Skip stashing, immediate suicide)</option>
         </select>
       </div>
 
-      <div className="text-[13px] font-semibold text-mdb-text-muted uppercase tracking-wider mb-2 mt-6 pb-2 border-t border-mdb-outline-variant pt-4">Storage Keys</div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Ender Chest Key</label>
-          <input type="text" value={deliveryForm.STORAGE_KEYS?.ender || 'ender'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, ender: e.target.value } })} />
+      <div className="border-t border-mdb-border my-6 pt-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Storage Keys</div>
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Ender Chest Key</label>
+            <input type="text" value={deliveryForm.STORAGE_KEYS?.ender || 'ender'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, ender: e.target.value } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Standard Chest Key</label>
+            <input type="text" value={deliveryForm.STORAGE_KEYS?.chest || 'chest'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, chest: e.target.value } })} className="h-10" />
+          </div>
         </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Standard Chest Key</label>
-          <input type="text" value={deliveryForm.STORAGE_KEYS?.chest || 'chest'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, chest: e.target.value } })} />
-        </div>
-      </div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Elytra Key</label>
-          <input type="text" value={deliveryForm.STORAGE_KEYS?.elytra || 'elytra'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, elytra: e.target.value } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Rocket Key</label>
-          <input type="text" value={deliveryForm.STORAGE_KEYS?.rocket || 'rocket'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, rocket: e.target.value } })} />
-        </div>
-      </div>
-
-      <div className="text-[13px] font-semibold text-mdb-text-muted uppercase tracking-wider mb-2 mt-6 pb-2 border-t border-mdb-outline-variant pt-4">Base Coordinates</div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">X</label>
-          <input type="number" value={deliveryForm.BASE_COORDINATES?.x ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, x: parseInt(e.target.value) || 0 } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Y</label>
-          <input type="number" value={deliveryForm.BASE_COORDINATES?.y ?? 64} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, y: parseInt(e.target.value) || 0 } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Z</label>
-          <input type="number" value={deliveryForm.BASE_COORDINATES?.z ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, z: parseInt(e.target.value) || 0 } })} />
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Elytra Key</label>
+            <input type="text" value={deliveryForm.STORAGE_KEYS?.elytra || 'elytra'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, elytra: e.target.value } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Rocket Key</label>
+            <input type="text" value={deliveryForm.STORAGE_KEYS?.rocket || 'rocket'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, rocket: e.target.value } })} className="h-10" />
+          </div>
         </div>
       </div>
 
-      <div className="text-[13px] font-semibold text-mdb-text-muted uppercase tracking-wider mb-2 mt-6 pb-2 border-t border-mdb-outline-variant pt-4">Random Region Bounds</div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">X1</label>
-          <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x1: parseInt(e.target.value) || 0 } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Z1</label>
-          <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z1: parseInt(e.target.value) || 0 } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">X2</label>
-          <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x2: parseInt(e.target.value) || 0 } })} />
-        </div>
-        <div className="flex-1">
-          <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Z2</label>
-          <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z2: parseInt(e.target.value) || 0 } })} />
+      <div className="border-t border-mdb-border my-6 pt-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Base Coordinates</div>
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X</label>
+            <input type="number" value={deliveryForm.BASE_COORDINATES?.x ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, x: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Y</label>
+            <input type="number" value={deliveryForm.BASE_COORDINATES?.y ?? 64} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, y: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z</label>
+            <input type="number" value={deliveryForm.BASE_COORDINATES?.z ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, z: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
         </div>
       </div>
 
-      <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-2" onClick={handleSaveDelivery} disabled={savingDelivery}>
+      <div className="border-t border-mdb-border my-6 pt-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Random Region Bounds</div>
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X1</label>
+            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x1: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z1</label>
+            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z1: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X2</label>
+            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x2: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z2</label>
+            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z2: parseInt(e.target.value) || 0 } })} className="h-10" />
+          </div>
+        </div>
+      </div>
+
+      <button
+        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
+        onClick={handleSaveDelivery}
+        disabled={savingDelivery}
+      >
         {savingDelivery ? 'Saving...' : 'Save Delivery Settings'}
       </button>
     </div>
@@ -271,31 +289,41 @@ export default function Settings() {
 
   const renderUsers = () => (
     <>
-      <div className="bg-mdb-surface border border-mdb-surface-high p-6">
-        <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant flex items-center justify-between">
-          <span>Users</span>
-          <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-primary text-mdb-on-primary" onClick={() => setShowAdd(true)}>Add User</button>
+      <div className="bg-mdb-surface rounded-xl border border-mdb-border">
+        <div className="px-5 py-4 border-b border-mdb-border flex items-center justify-between">
+          <span className="text-base font-semibold">Users</span>
+          <button
+            className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors"
+            onClick={() => setShowAdd(true)}
+          >
+            Add User
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="font-mono text-[10px] font-medium uppercase tracking-widest text-mdb-text-muted text-left px-4 h-10 border-b border-mdb-surface-high">Username</th>
-                <th className="font-mono text-[10px] font-medium uppercase tracking-widest text-mdb-text-muted text-left px-4 h-10 border-b border-mdb-surface-high">Role</th>
-                <th className="font-mono text-[10px] font-medium uppercase tracking-widest text-mdb-text-muted text-left px-4 h-10 border-b border-mdb-surface-high">Created</th>
-                <th className="font-mono text-[10px] font-medium uppercase tracking-widest text-mdb-text-muted text-left px-4 h-10 border-b border-mdb-surface-high"></th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Username</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Role</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Created</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-mdb-border">
               {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="font-semibold px-4 h-12 border-b border-mdb-outline-variant text-sm">{u.username}</td>
-                  <td className="px-4 h-12 border-b border-mdb-outline-variant text-sm">
-                    <span className={`inline-block px-2 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wider ${u.role === 'admin' ? 'bg-mdb-surface-high text-mdb-primary' : u.role === 'operator' ? 'bg-mdb-surface-high text-mdb-online' : 'bg-mdb-surface-high text-mdb-text-muted'}`}>{u.role}</span>
+                <tr key={u.id} className="hover:bg-mdb-surface-high transition-colors">
+                  <td className="font-medium px-5 h-12 text-sm">{u.username}</td>
+                  <td className="px-5 h-12 text-sm">
+                    <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${u.role === 'admin' ? 'bg-mdb-primary/15 text-mdb-primary' : u.role === 'operator' ? 'bg-mdb-success/15 text-mdb-success' : 'bg-mdb-surface-high text-mdb-text-muted'}`}>{u.role}</span>
                   </td>
-                  <td className="text-mdb-text-muted text-[13px] px-4 h-12 border-b border-mdb-outline-variant">{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td className="text-right px-4 h-12 border-b border-mdb-outline-variant">
-                    <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10" onClick={() => handleDelete(u.id)}>Delete</button>
+                  <td className="text-mdb-text-muted text-sm px-5 h-12">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td className="text-right px-5 h-12">
+                    <button
+                      className="text-sm font-medium text-mdb-text-muted hover:text-mdb-error hover:bg-mdb-error/10 px-3 py-1.5 rounded-lg transition-colors"
+                      onClick={() => handleDelete(u.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -306,32 +334,48 @@ export default function Settings() {
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={() => setShowAdd(false)}>
-          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-mdb-surface-high">
-              <span className="text-lg font-bold">Add New User</span>
-              <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => setShowAdd(false)}>X</button>
+          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-border flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-mdb-border">
+              <span className="text-lg font-semibold">Add New User</span>
+              <button
+                className="inline-flex items-center justify-center w-8 h-8 text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high rounded-lg transition-colors"
+                onClick={() => setShowAdd(false)}
+              >
+                ✕
+              </button>
             </div>
             <div className="flex-1 p-6 overflow-y-auto">
               <form onSubmit={handleAdd}>
                 <div className="mb-4">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Username</label>
-                  <input type="text" value={form.username} onChange={(e) => setForm({...form, username: e.target.value})} required />
+                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Username</label>
+                  <input type="text" value={form.username} onChange={(e) => setForm({...form, username: e.target.value})} required className="h-10" />
                 </div>
                 <div className="mb-4">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Password</label>
-                  <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required />
+                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Password</label>
+                  <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required className="h-10" />
                 </div>
                 <div className="mb-4">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Role</label>
-                  <select value={form.role} onChange={(e) => setForm({...form, role: e.target.value})}>
+                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Role</label>
+                  <select value={form.role} onChange={(e) => setForm({...form, role: e.target.value})} className="h-10">
                     <option value="viewer">Viewer</option>
                     <option value="operator">Operator</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
-                <div className="flex gap-2 mt-4">
-                  <button type="button" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={() => setShowAdd(false)}>Cancel</button>
-                  <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary">Add User</button>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high rounded-lg transition-colors"
+                    onClick={() => setShowAdd(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors"
+                  >
+                    Add User
+                  </button>
                 </div>
               </form>
             </div>
@@ -342,17 +386,23 @@ export default function Settings() {
   );
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Settings</h1>
-        <p className="text-sm text-mdb-text-muted mt-0.5">Server, bot, and delivery configuration</p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-mdb-text tracking-tight">Settings</h1>
+        <p className="text-sm text-mdb-text-muted mt-0.5">Manage your server configuration</p>
       </div>
 
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+      {/* Tab Bar */}
+      <div className="flex gap-1 bg-mdb-surface rounded-xl p-1 border border-mdb-border">
         {TABS.map((tab) => (
           <button
             key={tab}
-            className={`inline-flex items-center gap-1.5 h-9 px-4 text-[13px] font-medium whitespace-nowrap transition-all border ${activeTab === tab ? 'bg-mdb-primary text-mdb-on-primary border-mdb-primary' : 'bg-mdb-surface border-mdb-surface-high text-mdb-text-secondary hover:border-mdb-text-muted'}`}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg text-center transition-colors ${
+              activeTab === tab
+                ? 'bg-mdb-surface-high text-mdb-text'
+                : 'text-mdb-text-muted hover:text-mdb-text'
+            }`}
             onClick={() => setActiveTab(tab)}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -360,6 +410,7 @@ export default function Settings() {
         ))}
       </div>
 
+      {/* Tab Content */}
       {activeTab === 'general' && renderGeneral()}
       {activeTab === 'bot' && renderBot()}
       {activeTab === 'delivery' && renderDelivery()}

@@ -208,9 +208,9 @@ export default function BotDetail() {
 
   if (loading) return <div className="p-12 text-center text-mdb-text-muted">Loading...</div>;
   if (!bot) return (
-    <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
-      <div className="text-lg font-semibold mb-2">Bot not found</div>
-      <button className="inline-flex items-center gap-2 px-5 h-12 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-4" onClick={() => navigate('/fleet/bots')}>Back to Bots</button>
+    <div className="flex flex-col items-center justify-center py-20 text-mdb-text-muted">
+      <div className="text-lg font-medium mb-1 text-mdb-text">Bot not found</div>
+      <button className="h-10 px-5 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium mt-4" onClick={() => navigate('/fleet/bots')}>Back to Bots</button>
     </div>
   );
 
@@ -222,48 +222,47 @@ export default function BotDetail() {
       case 'console':
         return (
           <div className="max-w-[800px]">
-            <div className="flex items-center gap-2 text-lg font-bold mb-6 pb-2 border-b border-mdb-outline-variant">
-              <Terminal size={18} />
-              <span>Live Console</span>
-            </div>
-            <div className="h-[300px] overflow-y-auto border border-mdb-outline-variant p-4 bg-mdb-surface mb-2">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <Terminal size={16} /> Live Console
+            </h2>
+            <div className="h-[300px] overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5">
               {chatMessages.length === 0 ? (
-                <div className="text-mdb-text-muted text-sm">No messages yet. Send a command or chat message below.</div>
+                <div className="text-mdb-text-muted">No messages yet. Send a command or chat message below.</div>
               ) : (
                 chatMessages.map((msg, i) => (
-                  <div key={i} className="chat-line font-mono text-xs leading-relaxed text-mdb-text-secondary py-0.5 border-b border-mdb-outline-variant hover:bg-mdb-surface-high">
+                  <div key={i} className="py-0.5 hover:bg-mdb-surface-high rounded px-1 -mx-1">
                     <span className="text-mdb-text-muted mr-2">[{new Date(msg.timestamp).toLocaleTimeString()}]</span>
-                    <span className={`font-bold ${msg.sender === 'you' ? 'text-mdb-primary' : ''}`}>{msg.sender}:</span>
-                    {msg.message}
+                    <span className={`font-semibold ${msg.sender === 'you' ? 'text-mdb-primary' : ''}`}>{msg.sender}:</span>
+                    {' '}{msg.message}
                   </div>
                 ))
               )}
               <div ref={chatEndRef} />
             </div>
-            <form onSubmit={handleChatSend} className="flex gap-2">
+            <form onSubmit={handleChatSend} className="flex gap-2 mb-2">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Say something..."
-                className="flex-1 font-mono text-[13px]"
+                className="flex-1 font-mono text-sm"
                 disabled={!isOnline}
               />
-              <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" disabled={!isOnline}>
-                <Send size={16} />
+              <button type="submit" className="h-10 px-4 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium inline-flex items-center gap-2 transition-colors" disabled={!isOnline}>
+                <Send size={14} />
               </button>
             </form>
-            <form onSubmit={handleSendCommand} className="flex gap-2 mt-2">
+            <form onSubmit={handleSendCommand} className="flex gap-2">
               <input
                 type="text"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 placeholder="/command"
-                className="flex-1 font-mono text-[13px]"
+                className="flex-1 font-mono text-sm"
                 disabled={!isOnline}
               />
-              <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" disabled={!isOnline}>
-                <Terminal size={16} /> Exec
+              <button type="submit" className="h-10 px-4 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:bg-mdb-surface-high inline-flex items-center gap-2 transition-colors" disabled={!isOnline}>
+                <Terminal size={14} /> Exec
               </button>
             </form>
           </div>
@@ -271,197 +270,157 @@ export default function BotDetail() {
       case 'chests':
         return (
           <div className="max-w-[800px]">
-            <div className="flex items-center gap-2 text-lg font-bold mb-6 pb-2 border-b border-mdb-outline-variant">
-              <Box size={18} />
-              <span>Chest Scanner</span>
-              <div className="flex gap-2 ml-auto">
-                <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => setShowScanConfig(true)}>
-                  <Settings size={14} /> Config
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                <Box size={16} /> Chest Scanner
+              </h2>
+              <div className="flex gap-2">
+                <button className="h-8 px-3 rounded-lg border border-mdb-border text-xs font-medium text-mdb-text-secondary hover:bg-mdb-surface-high transition-colors inline-flex items-center gap-1.5" onClick={() => setShowScanConfig(true)}>
+                  <Settings size={12} /> Config
                 </button>
-                <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-primary text-mdb-on-primary" onClick={handleScan} disabled={scanning || !isOnline}>
-                  <Scan size={14} /> {scanning ? 'Scanning...' : 'Scan'}
+                <button className="h-8 px-3 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors" onClick={handleScan} disabled={scanning || !isOnline}>
+                  <Scan size={12} /> {scanning ? 'Scanning...' : 'Scan'}
                 </button>
               </div>
             </div>
+
             {scanning && scanProgress && (
-              <div className="bg-mdb-surface border border-mdb-surface-high p-4 mb-6 flex items-center gap-4">
-                <div className="flex-1 h-1.5 bg-mdb-surface-high overflow-hidden">
-                  <div className="scan-progress-fill h-full bg-mdb-working transition-[width]" style={{ width: `${scanProgress.percent}%` }} />
+              <div className="bg-mdb-surface rounded-xl border border-mdb-border p-4 mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-1.5 bg-mdb-surface-high rounded-full overflow-hidden">
+                    <div className="h-full bg-mdb-primary rounded-full transition-[width]" style={{ width: `${scanProgress.percent}%` }} />
+                  </div>
+                  <span className="text-xs text-mdb-text-secondary font-mono min-w-[160px]">{scanProgress.phase} ({scanProgress.percent}%) {scanProgress.found ? `— ${scanProgress.found} found` : ''}</span>
                 </div>
-                <span className="text-[13px] text-mdb-text-secondary min-w-[140px] font-mono">{scanProgress.phase} ({scanProgress.percent}%) {scanProgress.found ? `- ${scanProgress.found} found` : ''}</span>
               </div>
             )}
+
             {chests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center animate-fade-in">
-                <div className="text-base font-semibold mb-2">No chests found</div>
-                <div className="text-sm mb-4">Run a scan to discover chests</div>
+              <div className="py-16 text-center text-mdb-text-muted">
+                <div className="text-base font-medium mb-1 text-mdb-text">No chests found</div>
+                <div className="text-sm">Run a scan to discover chests</div>
               </div>
             ) : (
-              chests.map((chest, i) => (
-                <div key={i} className="flex items-center justify-between px-4 h-12 border-b border-mdb-outline-variant stagger-item">
-                  <div>
-                    <div className="font-semibold">{chest.name}</div>
-                    <div className="font-mono text-xs text-mdb-text-muted">{chest.x}, {chest.y}, {chest.z}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <div className="text-sm">{chest.itemName}</div>
-                      {chest.itemCount !== undefined && <div className="text-mdb-text-muted text-[12px]">{chest.itemCount} items</div>}
+              <div className="space-y-2 mb-6">
+                {chests.map((chest, i) => (
+                  <div key={i} className="flex items-center justify-between py-3 px-4 bg-mdb-surface rounded-xl border border-mdb-border stagger-item">
+                    <div>
+                      <div className="text-sm font-medium">{chest.name}</div>
+                      <div className="text-xs text-mdb-text-muted font-mono">{chest.x}, {chest.y}, {chest.z}</div>
                     </div>
-                    <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-primary text-mdb-on-primary" onClick={() => setDeliverChest(chest)}>
-                      <Send size={14} /> Deliver
-                    </button>
-                    <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high hover-glow" onClick={() => handleRescan(chest.x, chest.y, chest.z)}><RefreshCw size={14} /></button>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-sm">{chest.itemName}</div>
+                        {chest.itemCount !== undefined && <div className="text-xs text-mdb-text-muted">{chest.itemCount} items</div>}
+                      </div>
+                      <button className="h-8 px-3 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors" onClick={() => setDeliverChest(chest)}>
+                        <Send size={12} /> Deliver
+                      </button>
+                      <button className="h-8 w-8 rounded-lg border border-mdb-border text-mdb-text-muted hover:text-mdb-primary hover:border-mdb-primary/30 flex items-center justify-center transition-colors" onClick={() => handleRescan(chest.x, chest.y, chest.z)}>
+                        <RefreshCw size={12} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-            <div className="h-px bg-mdb-surface-high my-4" />
-            <div className="flex items-center gap-2 text-lg font-bold mb-4 pb-2 border-b border-mdb-outline-variant mt-2">
-              <Package size={18} />
-              <span>Order Item</span>
-            </div>
-            <form onSubmit={handleOrder} className="p-4 bg-mdb-surface border border-mdb-surface-high">
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  placeholder="Item name (e.g. diamond_sword)"
-                  value={orderItem}
-                  onChange={(e) => setOrderItem(e.target.value)}
-                  className="flex-1"
-                  disabled={ordering}
-                />
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  value={orderCount}
-                  onChange={(e) => setOrderCount(parseInt(e.target.value) || 1)}
-                  min={1}
-                  max={64}
-                  className="flex-1"
-                  disabled={ordering}
-                />
+                ))}
               </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Player name (for tpa)"
-                  value={orderPlayer}
-                  onChange={(e) => setOrderPlayer(e.target.value)}
-                  className="flex-1"
-                  disabled={ordering}
-                />
-                <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" disabled={ordering || !orderItem.trim()}>
+            )}
+
+            <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <Package size={16} /> Order Item
+            </h3>
+            <form onSubmit={handleOrder} className="p-4 bg-mdb-surface rounded-xl border border-mdb-border space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" placeholder="Item name (e.g. diamond_sword)" value={orderItem} onChange={(e) => setOrderItem(e.target.value)} disabled={ordering} />
+                <input type="number" placeholder="Qty" value={orderCount} onChange={(e) => setOrderCount(parseInt(e.target.value) || 1)} min={1} max={64} disabled={ordering} />
+              </div>
+              <div className="flex gap-3">
+                <input type="text" placeholder="Player name (for tpa)" value={orderPlayer} onChange={(e) => setOrderPlayer(e.target.value)} className="flex-1" disabled={ordering} />
+                <button type="submit" className="h-10 px-5 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium transition-colors" disabled={ordering || !orderItem.trim()}>
                   {ordering ? 'Ordering...' : 'Order'}
                 </button>
               </div>
             </form>
-            <div className="h-px bg-mdb-surface-high my-4" />
-            <div className="flex items-center gap-2 text-lg font-bold mb-4 pb-2 border-b border-mdb-outline-variant mt-2">
-              <Truck size={18} />
-              <span>Delivery Engine Settings</span>
-            </div>
-            <div className="bg-mdb-surface-low p-3 border border-mdb-surface-high">
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Delivery Transport Mode</label>
-                  <select
-                    value={deliveryConfig.DELIVERY_MODE}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, DELIVERY_MODE: e.target.value })}
-                  >
+
+            <div className="my-6 border-t border-mdb-border" />
+
+            <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <Truck size={16} /> Delivery Engine Settings
+            </h3>
+            <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Delivery Transport Mode</label>
+                  <select value={deliveryConfig.DELIVERY_MODE} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, DELIVERY_MODE: e.target.value })}>
                     <option value="TPA">TPA (Teleport Request)</option>
                     <option value="ELYTRA">ELYTRA (Autonomous Flight)</option>
                   </select>
                 </div>
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Target Coords Mode</label>
-                  <select
-                    value={deliveryConfig.TARGET_COORD_MODE}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, TARGET_COORD_MODE: e.target.value })}
-                  >
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Target Coords Mode</label>
+                  <select value={deliveryConfig.TARGET_COORD_MODE} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, TARGET_COORD_MODE: e.target.value })}>
                     <option value="USER">USER (Direct Coordinates)</option>
                     <option value="RANDOM_REGION">RANDOM_REGION (Bounded Region)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Post-Delivery Action Waterfall</label>
-                <select
-                  value={deliveryConfig.POST_DELIVERY_ACTION}
-                  onChange={(e) => setDeliveryConfig({ ...deliveryConfig, POST_DELIVERY_ACTION: e.target.value })}
-                >
+              <div>
+                <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Post-Delivery Action Waterfall</label>
+                <select value={deliveryConfig.POST_DELIVERY_ACTION} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, POST_DELIVERY_ACTION: e.target.value })}>
                   <option value="FLY_HOME">FLY_HOME (Fly back to base coordinates)</option>
                   <option value="ECHEST_SAVE_AND_DIE">ECHEST_SAVE_AND_DIE (Stash flight gear in EChest then suicide)</option>
                   <option value="DIRECT_DIE">DIRECT_DIE (Skip stashing, immediate suicide)</option>
                 </select>
               </div>
 
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Key: Ender Chest</label>
-                  <input
-                    type="text"
-                    value={deliveryConfig.STORAGE_KEYS?.ender || 'ender'}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, ender: e.target.value } })}
-                  />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Key: Ender Chest</label>
+                  <input type="text" value={deliveryConfig.STORAGE_KEYS?.ender || 'ender'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, ender: e.target.value } })} />
                 </div>
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Key: Standard Chest</label>
-                  <input
-                    type="text"
-                    value={deliveryConfig.STORAGE_KEYS?.chest || 'chest'}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, chest: e.target.value } })}
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Key: Standard Chest</label>
+                  <input type="text" value={deliveryConfig.STORAGE_KEYS?.chest || 'chest'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, chest: e.target.value } })} />
                 </div>
-              </div>
-
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Key: Elytra</label>
-                  <input
-                    type="text"
-                    value={deliveryConfig.STORAGE_KEYS?.elytra || 'elytra'}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, elytra: e.target.value } })}
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Key: Elytra</label>
+                  <input type="text" value={deliveryConfig.STORAGE_KEYS?.elytra || 'elytra'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, elytra: e.target.value } })} />
                 </div>
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Key: Rockets</label>
-                  <input
-                    type="text"
-                    value={deliveryConfig.STORAGE_KEYS?.rocket || 'rocket'}
-                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, rocket: e.target.value } })}
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Key: Rockets</label>
+                  <input type="text" value={deliveryConfig.STORAGE_KEYS?.rocket || 'rocket'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, rocket: e.target.value } })} />
                 </div>
               </div>
 
-              <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-primary text-mdb-on-primary mt-2" onClick={handleSaveDeliveryConfig}>
+              <button className="h-9 px-4 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-xs font-medium inline-flex items-center gap-2 transition-colors" onClick={handleSaveDeliveryConfig}>
                 Save Delivery Settings
               </button>
             </div>
 
             {showScanConfig && (
-              <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end animate-fade-in" onClick={() => setShowScanConfig(false)}>
-                <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-between p-6 border-b border-mdb-surface-high">
-                    <span className="text-lg font-bold">Scan Configuration</span>
-                    <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => setShowScanConfig(false)}>X</button>
+              <div className="fixed inset-0 bg-black/60 z-50 flex items-stretch justify-end animate-fade-in" onClick={() => setShowScanConfig(false)}>
+                <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-border flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between p-6 border-b border-mdb-border">
+                    <h2 className="text-lg font-semibold">Scan Configuration</h2>
+                    <button className="h-8 w-8 rounded-lg hover:bg-mdb-surface-high flex items-center justify-center text-mdb-text-muted hover:text-mdb-text transition-colors" onClick={() => setShowScanConfig(false)}>
+                      <AlertTriangle size={16} />
+                    </button>
                   </div>
-                  <div className="flex-1 p-6 overflow-y-auto">
-                    <div className="mb-4">
-                      <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Scan Radius (blocks)</label>
+                  <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                    <div>
+                      <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Scan Radius (blocks)</label>
                       <input type="number" value={scanConfig.scanRadius} onChange={(e) => setScanConfig({...scanConfig, scanRadius: parseInt(e.target.value) || 16})} min={8} max={128} />
                     </div>
-                    <div className="mb-4">
-                      <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Auto-rescan after delivery</label>
+                    <div>
+                      <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Auto-rescan after delivery</label>
                       <select value={scanConfig.autoRescan ? 'true' : 'false'} onChange={(e) => setScanConfig({...scanConfig, autoRescan: e.target.value === 'true'})}>
                         <option value="true">Enabled</option>
                         <option value="false">Disabled</option>
                       </select>
                     </div>
-                    <div className="flex gap-2 mt-4">
-                      <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={() => setShowScanConfig(false)}>Cancel</button>
-                      <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" onClick={handleSaveScanConfig}>Save</button>
+                    <div className="flex gap-3 pt-4 border-t border-mdb-border">
+                      <button className="flex-1 h-10 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:bg-mdb-surface-high transition-colors" onClick={() => setShowScanConfig(false)}>Cancel</button>
+                      <button className="flex-1 h-10 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium transition-colors" onClick={handleSaveScanConfig}>Save</button>
                     </div>
                   </div>
                 </div>
@@ -472,21 +431,20 @@ export default function BotDetail() {
       case 'inventory':
         return (
           <div className="max-w-[800px]">
-            <div className="flex items-center gap-2 text-lg font-bold mb-6 pb-2 border-b border-mdb-outline-variant">
-              <Package size={18} />
-              <span>Inventory ({inventory.length} items)</span>
-              <div className="flex gap-2 ml-auto">
-                <button
-                  className={`inline-flex items-center gap-2 h-9 px-3 text-xs font-bold ${useWebViewer ? 'bg-mdb-primary text-mdb-on-primary' : 'text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high'}`}
-                  onClick={() => setUseWebViewer(!useWebViewer)}
-                >
-                  {useWebViewer ? 'Mineflayer Web Viewer' : 'Grid View'}
-                </button>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                <Package size={16} /> Inventory ({inventory.length} items)
+              </h2>
+              <button
+                className={`h-8 px-3 rounded-lg text-xs font-medium transition-colors ${useWebViewer ? 'bg-mdb-primary text-white' : 'border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high'}`}
+                onClick={() => setUseWebViewer(!useWebViewer)}
+              >
+                {useWebViewer ? 'Mineflayer Web Viewer' : 'Grid View'}
+              </button>
             </div>
 
             {useWebViewer ? (
-              <div className="w-full h-[520px] border border-mdb-surface-high rounded-[4px] overflow-hidden">
+              <div className="w-full h-[520px] rounded-xl border border-mdb-border overflow-hidden">
                 <iframe
                   src={`http://${window.location.hostname}:3001`}
                   title="Mineflayer Live Web Inventory"
@@ -514,65 +472,74 @@ export default function BotDetail() {
         );
       case 'settings':
         return (
-          <div className="max-w-[800px]">
-            <div className="flex items-center gap-2 text-lg font-bold mb-6 pb-2 border-b border-mdb-outline-variant">
-              <Settings size={18} />
-              <span>Bot Settings</span>
-            </div>
-            <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
-              <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Information</div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Bot Name</label>
-                <input type="text" value={bot.name} readOnly className="text-mdb-text-muted" />
-              </div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Username</label>
-                <input type="text" value={bot.username} readOnly className="text-mdb-text-muted" />
-              </div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Swarm</label>
-                <input type="text" value={bot.swarmId || 'None'} readOnly className="text-mdb-text-muted" />
-              </div>
-            </div>
-            <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
-              <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Server Connection</div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Server IP / Host</label>
-                <input type="text" value={bot.serverHost || ''} readOnly className="text-mdb-text-muted" placeholder="Not configured" />
-              </div>
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Port</label>
-                  <input type="text" value={bot.serverPort || 25565} readOnly className="text-mdb-text-muted" />
+          <div className="max-w-[800px] space-y-6">
+            <h2 className="text-base font-semibold flex items-center gap-2">
+              <Settings size={16} /> Bot Settings
+            </h2>
+
+            <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
+              <h3 className="text-sm font-medium mb-4 pb-3 border-b border-mdb-border">Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Bot Name</label>
+                  <input type="text" value={bot.name} readOnly className="text-mdb-text-muted" />
                 </div>
-                <div className="flex-1">
-                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Version</label>
-                  <input type="text" value={bot.serverVersion || 'auto'} readOnly className="text-mdb-text-muted" />
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Username</label>
+                  <input type="text" value={bot.username} readOnly className="text-mdb-text-muted" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Swarm</label>
+                  <input type="text" value={bot.swarmId || 'None'} readOnly className="text-mdb-text-muted" />
                 </div>
               </div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Auth Mode</label>
-                <input type="text" value={bot.authMode === 'OFFLINE' ? 'Offline (Cracked)' : 'Online (Premium)'} readOnly className="text-mdb-text-muted" />
+            </div>
+
+            <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
+              <h3 className="text-sm font-medium mb-4 pb-3 border-b border-mdb-border">Server Connection</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Server IP / Host</label>
+                  <input type="text" value={bot.serverHost || ''} readOnly className="text-mdb-text-muted" placeholder="Not configured" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Port</label>
+                    <input type="text" value={bot.serverPort || 25565} readOnly className="text-mdb-text-muted" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Version</label>
+                    <input type="text" value={bot.serverVersion || 'auto'} readOnly className="text-mdb-text-muted" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Auth Mode</label>
+                  <input type="text" value={bot.authMode === 'OFFLINE' ? 'Offline (Cracked)' : 'Online (Premium)'} readOnly className="text-mdb-text-muted" />
+                </div>
               </div>
             </div>
-            <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
-              <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Scan Settings</div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Scan Radius</label>
-                <input type="number" value={scanConfig.scanRadius} onChange={(e) => setScanConfig({...scanConfig, scanRadius: parseInt(e.target.value) || 16})} min={8} max={128} />
+
+            <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
+              <h3 className="text-sm font-medium mb-4 pb-3 border-b border-mdb-border">Scan Settings</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Scan Radius</label>
+                  <input type="number" value={scanConfig.scanRadius} onChange={(e) => setScanConfig({...scanConfig, scanRadius: parseInt(e.target.value) || 16})} min={8} max={128} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Auto-rescan</label>
+                  <select value={scanConfig.autoRescan ? 'true' : 'false'} onChange={(e) => setScanConfig({...scanConfig, autoRescan: e.target.value === 'true'})}>
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
+                <button className="h-10 px-5 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium transition-colors" onClick={handleSaveScanConfig}>Save Scan Settings</button>
               </div>
-              <div className="mb-4">
-                <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Auto-rescan</label>
-                <select value={scanConfig.autoRescan ? 'true' : 'false'} onChange={(e) => setScanConfig({...scanConfig, autoRescan: e.target.value === 'true'})}>
-                  <option value="true">Enabled</option>
-                  <option value="false">Disabled</option>
-                </select>
-              </div>
-              <button className="inline-flex items-center gap-2 px-5 h-12 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-2" onClick={handleSaveScanConfig}>Save Scan Settings</button>
             </div>
-            <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
-              <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant">Danger Zone</div>
-              <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10" onClick={handleStop} disabled={!isOnline}>
+
+            <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
+              <h3 className="text-sm font-medium mb-4 pb-3 border-b border-mdb-border">Danger Zone</h3>
+              <button className="h-10 px-5 rounded-lg border border-red-400/30 text-red-400 text-sm font-medium inline-flex items-center gap-2 hover:bg-red-400/10 transition-colors" onClick={handleStop} disabled={!isOnline}>
                 <Square size={14} /> Force Stop Bot
               </button>
             </div>
@@ -581,16 +548,15 @@ export default function BotDetail() {
       case 'logs':
         return (
           <div className="max-w-[800px]">
-            <div className="flex items-center gap-2 text-lg font-bold mb-6 pb-2 border-b border-mdb-outline-variant">
-              <AlertTriangle size={18} />
-              <span>Logs ({logs.length})</span>
-            </div>
-            <div className="max-h-[200px] overflow-y-auto bg-mdb-bg border border-mdb-surface-high p-2">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <AlertTriangle size={16} /> Logs ({logs.length})
+            </h2>
+            <div className="max-h-[500px] overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-3 font-mono text-xs space-y-0.5">
               {logs.length === 0 ? (
-                <div className="text-mdb-text-muted text-sm">No logs available</div>
+                <div className="text-mdb-text-muted py-8 text-center">No logs available</div>
               ) : (
                 logs.slice(0, 100).map((log, i) => (
-                  <div key={i} className="log-line font-mono text-xs leading-relaxed text-mdb-text-secondary py-0.5 border-b border-mdb-outline-variant hover:bg-mdb-surface-high">
+                  <div key={i} className="py-0.5 hover:bg-mdb-surface-high rounded px-1 -mx-1">
                     <span className="text-mdb-text-muted mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     {log.message}
                   </div>
@@ -607,51 +573,62 @@ export default function BotDetail() {
   return (
     <div className="flex h-full gap-0">
       {/* Desktop Sidebar */}
-      <div className="w-[280px] bg-mdb-surface border-r border-mdb-outline-variant flex flex-col shrink-0 max-md:!hidden">
-        <div className="flex items-center gap-2 p-4 border-b border-mdb-outline-variant">
-          <button className="inline-flex items-center justify-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => navigate(-1)} aria-label="Go back">
-            <ArrowLeft size={18} />
+      <div className="w-[280px] bg-mdb-surface border-r border-mdb-border flex flex-col shrink-0 max-md:hidden">
+        <div className="flex items-center gap-2 p-4 border-b border-mdb-border">
+          <button className="h-8 w-8 rounded-lg hover:bg-mdb-surface-high flex items-center justify-center text-mdb-text-muted hover:text-mdb-text transition-colors" onClick={() => navigate(-1)} aria-label="Go back">
+            <ArrowLeft size={16} />
           </button>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-base truncate">{bot.name}</div>
+            <div className="font-medium text-sm truncate">{bot.name}</div>
             <div className="font-mono text-xs text-mdb-text-muted">{bot.username}</div>
           </div>
         </div>
-        <div className="flex items-center justify-between py-2 px-4 border-b border-mdb-outline-variant">
+        <div className="flex items-center justify-between py-2.5 px-4 border-b border-mdb-border">
           <StatusBadge status={status} />
           {isOnline ? (
-            <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-working text-mdb-surface-lowest" onClick={handleStop}><Square size={14} /> Stop</button>
+            <button className="h-7 px-2.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium inline-flex items-center gap-1 hover:bg-red-500/20 transition-colors" onClick={handleStop}><Square size={12} /> Stop</button>
           ) : (
-            <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-online text-mdb-surface-lowest" onClick={handleStart}><Play size={14} /> Start</button>
+            <button className="h-7 px-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium inline-flex items-center gap-1 hover:bg-emerald-500/20 transition-colors" onClick={handleStart}><Play size={12} /> Start</button>
           )}
         </div>
         {isOnline && (
-          <div className="py-2 px-4 border-b border-mdb-outline-variant">
+          <div className="py-2.5 px-4 border-b border-mdb-border space-y-1.5">
             {bot.liveStatus?.health != null && (
-              <div className="flex items-center gap-2 mb-1"><span className="font-mono text-[11px] text-mdb-text-muted uppercase tracking-wider min-w-[32px]">HP</span><HealthBar value={bot.liveStatus.health} /></div>
+              <HealthBar value={bot.liveStatus.health} />
             )}
             {bot.liveStatus?.food != null && (
-              <div className="flex items-center gap-2 mb-1"><span className="font-mono text-[11px] text-mdb-text-muted uppercase tracking-wider min-w-[32px]">Food</span><FoodBar value={bot.liveStatus.food} /></div>
+              <FoodBar value={bot.liveStatus.food} />
             )}
             {bot.liveStatus?.position && (
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] text-mdb-text-muted uppercase tracking-wider min-w-[32px]">Pos</span>
-                <span className="font-mono text-xs text-[12px]">{Math.round(bot.liveStatus.position.x)}, {Math.round(bot.liveStatus.position.y)}, {Math.round(bot.liveStatus.position.z)}</span>
+              <div className="text-xs text-mdb-text-muted font-mono">
+                {Math.round(bot.liveStatus.position.x)}, {Math.round(bot.liveStatus.position.y)}, {Math.round(bot.liveStatus.position.z)}
               </div>
             )}
           </div>
         )}
         <nav className="flex-1 py-2 overflow-y-auto">
           {BOT_NAV.map(({ id, label, icon: Icon }) => (
-            <button key={id} className={`flex items-center gap-2 w-full py-2 px-4 bg-transparent border-none text-sm text-mdb-text-secondary cursor-pointer text-left transition-colors hover:bg-mdb-surface-high hover:text-mdb-primary ${activeTab === id ? 'bg-mdb-surface-high text-mdb-primary font-semibold' : ''}`} onClick={() => setActiveTab(id)}>
-              <Icon size={18} />
+            <button
+              key={id}
+              className={`flex items-center gap-2.5 w-full py-2 px-4 text-sm transition-colors ${
+                activeTab === id
+                  ? 'bg-mdb-surface-high text-mdb-primary font-medium'
+                  : 'text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high'
+              }`}
+              onClick={() => setActiveTab(id)}
+            >
+              <Icon size={16} />
               <span>{label}</span>
-              {id === 'chests' && chests.length > 0 && <span className="ml-auto bg-mdb-surface-highest text-mdb-text-secondary text-[11px] font-mono px-1.5 min-w-[20px] text-center">{chests.length}</span>}
+              {id === 'chests' && chests.length > 0 && (
+                <span className="ml-auto bg-mdb-primary/10 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
+              )}
             </button>
           ))}
         </nav>
-        <div className="py-2 px-4 border-t border-mdb-outline-variant">
-          <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={loadBotData}><RefreshCw size={16} /> Refresh</button>
+        <div className="py-2 px-4 border-t border-mdb-border">
+          <button className="h-8 w-full rounded-lg hover:bg-mdb-surface-high text-xs font-medium text-mdb-text-secondary hover:text-mdb-text inline-flex items-center justify-center gap-1.5 transition-colors" onClick={loadBotData}>
+            <RefreshCw size={14} /> Refresh
+          </button>
         </div>
       </div>
 
@@ -671,12 +648,18 @@ export default function BotDetail() {
       )}
 
       {/* Mobile Bottom Tab Bar */}
-      <div className="hidden max-md:flex fixed bottom-0 left-0 right-0 h-16 bg-mdb-surface border-t border-mdb-outline-variant z-[100] items-center justify-around">
+      <div className="hidden max-md:flex fixed bottom-0 left-0 right-0 h-14 bg-mdb-surface border-t border-mdb-border z-50 items-center justify-around">
         {BOT_NAV.map(({ id, label, icon: Icon }) => (
-          <button key={id} className={`flex flex-col items-center gap-1 bg-transparent border-none text-mdb-text-muted cursor-pointer py-1 px-2 min-w-12 min-h-12 text-[11px] transition-colors relative ${activeTab === id ? 'text-mdb-primary' : 'hover:text-mdb-text'}`} onClick={() => setActiveTab(id)}>
-            <Icon size={20} />
+          <button
+            key={id}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 min-w-[52px] text-[10px] transition-colors relative ${
+              activeTab === id ? 'text-mdb-primary' : 'text-mdb-text-muted'
+            }`}
+            onClick={() => setActiveTab(id)}
+          >
+            <Icon size={18} />
             <span>{label}</span>
-            {activeTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-mdb-primary" />}
+            {activeTab === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-mdb-primary rounded-full" />}
           </button>
         ))}
       </div>

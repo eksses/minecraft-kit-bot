@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Gamepad2 } from 'lucide-react';
+import { Gamepad2, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       await login(username, password);
       navigate('/fleet', { replace: true });
@@ -28,48 +28,61 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-mdb-bg">
-      <div className="w-full max-w-[400px] bg-mdb-surface border border-mdb-surface-high p-8">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Gamepad2 size={28} className="text-mdb-primary text-2xl" />
-        </div>
-        <h1 className="text-2xl font-bold text-center text-mdb-text">MDB Platform</h1>
-        <p className="text-sm text-mdb-text-muted text-center mt-1 mb-8">Minecraft Delivery Bot Management</p>
-        
-        <form onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-mdb-error/10 border border-mdb-error rounded-none p-2 px-4 mb-4 text-mdb-error text-[13px]">
-              {error}
+      <div className="w-full max-w-[400px]">
+        <div className="bg-mdb-surface rounded-xl border border-mdb-border p-8 shadow-xl">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-mdb-primary/10 border border-mdb-primary/20 flex items-center justify-center">
+              <Gamepad2 size={24} className="text-mdb-primary" />
             </div>
-          )}
-          
-          <div className="mb-4">
-            <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              placeholder="Enter username"
-              autoComplete="username"
-            />
           </div>
-          
-          <div className="mb-4">
-            <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter password"
-              autoComplete="current-password"
-            />
-          </div>
-          
-          <button type="submit" className="inline-flex items-center justify-center gap-2 w-full h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+          <h1 className="text-xl font-bold text-center text-mdb-text mb-1">MDB Platform</h1>
+          <p className="text-sm text-mdb-text-muted text-center mb-8">Minecraft Delivery Bot Management</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Enter username"
+                autoComplete="username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter password"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full h-11 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 mt-6"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Logging in...
+                </>
+              ) : 'Login'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

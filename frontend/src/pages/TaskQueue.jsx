@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
 import { StatusBadge } from '../components/ui/StatusComponents';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ListTodo, XCircle } from 'lucide-react';
 
 const filters = ['ALL', 'PENDING', 'LOCKED', 'IN_PROGRESS', 'COMPLETED', 'FAILED'];
 
@@ -53,51 +53,89 @@ export default function TaskQueue() {
           <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Task Queue</h1>
           <p className="text-sm text-mdb-text-muted mt-0.5">Monitor and manage delivery tasks</p>
         </div>
-        <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={loadTasks} aria-label="Refresh">
+        <button
+          className="h-9 px-3 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors inline-flex items-center gap-2"
+          onClick={loadTasks}
+        >
           <RefreshCw size={16} />
         </button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 -webkit-overflow-scrolling-touch [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1.5 bg-mdb-surface rounded-xl p-1 border border-mdb-border mb-6 overflow-x-auto">
         {filters.map((s) => (
           <button
             key={s}
-            className={`inline-flex items-center gap-1.5 h-9 px-3.5 border text-[13px] font-medium whitespace-nowrap cursor-pointer transition-all ${filter === s ? 'bg-mdb-primary text-mdb-on-primary border-mdb-primary' : 'bg-mdb-surface border-mdb-surface-high text-mdb-text-secondary hover:border-mdb-text-muted'}`}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              filter === s
+                ? 'bg-mdb-primary text-white'
+                : 'text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high'
+            }`}
             onClick={() => setFilter(s)}
           >
-            {s}
-            {s !== 'ALL' && <span className="font-mono text-[11px] font-medium opacity-70">({tasks.filter(t => t.status === s).length})</span>}
+            {s.replace('_', ' ')}
+            {s !== 'ALL' && <span className="ml-1 opacity-70">({tasks.filter(t => t.status === s).length})</span>}
           </button>
         ))}
       </div>
 
       {filteredTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
-          <div className="text-lg font-semibold mb-2">No tasks</div>
-          <div className="text-sm text-mdb-text-muted mb-4">No tasks match the current filter</div>
+        <div className="flex flex-col items-center justify-center py-20 text-mdb-text-muted">
+          <ListTodo size={48} className="mb-4 opacity-30" />
+          <div className="text-lg font-medium mb-1 text-mdb-text">No tasks</div>
+          <div className="text-sm">No tasks match the current filter</div>
         </div>
       ) : (
-        <div>
+        <div className="space-y-2">
           {filteredTasks.map((task) => (
-            <div key={task.id} className="bg-mdb-surface border border-mdb-surface-high p-4 mb-2">
-              <div className="flex justify-between items-center mb-2">
+            <div key={task.id} className="bg-mdb-surface rounded-xl border border-mdb-border p-4">
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <div className="font-semibold text-sm">{task.type}</div>
-                  <div className="text-[13px] text-mdb-text-muted">{new Date(task.createdAt).toLocaleString()}</div>
+                  <div className="font-medium text-sm text-mdb-text">{task.type}</div>
+                  <div className="text-xs text-mdb-text-muted mt-0.5">{new Date(task.createdAt).toLocaleString()}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={task.status} />
                   {(task.status === 'PENDING' || task.status === 'LOCKED') && (
-                    <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10" onClick={() => handleCancel(task.id)}>Cancel</button>
+                    <button
+                      className="h-7 px-2.5 rounded-lg border border-red-400/30 text-red-400 text-xs font-medium inline-flex items-center gap-1 hover:bg-red-400/10 transition-colors"
+                      onClick={() => handleCancel(task.id)}
+                    >
+                      <XCircle size={12} /> Cancel
+                    </button>
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-1">
-                {task.assignedBotId && <div className="flex justify-between text-[13px]"><span className="text-mdb-text-muted">Bot</span><span className="text-mdb-text">{task.assignedBotId}</span></div>}
-                {task.swarmId && <div className="flex justify-between text-[13px]"><span className="text-mdb-text-muted">Swarm</span><span className="text-mdb-text">{task.swarmId}</span></div>}
-                {task.details && <div className="flex justify-between text-[13px]"><span className="text-mdb-text-muted">Details</span><span className="text-mdb-text font-mono text-xs">{typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}</span></div>}
-                {task.errorMessage && <div className="flex justify-between text-[13px]"><span className="text-mdb-text-muted">Error</span><span className="text-mdb-status-error">{task.errorMessage}</span></div>}
-                {task.retryCount > 0 && <div className="flex justify-between text-[13px]"><span className="text-mdb-text-muted">Retries</span><span className="text-mdb-text">{task.retryCount}</span></div>}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                {task.assignedBotId && (
+                  <div className="flex justify-between">
+                    <span className="text-mdb-text-muted">Bot</span>
+                    <span className="text-mdb-text-secondary font-mono">{task.assignedBotId}</span>
+                  </div>
+                )}
+                {task.swarmId && (
+                  <div className="flex justify-between">
+                    <span className="text-mdb-text-muted">Swarm</span>
+                    <span className="text-mdb-text-secondary font-mono">{task.swarmId}</span>
+                  </div>
+                )}
+                {task.details && (
+                  <div className="col-span-2 flex justify-between">
+                    <span className="text-mdb-text-muted">Details</span>
+                    <span className="text-mdb-text-secondary font-mono truncate max-w-[60%] text-right">{typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}</span>
+                  </div>
+                )}
+                {task.errorMessage && (
+                  <div className="col-span-2 flex justify-between">
+                    <span className="text-mdb-text-muted">Error</span>
+                    <span className="text-red-400 truncate max-w-[60%] text-right">{task.errorMessage}</span>
+                  </div>
+                )}
+                {task.retryCount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-mdb-text-muted">Retries</span>
+                    <span className="text-mdb-text-secondary">{task.retryCount}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
