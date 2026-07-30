@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
-import { X, Search, Copy, Check, ChevronRight } from 'lucide-react';
+import { X, Search, Copy, Check, ChevronRight, ChevronDown } from 'lucide-react';
 import { HealthBar, FoodBar, LiveStatusDot, StatusBadge } from './StatusComponents';
 
 /* ─── Button ─── */
@@ -202,8 +202,8 @@ export function Badge({ variant = 'default', size = 'sm', dot, className = '', c
   );
 }
 
-/* ─── StatusBadge ─── */
-export { StatusBadge };
+/* ─── StatusBadge & LiveStatusDot ─── */
+export { StatusBadge, LiveStatusDot };
 
 /* ─── Tabs ─── */
 export function Tabs({ items = [], value, onChange, variant = 'underline', className = '' }) {
@@ -881,5 +881,25 @@ export function KeyCombo({ keys = [], className = '' }) {
         </kbd>
       ))}
     </span>
+  );
+}
+
+/* ─── SettingsSection ─── */
+export function SettingsSection({ title, variant = 'default', defaultOpen = true, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const isDanger = variant === 'danger';
+
+  return (
+    <Card className="my-6" padding="none">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`flex items-center justify-between w-full px-5 py-4 text-left cursor-pointer select-none transition-colors hover:bg-mdb-surface-high/50 ${open ? 'border-b border-mdb-border' : ''}`}
+      >
+        <h3 className={`text-sm font-semibold uppercase tracking-wider ${isDanger ? 'text-mdb-error' : 'text-mdb-text-muted'}`}>{title}</h3>
+        {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}
+      </button>
+      {open && <div className="p-5">{children}</div>}
+    </Card>
   );
 }

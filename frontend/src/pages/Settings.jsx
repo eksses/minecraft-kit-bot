@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
-import { Button, Card, CardHeader, Input, Select, Tabs, Modal } from '../components/ui';
+import { Button, Card, CardHeader, Input, Select, Tabs, Modal, SettingsSection, ConfirmAction } from '../components/ui';
 
 const TAB_ITEMS = [
   { id: 'general', label: 'General' },
@@ -105,7 +105,6 @@ export default function Settings() {
   };
 
   const handleDeleteWhitelist = async (playerName) => {
-    if (!confirm(`Remove ${playerName} from whitelist?`)) return;
     try {
       await api.fleet.deleteWhitelist(playerName);
       setWhitelist(await api.fleet.getWhitelist());
@@ -129,7 +128,6 @@ export default function Settings() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this user?')) return;
     try {
       await api.fleet.deleteUser(id);
       setUsers(await api.fleet.getUsers());
@@ -320,11 +318,8 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
           ]}
         />
 
-        <details className="border-t border-mdb-border my-6 pt-4">
-          <summary className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted cursor-pointer select-none hover:text-mdb-text transition-colors">
-            Advanced Settings
-          </summary>
-          <div className="mt-4 space-y-5">
+        <SettingsSection title="Advanced Delivery Settings" defaultOpen={false}>
+          <div className="space-y-5">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Storage Keys</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -405,7 +400,7 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
               </div>
             </div>
           </div>
-        </details>
+        </SettingsSection>
 
         <div className="pt-2">
           <Button variant="primary" size="lg" loading={saving} onClick={onSave}>
@@ -449,13 +444,16 @@ function UsersTab({ users, onAdd, onDelete, showAdd, setShowAdd, form, setForm }
                   </td>
                   <td className="text-mdb-text-muted text-sm px-5 h-12">{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td className="text-right px-5 h-12">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => onDelete(u.id)}
+                    <ConfirmAction
+                      title="Delete User"
+                      message={`Are you sure you want to delete user "${u.username}"?`}
+                      confirmLabel="Delete"
+                      onConfirm={() => onDelete(u.id)}
                     >
-                      Delete
-                    </Button>
+                      <Button variant="danger" size="sm">
+                        Delete
+                      </Button>
+                    </ConfirmAction>
                   </td>
                 </tr>
               ))}
@@ -571,13 +569,19 @@ function WhitelistTab({ whitelist, onAdd, onDelete, showAdd, setShowAdd, editing
                       >
                         Edit Role
                       </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => onDelete(p.playerName)}
+                      <ConfirmAction
+                        title="Remove Player"
+                        message={`Remove ${p.playerName} from whitelist?`}
+                        confirmLabel="Delete"
+                        onConfirm={() => onDelete(p.playerName)}
                       >
-                        Delete
-                      </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                        >
+                          Delete
+                        </Button>
+                      </ConfirmAction>
                     </td>
                   </tr>
                 ))

@@ -292,6 +292,7 @@ export const pluginStoreAPI = {
   getInstalled: () => request('/plugin-store/installed'),
   getRepos: () => request('/plugin-store/repos'),
   addRepo: (name, url) => request('/plugin-store/repos', { method: 'POST', body: JSON.stringify({ name, url }) }),
+  updateRepo: (id, data) => request(`/plugin-store/repos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   removeRepo: (id) => request(`/plugin-store/repos/${id}`, { method: 'DELETE' }),
   install: (id, downloadUrl) => request(`/plugin-store/install/${id}`, { method: 'POST', body: JSON.stringify({ downloadUrl }) }),
   uninstall: (id) => request(`/plugin-store/uninstall/${id}`, { method: 'DELETE' }),
