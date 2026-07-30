@@ -245,6 +245,10 @@ parentPort.on('message', (msg) => {
     scanAbort = true;
   }
 
+  if (msg.type === 'delivery_config_update') {
+    deliveryConfig = { ...deliveryConfig, ...msg.data };
+  }
+
   if (msg.type === 'stop') {
     if (bot) {
       bot.quit('Stopped by operator');

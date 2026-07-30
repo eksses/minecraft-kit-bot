@@ -4,11 +4,7 @@ import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { sessionMiddleware } from './middleware/session.js';
 import { authRoutes } from './routes/auth.js';
-import { botRoutes } from './routes/bot.js';
 import { chestRoutes } from './routes/chests.js';
-import { kitRoutes } from './routes/kits.js';
-import { configRoutes } from './routes/config.js';
-import { integrationRoutes } from './routes/integrations.js';
 import { fleetRoutes } from './routes/fleet.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { pluginUIRoutes } from './routes/plugin-ui.js';
@@ -38,15 +34,8 @@ export function createApp() {
   
   app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: Date.now() }));
   
-  // Legacy routes (keep for backward compatibility)
   app.route('/api/auth', authRoutes);
-  app.route('/api/bot', botRoutes);
   app.route('/api/chests', chestRoutes);
-  app.route('/api/kits', kitRoutes);
-  app.route('/api/config', configRoutes);
-  app.route('/api/integrations', integrationRoutes);
-  
-  // New fleet management routes
   app.route('/api/fleet', fleetRoutes);
   
   // Plugin management routes

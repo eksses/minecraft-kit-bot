@@ -1,7 +1,5 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/session.js';
-import { chestService } from '../services/chest.js';
-import { botService } from '../services/bot.js';
 import { botLifecycleManager } from '../services/botLifecycle.js';
 import { db, schema } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
@@ -63,22 +61,14 @@ chestRoutes.post('/:botId/scan', requireAuth, async (c) => {
     return c.json({ error: 'Bot not found or access denied' }, 404);
   }
 
-  // Check fleet bot instance first, then fall back to legacy botService
   const fleetBot = botLifecycleManager.getBot(botId);
   
-  if (fleetBot) {
-    // Fleet bot is running — send scan command through worker
-    if (fleetBot.status === 'OFFLINE' || fleetBot.status === 'ERROR') {
-      return c.json({ error: 'Bot is not connected to server' }, 400);
-    }
-  } else {
-    // Check legacy botService
-    if (!botService.bot || !botService.connected) {
-      return c.json({ error: 'Bot is not connected to server' }, 400);
-    }
-    if (botService.isScanning()) {
-      return c.json({ error: 'Scan already in progress' }, 409);
-    }
+  if (!fleetBot) {
+    return c.json({ error: 'Bot is not running' }, 400);
+  }
+
+  if (fleetBot.status === 'OFFLINE' || fleetBot.status === 'ERROR') {
+    return c.json({ error: 'Bot is not connected to server' }, 400);
   }
 
   const body = await c.req.json();
@@ -94,38 +84,24 @@ chestRoutes.post('/:botId/scan', requireAuth, async (c) => {
   });
 
   try {
-    const options = {
-      scanMarkedOnly: scanConfig?.scanMarkedEnabled || false,
-    };
-
-    if (fleetBot) {
-      // Ensure scan_complete listener is wired
-      if (!fleetBot._scanWired) {
-        fleetBot._scanWired = true;
-        const { randomUUID } = await import('crypto');
-        const { db: dbRef, schema: schemaRef } = await import('../db/index.js');
-        
-        fleetBot.on('scan_complete', async (scanData) => {
-          try {
-            const { saveScanResultsToDb } = await import('../utils/chest-helpers.js');
-            await saveScanResultsToDb(fleetBot, scanData, scanRadius);
-            console.log('[Scan] Saved & de-duplicated ' + scanData.chests.length + ' chests for bot ' + fleetBot.name);
-          } catch (err) {
-            console.error('[Scan] Error saving scan results:', err.message);
-          }
-        });
-        
-        fleetBot.on('scan_error', (err) => {
-          console.error('[Scan] Bot ' + fleetBot.name + ' scan error:', err.error);
-        });
-      }
+    if (!fleetBot._scanWired) {
+      fleetBot._scanWired = true;
       
-      fleetBot.startScan(scanRadius, scanConfig?.scanMarkedEnabled || false);
-    } else {
-      botService.startScan(scanRadius, options).catch((err) => {
-        console.error(`Scan failed for bot ${botId}:`, err.message);
+      fleetBot.on('scan_complete', async (scanData) => {
+        try {
+          const { saveScanResultsToDb } = await import('../utils/chest-helpers.js');
+          await saveScanResultsToDb(fleetBot, scanData, scanRadius);
+        } catch (err) {
+          console.error('[Scan] Error saving scan results:', err.message);
+        }
+      });
+      
+      fleetBot.on('scan_error', (err) => {
+        console.error('[Scan] Bot ' + fleetBot.name + ' scan error:', err.error);
       });
     }
+    
+    fleetBot.startScan(scanRadius, scanConfig?.scanMarkedEnabled || false);
 
     return c.json({ success: true, message: 'Scan started', radius: scanRadius });
   } catch (error) {
@@ -161,14 +137,9 @@ chestRoutes.get('/:botId/scan/status', requireAuth, async (c) => {
     });
   }
   
-  const scanning = botService.isScanning();
-  return c.json({ running: scanning });
+  return c.json({ running: false });
 });
 
-/**
- * POST /:botId/scan/abort — Abort current scan for a bot
- * WR-08: Currently aborts the singleton scanner (global, not per-bot).
- */
 chestRoutes.post('/:botId/scan/abort', requireAuth, async (c) => {
   const botId = c.req.param('botId');
   const session = c.get('session');
@@ -178,7 +149,10 @@ chestRoutes.post('/:botId/scan/abort', requireAuth, async (c) => {
     return c.json({ error: 'Bot not found or access denied' }, 404);
   }
 
-  botService.abortScan();
+  const fleetBot = botLifecycleManager.getBot(botId);
+  if (fleetBot) {
+    fleetBot.abortScan();
+  }
   return c.json({ success: true, message: 'Scan abort requested' });
 });
 
@@ -377,89 +351,5 @@ chestRoutes.post('/:botId', requireAuth, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: error.message }, 400);
-  }
-});
-
-// ============================================================
-// Legacy Endpoints (backward compatibility)
-// NOTE: These operate on a JSON file without per-user ownership.
-// Prefer bot-scoped endpoints (/:botId) for production use.
-// ============================================================
-
-chestRoutes.get('/', requireAuth, (c) => {
-  return c.json(chestService.getAll());
-});
-
-chestRoutes.post('/', requireAuth, async (c) => {
-  const body = await c.req.json();
-  const { name, x, y, z, item } = body;
-  
-  if (!name || !item) {
-    return c.json({ error: 'Missing required fields (name, item)' }, 400);
-  }
-  
-  const coordCheck = validateCoordinates(x, y, z);
-  if (!coordCheck.valid) {
-    return c.json({ error: coordCheck.error }, 400);
-  }
-  
-  try {
-    chestService.saveChest(name, { x: coordCheck.x, y: coordCheck.y, z: coordCheck.z, item });
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error.message }, 400);
-  }
-});
-
-chestRoutes.put('/:name', requireAuth, async (c) => {
-  const name = c.req.param('name');
-  const session = c.get('session');
-  const body = await c.req.json();
-  
-  // Basic ownership check (WR-05): if chest has userId, verify it matches
-  const existing = chestService.get(name);
-  if (!existing) {
-    return c.json({ error: 'Chest not found' }, 404);
-  }
-  if (existing.userId && existing.userId !== session.id) {
-    return c.json({ error: 'Chest not found or access denied' }, 404);
-  }
-  
-  if (body.x !== undefined || body.y !== undefined || body.z !== undefined) {
-    const coordCheck = validateCoordinates(body.x, body.y, body.z);
-    if (!coordCheck.valid) {
-      return c.json({ error: coordCheck.error }, 400);
-    }
-    body.x = coordCheck.x;
-    body.y = coordCheck.y;
-    body.z = coordCheck.z;
-  }
-  
-  try {
-    chestService.updateChest(name, body);
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error.message }, 404);
-  }
-});
-
-chestRoutes.delete('/:name', requireAuth, async (c) => {
-  const name = c.req.param('name');
-  const session = c.get('session');
-  
-  // Basic ownership check (WR-05): if chest has userId, verify it matches
-  const existing = chestService.get(name);
-  if (!existing) {
-    return c.json({ error: 'Chest not found' }, 404);
-  }
-  if (existing.userId && existing.userId !== session.id) {
-    return c.json({ error: 'Chest not found or access denied' }, 404);
-  }
-  
-  try {
-    chestService.deleteChest(name);
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: error.message }, 404);
   }
 });

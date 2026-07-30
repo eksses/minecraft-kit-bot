@@ -32,29 +32,18 @@ export const authAPI = {
 };
 
 // ============================================================
-// Legacy Bot API (for backward compatibility)
+// Bot API (via fleet)
 // ============================================================
 export const botAPI = {
-  getStatus: () => request('/bot/status'),
-  leave: () => request('/bot/leave', { method: 'POST' }),
-  restart: () => request('/bot/restart', { method: 'POST' }),
+  getStatus: () => request('/fleet/dashboard'),
 };
 
 // ============================================================
-// Chest API (Legacy + Bot-Scoped)
+// Chest API (Bot-Scoped)
 // ============================================================
 export const chestAPI = {
-  // Legacy endpoints
-  getAll: () => request('/chests'),
-  create: (data) => request('/chests', { method: 'POST', body: JSON.stringify(data) }),
-  update: (name, data) => request(`/chests/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (name) => request(`/chests/${name}`, { method: 'DELETE' }),
-
-  // Bot-scoped chest operations (D-14a)
   listForBot: (botId) => request(`/chests/${botId}`),
   createForBot: (botId, data) => request(`/chests/${botId}`, { method: 'POST', body: JSON.stringify(data) }),
-
-  // Scan endpoints — all scoped by botId (D-01, D-02)
   triggerScan: (botId, radius = 32) =>
     request(`/chests/${botId}/scan`, {
       method: 'POST',
@@ -81,20 +70,11 @@ export const chestAPI = {
 };
 
 // ============================================================
-// Legacy Kit API
-// ============================================================
-export const kitAPI = {
-  order: (chestName, amount, player) => request('/kits/order', { method: 'POST', body: JSON.stringify({ chestName, amount, player }) }),
-  available: () => request('/kits/available'),
-  history: () => request('/kits/history'),
-};
-
-// ============================================================
-// Config API
+// Config API (via fleet delivery-config)
 // ============================================================
 export const configAPI = {
-  get: () => request('/config'),
-  update: (data) => request('/config', { method: 'POST', body: JSON.stringify(data) }),
+  get: () => request('/fleet/delivery-config'),
+  update: (data) => request('/fleet/delivery-config', { method: 'POST', body: JSON.stringify(data) }),
 };
 
 // ============================================================
@@ -294,7 +274,6 @@ export const api = {
   auth: authAPI,
   bot: botAPI,
   chests: chestAPI,
-  kits: kitAPI,
   config: configAPI,
   fleet: fleetAPI,
   pluginStore: pluginStoreAPI,
