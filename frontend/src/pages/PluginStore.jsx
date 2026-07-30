@@ -221,7 +221,7 @@ export default function PluginStore() {
                           {plugin.description}
                         </p>
                         {plugin.tags && (
-                          <div className="flex gap-1.5 flex-wrap mt-3">
+                          <div className="flex gap-2 flex-wrap mt-3">
                             {plugin.tags.map((tag) => (
                               <Badge
                                 key={tag}
@@ -360,7 +360,7 @@ export default function PluginStore() {
           <Card padding="none">
             <div className="divide-y divide-mdb-border">
               {repos.map((repo) => (
-                <div key={repo.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-3 hover:bg-mdb-surface-high/40 transition-colors">
+                <div key={repo.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4 hover:bg-mdb-surface-high/40 transition-colors">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm text-mdb-text">{repo.name}</span>
@@ -428,7 +428,7 @@ export default function PluginStore() {
             placeholder="https://plugins.example.com/plugins.json"
             required
           />
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <Button
               variant="secondary"
               type="button"

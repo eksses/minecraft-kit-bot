@@ -45,7 +45,7 @@ export default function Sidebar({ currentPath, user, onLogout }) {
             key={path}
             to={path}
             className={({ isActive }) =>
-              `flex items-center gap-3 min-h-[44px] h-11 mx-2 px-3.5 rounded-lg text-sm font-medium no-underline transition-all duration-150 max-[1025px]:justify-center max-[1025px]:mx-0 max-[1025px]:px-0 ${
+              `flex items-center gap-4 min-h-[44px] h-11 mx-2 px-3.5 rounded-lg text-sm font-medium no-underline transition-all duration-150 max-[1025px]:justify-center max-[1025px]:mx-0 max-[1025px]:px-0 ${
                 isActive
                   ? 'bg-mdb-surface-high text-mdb-primary'
                   : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'
@@ -59,7 +59,7 @@ export default function Sidebar({ currentPath, user, onLogout }) {
       </div>
 
       <div className="px-3 py-3 border-t border-mdb-border max-[1025px]:px-0">
-        <div className="flex items-center gap-3 px-2 max-[1025px]:justify-center max-[1025px]:px-0">
+        <div className="flex items-center gap-4 px-2 max-[1025px]:justify-center max-[1025px]:px-0">
           <div className="w-8 h-8 rounded-full bg-mdb-surface-high flex items-center justify-center text-xs font-medium text-mdb-primary shrink-0">
             {user?.username?.[0]?.toUpperCase() || 'U'}
           </div>

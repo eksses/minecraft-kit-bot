@@ -83,7 +83,7 @@ export default function BotControl() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} padding="sm" className="animate-pulse">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-4">
                 <div className="h-10 w-10 rounded-full bg-mdb-surface-high" />
                 <div className="space-y-2 flex-1">
                   <div className="h-4 w-28 bg-mdb-surface-high rounded" />
@@ -140,7 +140,7 @@ export default function BotControl() {
           </div>
 
           <Input label="Server IP / Host" required placeholder="play.example.com" value={form.serverHost} onChange={(e) => setForm({ ...form, serverHost: e.target.value })} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Input label="Port" type="number" placeholder="25565" value={form.serverPort} onChange={(e) => setForm({ ...form, serverPort: e.target.value })} />
             <Select label="Version" value={form.serverVersion} onChange={(e) => setForm({ ...form, serverVersion: e.target.value })} options={[
               { value: 'auto', label: 'Auto Detect' },
@@ -169,7 +169,7 @@ export default function BotControl() {
             <Input label="Login Password" type="password" placeholder="Server login password" helperText="Bot will execute /login <password> on spawn" value={form.authPassword} onChange={(e) => setForm({ ...form, authPassword: e.target.value })} />
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-mdb-border">
+          <div className="flex gap-4 pt-4 border-t border-mdb-border">
             <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowAdd(false)}>Cancel</Button>
             <Button type="submit" className="flex-1">Add Bot</Button>
           </div>
@@ -197,7 +197,7 @@ export default function BotControl() {
             const isOnline = !['OFFLINE', 'ERROR'].includes(status);
             return (
               <Card key={bot.id} padding="sm">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-4 mb-4">
                   <Avatar name={bot.name} />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-mdb-text truncate">{bot.name}</div>

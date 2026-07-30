@@ -64,7 +64,7 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
       <p className="text-xs text-mdb-text-muted mb-5">{chestName}</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-2 gap-3 p-3 bg-mdb-bg rounded-lg border border-mdb-border">
+        <div className="grid grid-cols-2 gap-4 p-3 bg-mdb-bg rounded-lg border border-mdb-border">
           <div className="flex items-center gap-2">
             <Zap size={14} className={deliveryMode === 'ELYTRA' ? 'text-amber-400' : 'text-mdb-primary'} />
             <div>
@@ -105,7 +105,7 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-medium text-mdb-text-secondary flex items-center gap-1.5">
+            <label className="text-xs font-medium text-mdb-text-secondary flex items-center gap-2">
               <Navigation size={12} className="text-mdb-primary" />
               Custom Coordinates
             </label>
@@ -117,7 +117,7 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
           </div>
 
           {useCustomCoords ? (
-            <div className="grid grid-cols-2 gap-3 p-3 bg-mdb-bg rounded-lg border border-mdb-border">
+            <div className="grid grid-cols-2 gap-4 p-3 bg-mdb-bg rounded-lg border border-mdb-border">
               <Input
                 label="Target X"
                 type="number"
@@ -148,7 +148,7 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
           )}
         </div>
 
-        <div className="pt-4 flex gap-3 border-t border-mdb-border">
+        <div className="pt-4 flex gap-4 border-t border-mdb-border">
           <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
             Cancel
           </Button>

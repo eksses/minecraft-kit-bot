@@ -219,7 +219,7 @@ function GeneralTab({ form, setForm, saving, onSave }) {
   return (
     <Card padding="none">
       <CardHeader title="General Settings" subtitle="Server connection ports" />
-      <div className="p-5">
+      <div className="p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Server Port"
@@ -250,7 +250,7 @@ function BotTab({ form, setForm, saving, onSave }) {
   return (
     <Card padding="none">
       <CardHeader title="Default Bot Settings" subtitle="Default connection parameters for new bots" />
-      <div className="p-5 space-y-4">
+      <div className="p-6 space-y-4">
         <Input
           label="Default Host"
           value={form.IP}
@@ -286,7 +286,7 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
   return (
     <Card padding="none">
       <CardHeader title="Delivery Configuration" subtitle="Kit delivery behavior and coordinates" />
-      <div className="p-5 space-y-4">
+      <div className="p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Delivery Mode"
@@ -321,7 +321,7 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
         <SettingsSection title="Advanced Delivery Settings" defaultOpen={false}>
           <div className="space-y-5">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Storage Keys</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-4">Storage Keys</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Ender Chest Key"
@@ -347,7 +347,7 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
             </div>
 
             <div className="border-t border-mdb-border pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Base Coordinates</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-4">Base Coordinates</div>
               <div className="grid grid-cols-3 gap-4">
                 <Input
                   label="X"
@@ -371,7 +371,7 @@ function DeliveryTab({ form, setForm, saving, onSave }) {
             </div>
 
             <div className="border-t border-mdb-border pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Random Region Bounds</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-4">Random Region Bounds</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Input
                   label="X1"
@@ -487,7 +487,7 @@ function UsersTab({ users, onAdd, onDelete, showAdd, setShowAdd, form, setForm }
               { value: 'admin', label: 'Admin' },
             ]}
           />
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-2">
             <Button variant="secondary" type="button" onClick={() => setShowAdd(false)}>
               Cancel
             </Button>
@@ -611,7 +611,7 @@ function WhitelistTab({ whitelist, onAdd, onDelete, showAdd, setShowAdd, editing
               { value: 'admin', label: 'Admin (In-game whitelist control)' },
             ]}
           />
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-2">
             <Button variant="secondary" type="button" onClick={() => { setShowAdd(false); setEditingPlayer(null); }}>
               Cancel
             </Button>

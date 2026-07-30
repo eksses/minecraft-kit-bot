@@ -118,7 +118,7 @@ export default function Plugins() {
     <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-mdb-primary/10 border border-mdb-primary/20 flex items-center justify-center">
             <Terminal size={22} className="text-mdb-primary" />
           </div>
@@ -169,13 +169,13 @@ export default function Plugins() {
                 }`}
               >
                 {/* Plugin Header */}
-                <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
                       <LiveStatusDot status={plugin.enabled ? 'online' : 'offline'} />
                       <h3 className="text-base font-semibold text-mdb-text">{plugin.name}</h3>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-mdb-text-muted">
+                    <div className="flex items-center gap-4 text-xs text-mdb-text-muted">
                       <Badge variant="default">v{plugin.version}</Badge>
                       <span className="flex items-center gap-1">
                         <User size={13} />
@@ -197,7 +197,7 @@ export default function Plugins() {
 
                 {/* Expanded Settings */}
                 {isExpanded && (
-                  <div className="p-5 bg-mdb-surface-low border-t border-mdb-border space-y-4">
+                  <div className="p-6 bg-mdb-surface-low border-t border-mdb-border space-y-4">
                     {Object.keys(settings).length > 0 ? (
                       <form
                         onSubmit={(e) => {

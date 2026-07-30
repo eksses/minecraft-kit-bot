@@ -33,7 +33,7 @@ export default function DeliveryPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-4 mb-6">
         <div className="w-10 h-10 rounded-xl bg-mdb-primary/10 flex items-center justify-center">
           <Truck size={20} className="text-mdb-primary" />
         </div>
@@ -43,7 +43,7 @@ export default function DeliveryPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <SearchInput value={search} onChange={setSearch} placeholder="Search chests..." className="flex-1" />
         <Select
           value={botFilter}
@@ -73,7 +73,7 @@ export default function DeliveryPage() {
                   <Badge variant="default" size="sm">{chest.itemCount || 0}</Badge>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-mdb-text-muted mt-3 pt-3 border-t border-mdb-border">
+                <div className="flex items-center gap-4 text-xs text-mdb-text-muted mt-3 pt-3 border-t border-mdb-border">
                   <span className="flex items-center gap-1">
                     <Bot size={12} />
                     {botName(chest.botId)}

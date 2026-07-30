@@ -57,7 +57,7 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
               end={path === '/fleet'}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium no-underline transition-all duration-150 ${
+                `flex items-center gap-4 h-12 px-4 rounded-xl text-sm font-medium no-underline transition-all duration-150 ${
                   isActive
                     ? 'bg-mdb-surface-high text-mdb-primary'
                     : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'

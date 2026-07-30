@@ -77,7 +77,7 @@ export default function FleetDashboard() {
           <h1 className="text-2xl font-semibold text-mdb-text tracking-tight">Fleet Command</h1>
           <p className="text-sm text-mdb-text-muted mt-0.5">{bots.length} bots · {onlineBots.length} online</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Button variant="ghost" icon={RefreshCw} onClick={loadDashboard} aria-label="Refresh" />
           <Button onClick={() => navigate('/fleet/bots?add=true')} icon={Plus}>Add Bot</Button>
         </div>
@@ -90,7 +90,7 @@ export default function FleetDashboard() {
         <StatCard label="Servers" value={servers.length} icon={Server} />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         <Button variant="success" icon={Play} onClick={handleStartAll} disabled={offlineBots.length === 0}>
           Start All ({offlineBots.length})
         </Button>
@@ -119,7 +119,7 @@ export default function FleetDashboard() {
                 <button
                   type="button"
                   key={bot.id}
-                  className="w-full text-left px-6 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-mdb-surface-high transition-colors"
+                  className="w-full text-left px-6 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-mdb-surface-high transition-colors"
                   onClick={() => navigate(`/fleet/bots/${bot.id}`)}
                 >
                   <Avatar name={bot.name} size="sm" />

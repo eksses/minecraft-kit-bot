@@ -206,7 +206,7 @@ export default function BotDetail() {
 
   const renderConsole = () => (
     <div className="flex flex-col flex-1 min-h-0 max-w-[800px]">
-      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5 min-h-[200px]">
+      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-4 font-mono text-xs space-y-0.5 min-h-[200px]">
         {chatMessages.length === 0 ? (
           <div className="text-mdb-text-muted py-8 text-center">No messages yet. Send a message or command below.</div>
         ) : (
@@ -250,7 +250,7 @@ export default function BotDetail() {
   const renderDelivery = () => (
     <div className="max-w-[800px] space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold flex items-center gap-2">
+        <h2 className="text-xl font-bold flex items-center gap-2">
           <Box size={16} /> Chests ({chests.length})
         </h2>
         <Button size="sm" icon={Scan} onClick={handleScan} disabled={scanning || !isOnline} loading={scanning}>
@@ -304,7 +304,7 @@ export default function BotDetail() {
 
   const renderInventory = () => (
     <div className="max-w-[800px]">
-      <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Package size={16} /> Inventory ({inventory.length} items)
       </h2>
       <div className="overflow-x-auto pb-2">
@@ -368,7 +368,7 @@ export default function BotDetail() {
   const renderWhitelist = () => (
     <div className="max-w-[800px] space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold flex items-center gap-2">
+        <h2 className="text-xl font-bold flex items-center gap-2">
           <Shield size={16} /> Whitelist ({whitelist.length})
         </h2>
         <Button size="sm" icon={Plus} onClick={() => { setEditingPlayer(null); setWhitelistForm({ playerName: '', role: 'user' }); setShowAddWhitelist(true); }}>
@@ -446,7 +446,7 @@ export default function BotDetail() {
               { value: 'admin', label: 'Admin (In-game whitelist control)' },
             ]}
           />
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-2">
             <Button variant="secondary" type="button" onClick={() => { setShowAddWhitelist(false); setEditingPlayer(null); }}>
               Cancel
             </Button>
@@ -481,7 +481,7 @@ export default function BotDetail() {
 
       <SettingsSection title="Delivery Config" defaultOpen={false}>
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Transport Mode"
               value={deliveryConfig.DELIVERY_MODE}
@@ -531,7 +531,7 @@ export default function BotDetail() {
 
           {showDeliveryAdvanced && (
             <div className="space-y-3 pl-1">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <Input label="Key: Ender Chest" value={deliveryConfig.STORAGE_KEYS?.ender || 'ender'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, ender: e.target.value } })} />
                 <Input label="Key: Chest" value={deliveryConfig.STORAGE_KEYS?.chest || 'chest'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, chest: e.target.value } })} />
                 <Input label="Key: Elytra" value={deliveryConfig.STORAGE_KEYS?.elytra || 'elytra'} onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, elytra: e.target.value } })} />
@@ -630,9 +630,9 @@ export default function BotDetail() {
       </div>
 
       {/* Content Area */}
-      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6`}>
+      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-14 md:pt-6`}>
         {/* Mobile Tabs Segmented Nav */}
-        <div className="md:hidden mb-4 bg-mdb-bg/95 backdrop-blur-md py-1 border-b border-mdb-border shrink-0">
+        <div className="md:hidden sticky top-[56px] z-30 mb-4 -mx-4 px-4 bg-mdb-bg/95 backdrop-blur-md py-2 border-b border-mdb-border shrink-0">
           <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="segmented" />
         </div>
 
@@ -667,10 +667,10 @@ function SettingsSection({ title, variant = 'default', defaultOpen = true, child
         onClick={() => setOpen(!open)}
         className={`flex items-center justify-between w-full px-5 py-4 text-left ${open ? 'border-b border-mdb-border' : ''}`}
       >
-        <h3 className={`text-sm font-semibold ${isDanger ? 'text-mdb-error' : 'text-mdb-text'}`}>{title}</h3>
+        <h3 className={`text-base font-semibold ${isDanger ? 'text-mdb-error' : 'text-mdb-text'}`}>{title}</h3>
         {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}
       </button>
-      {open && <div className="p-5">{children}</div>}
+      {open && <div className="p-6">{children}</div>}
     </Card>
   );
 }

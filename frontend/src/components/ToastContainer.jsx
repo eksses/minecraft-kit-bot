@@ -44,7 +44,7 @@ function Toast({ toast, onRemove }) {
 
   return (
     <div
-      className="bg-mdb-surface rounded-xl border border-mdb-border shadow-xl p-4 flex gap-3 min-w-[300px] max-w-[400px] animate-slide-in-right"
+      className="bg-mdb-surface rounded-xl border border-mdb-border shadow-xl p-4 flex gap-4 min-w-[300px] max-w-[400px] animate-slide-in-right"
       role="alert"
     >
       <div className={`w-1 rounded-full flex-shrink-0 ${colorClass}`} />

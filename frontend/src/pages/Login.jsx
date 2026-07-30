@@ -33,7 +33,7 @@ export default function Login() {
 
       <div className="w-full max-w-[400px] relative z-10">
         <Card className="backdrop-blur-xl bg-mdb-surface/90 border-white/[0.08]">
-          <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex items-center justify-center gap-4 mb-8">
             <div className="w-12 h-12 rounded-xl bg-mdb-primary/10 border border-mdb-primary/20 flex items-center justify-center shadow-lg shadow-mdb-primary/10">
               <Gamepad2 size={24} className="text-mdb-primary" />
             </div>

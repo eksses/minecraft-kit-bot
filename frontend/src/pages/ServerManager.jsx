@@ -92,7 +92,7 @@ export default function ServerManager() {
             required
             placeholder="mc.example.com"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="Port"
               type="number"
@@ -113,7 +113,7 @@ export default function ServerManager() {
             value={form.authType}
             onChange={(e) => setForm({ ...form, authType: e.target.value })}
           />
-          <div className="flex gap-3 pt-4 border-t border-mdb-border">
+          <div className="flex gap-4 pt-4 border-t border-mdb-border">
             <Button variant="secondary" type="button" className="flex-1" onClick={() => setDrawerOpen(false)}>
               Cancel
             </Button>
@@ -135,8 +135,8 @@ export default function ServerManager() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {servers.map((server) => (
             <Card key={server.id}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-mdb-surface-high flex items-center justify-center text-mdb-text-secondary">
                     <Globe size={20} />
                   </div>

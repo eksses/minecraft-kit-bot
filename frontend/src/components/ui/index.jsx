@@ -16,7 +16,7 @@ export function Button({
 }) {
   const base = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mdb-primary focus-visible:ring-offset-2 focus-visible:ring-offset-mdb-bg';
   const sizes = {
-    sm: 'h-10 px-4 text-xs gap-2',
+    sm: 'h-11 min-h-[44px] px-4 text-xs gap-2',
     md: 'h-12 px-4 text-sm gap-2',
     lg: 'h-12 px-6 text-sm font-semibold gap-2.5 shadow-lg shadow-mdb-primary/10',
   };
@@ -195,7 +195,7 @@ export function Badge({ variant = 'default', size = 'sm', dot, className = '', c
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+    <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColor[variant]}`} aria-hidden="true" />}
       {children}
     </span>
@@ -510,7 +510,7 @@ export function Dropdown({ trigger, items = [], align = 'left', className = '' }
 /* ─── Toggle ─── */
 export function Toggle({ checked, onChange, label, disabled, className = '' }) {
   return (
-    <label className={`inline-flex items-center gap-2.5 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+    <label className={`inline-flex items-center gap-2.5 min-h-[44px] min-w-[44px] cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
       <button
         type="button"
         role="switch"
@@ -611,7 +611,7 @@ export function Alert({ variant = 'info', title, children, dismissible, onClose,
   };
 
   return (
-    <div className={`rounded-xl p-4 flex gap-3 border ${styles[variant]} ${className}`}>
+    <div className={`rounded-xl p-4 flex gap-4 border ${styles[variant]} ${className}`}>
       {Icon && (
         <div className="flex-shrink-0 mt-0.5">
           <Icon size={20} />
@@ -665,7 +665,7 @@ export function Progress({ value = 0, variant = 'default', size = 'md', label, s
 /* ─── Breadcrumb ─── */
 export function Breadcrumb({ items = [], separator = '/', className = '' }) {
   return (
-    <nav className={`flex items-center gap-1.5 text-sm ${className}`} aria-label="Breadcrumb">
+    <nav className={`flex items-center gap-2 text-sm ${className}`} aria-label="Breadcrumb">
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return (
@@ -786,7 +786,7 @@ export function CopyButton({ text, label = 'Copy', className = '' }) {
   return (
     <button
       onClick={handleCopy}
-      className={`inline-flex items-center gap-1.5 text-xs text-mdb-text-muted hover:text-mdb-text transition-colors ${className}`}
+      className={`inline-flex items-center gap-2 text-xs text-mdb-text-muted hover:text-mdb-text transition-colors ${className}`}
     >
       {copied ? <Check size={14} className="text-mdb-success" /> : <Copy size={14} />}
       {copied ? 'Copied!' : label}
@@ -899,7 +899,7 @@ export function SettingsSection({ title, variant = 'default', defaultOpen = true
         <h3 className={`text-sm font-semibold uppercase tracking-wider ${isDanger ? 'text-mdb-error' : 'text-mdb-text-muted'}`}>{title}</h3>
         {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}
       </button>
-      {open && <div className="p-5">{children}</div>}
+      {open && <div className="p-6">{children}</div>}
     </Card>
   );
 }
