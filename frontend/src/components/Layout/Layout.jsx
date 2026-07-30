@@ -14,7 +14,7 @@ export default function Layout() {
       <main className="flex-1 ml-[260px] p-8 overflow-y-auto max-md:ml-0 max-md:p-4 max-md:pb-[calc(var(--bottom-nav-height)+24px)]">
         <Outlet />
       </main>
-      {!isBotDetail && <BottomNav currentPath={location.pathname} onLogout={logout} />}
+      <BottomNav currentPath={location.pathname} onLogout={logout} />
     </div>
   );
 }

@@ -196,8 +196,8 @@ export default function BotDetail() {
   const isOnline = !['OFFLINE', 'ERROR'].includes(status);
 
   const renderConsole = () => (
-    <div className="flex flex-col h-full max-w-[800px]">
-      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5 min-h-[200px] max-h-[calc(100vh-280px)]">
+    <div className="flex flex-col h-full max-w-[800px] pb-6">
+      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5 min-h-[200px] max-h-[calc(100vh-320px)]">
         {chatMessages.length === 0 ? (
           <div className="text-mdb-text-muted py-8 text-center">No messages yet. Send a message or command below.</div>
         ) : (
@@ -332,7 +332,7 @@ export default function BotDetail() {
             onChange={(v) => setScanConfig({ ...scanConfig, autoRescan: v })}
             label="Auto-rescan after delivery"
           />
-          <Button onClick={handleSaveScanConfig} loading={savingScan} disabled={!isOnline}>Save Scan Config</Button>
+          <Button onClick={handleSaveScanConfig} loading={savingScan}>Save Scan Config</Button>
         </div>
       </SettingsSection>
 
@@ -409,19 +409,29 @@ export default function BotDetail() {
 
   return (
     <div className="flex h-full gap-0">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface border-b border-mdb-border flex items-center gap-3 px-4 z-40">
-        <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate(-1)} />
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">{bot.name}</div>
+      {/* Mobile Top Navigation Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface/95 backdrop-blur-md border-b border-mdb-border flex items-center justify-between px-4 z-40">
+        <div className="flex items-center gap-2 min-w-0">
+          <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back to Bots" />
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate text-mdb-text">{bot.name}</div>
+            <div className="font-mono text-[10px] text-mdb-text-muted truncate">{bot.username}</div>
+          </div>
         </div>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusBadge status={status} />
+          {isOnline ? (
+            <Button size="sm" variant="danger" icon={Square} onClick={handleStop} />
+          ) : (
+            <Button size="sm" variant="success" icon={Play} onClick={handleStart} />
+          )}
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
       <div className="w-[280px] bg-mdb-surface border-r border-mdb-border flex flex-col shrink-0 max-md:hidden">
         <div className="flex items-center gap-2 p-4 border-b border-mdb-border">
-          <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate(-1)} tooltip="Back" />
+          <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back" />
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm truncate">{bot.name}</div>
             <div className="font-mono text-xs text-mdb-text-muted">{bot.username}</div>
@@ -471,10 +481,10 @@ export default function BotDetail() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6 pt-[72px] md:pt-6">
-        {/* Mobile Tabs */}
-        <div className="md:hidden mb-4 sticky top-[56px] z-10 bg-mdb-bg pt-2">
-          <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="pills" />
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6">
+        {/* Mobile Tabs Segmented Nav */}
+        <div className="md:hidden mb-4 bg-mdb-bg/95 backdrop-blur-md py-1 border-b border-mdb-border">
+          <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="segmented" />
         </div>
 
         {activeTab === 'console' && renderConsole()}

@@ -2,26 +2,44 @@ import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { X, Search, Copy, Check, ChevronRight } from 'lucide-react';
 
 /* ─── Button ─── */
-export function Button({ variant = 'primary', size = 'md', icon, loading, disabled, className = '', children, ...props }) {
-  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150';
-  const sizes = { sm: 'h-8 px-3 text-xs', md: 'h-9 px-4 text-sm', lg: 'h-10 px-5 text-sm' };
+export function Button({ variant = 'primary', size = 'md', icon: iconProp, loading, disabled, className = '', children, ...props }) {
+  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0';
+  const sizes = { sm: 'h-8 px-3 text-xs gap-1.5', md: 'h-9 px-4 text-sm gap-2', lg: 'h-10 px-5 text-sm gap-2' };
+  const iconOnlyWidths = { sm: 'w-8 px-0 aspect-square', md: 'w-9 px-0 aspect-square', lg: 'w-10 px-0 aspect-square' };
+  const iconSizes = { sm: 14, md: 16, lg: 18 };
   const variants = {
-    primary: 'bg-mdb-primary text-white hover:bg-mdb-primary-hover',
-    secondary: 'border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high',
+    primary: 'bg-mdb-primary text-white hover:bg-mdb-primary-hover shadow-sm hover:shadow-mdb-primary/20 hover:shadow-md',
+    secondary: 'border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text hover:border-mdb-border-hover',
     ghost: 'text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high',
-    danger: 'bg-mdb-error-light text-mdb-error hover:bg-mdb-error hover:text-white',
-    success: 'bg-mdb-success-light text-mdb-success hover:bg-mdb-success hover:text-white',
+    danger: 'bg-mdb-error-light text-mdb-error hover:bg-mdb-error hover:text-white shadow-sm',
+    success: 'bg-mdb-success-light text-mdb-success hover:bg-mdb-success hover:text-white shadow-sm',
   };
-  const disabledCls = disabled || loading ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
-  const iconOnly = icon && !children;
+  const disabledCls = disabled || loading ? 'opacity-50 cursor-not-allowed pointer-events-none active:scale-100' : '';
+  const iconOnly = iconProp && !children;
+
+  const renderIcon = () => {
+    if (!iconProp) return null;
+    if (typeof iconProp === 'function' || (typeof iconProp === 'object' && iconProp.render)) {
+      const IconComponent = iconProp;
+      return <IconComponent size={iconSizes[size]} className="shrink-0 transition-transform duration-150 group-hover:scale-110" />;
+    }
+    return <span className="shrink-0 flex items-center justify-center transition-transform duration-150 group-hover:scale-110">{iconProp}</span>;
+  };
 
   return (
     <button
-      className={`${base} ${sizes[size]} ${variants[variant]} ${disabledCls} ${iconOnly ? 'px-0 aspect-square' : ''} ${className}`}
+      className={`${base} ${sizes[size]} ${variants[variant]} ${disabledCls} ${iconOnly ? iconOnlyWidths[size] : ''} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : children}
+      {loading ? (
+        <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+      ) : (
+        <>
+          {renderIcon()}
+          {children}
+        </>
+      )}
     </button>
   );
 }
@@ -34,7 +52,8 @@ export function IconButton({ icon: Icon, size = 'md', tooltip, className = '', .
   return (
     <Tooltip content={tooltip}>
       <button
-        className={`inline-flex items-center justify-center rounded-lg text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors ${sizes[size]} ${className}`}
+        type="button"
+        className={`inline-flex items-center justify-center rounded-lg text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors shrink-0 ${sizes[size]} ${className}`}
         {...props}
       >
         <Icon size={iconSizes[size]} />

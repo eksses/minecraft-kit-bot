@@ -230,13 +230,13 @@ MDB supports **coordinated bot swarms** with intelligent task distribution:
 
 ## Mobile Experience
 
-The UI is **mobile-first** with a responsive design:
+The UI is **mobile-first** with a responsive glassmorphic design system:
 
-- **Bottom Navigation** — 4 primary items + More sheet for full nav
-- **Bot Detail Tab Bar** — Bottom tab bar for Console, Chests, Inventory, Settings, Logs
-- **Touch Targets** — All interactive elements are 48px minimum
-- **Drawer Panels** — Bot details and forms slide in from the right
-- **Flat Design** — No shadows, sharp corners, terminal-inspired
+- **Bottom Navigation** — Persistent 4-item glassmorphic bar with backdrop-blur and responsive bottom scroll padding
+- **Bot Detail Tab Bar** — Responsive segmented navigation for Console, Chests, Inventory, and Settings
+- **Touch Targets & Sizing** — Standardized touch targets (`h-8` sm, `h-9` md, `h-10` lg) with active scale feedback
+- **Drawer Panels** — Slide-over panels for bot details and configuration forms
+- **Modern Glassmorphism** — Sleek dark surface tokens (`#0c0e12` bg), backdrop-blur overlays, and smooth micro-animations
 
 ---
 
