@@ -124,11 +124,27 @@ function createBot(config) {
     }
   });
 
-  function handleChatCommand(username, message) {
+  function handleChatCommand(username, message, isWhisper = false) {
     if (!message || typeof message !== 'string') return;
     if (username === bot.username) return;
     const trimmed = message.trim();
 
+    // Always whisper to bot check: if user speaks in public chat, gently remind to whisper
+    if (!isWhisper && trimmed.startsWith('!')) {
+      try { bot.chat(\`/w \${username} Please whisper commands directly to me for privacy: /w \${bot.username} <command>\`); } catch (_) {}
+      return;
+    }
+
+    // Help Command
+    if (trimmed === '!help' || trimmed === '!commands' || trimmed === '!h') {
+      parentPort.postMessage({
+        type: 'chat_command_help',
+        data: { username }
+      });
+      return;
+    }
+
+    // Kits List Command
     if (trimmed === '!list' || trimmed === '!kits') {
       parentPort.postMessage({
         type: 'chat_command_list',
@@ -137,6 +153,40 @@ function createBot(config) {
       return;
     }
 
+    // Check Role / Whitelist Command
+    if (trimmed === '!role' || trimmed === '!myrole') {
+      parentPort.postMessage({
+        type: 'chat_command_role',
+        data: { username }
+      });
+      return;
+    }
+
+    // Whitelist Admin Management Commands (!wlist add/remove/list)
+    const wlistMatch = trimmed.match(/^!wlist\s+(add|remove|list)(?:\\s+([^\\s]+))?(?:\\s+(admin|vip|user))?$/i);
+    if (wlistMatch) {
+      parentPort.postMessage({
+        type: 'chat_command_wlist',
+        data: {
+          username,
+          subcmd: wlistMatch[1].toLowerCase(),
+          targetPlayer: wlistMatch[2],
+          role: wlistMatch[3] || 'user'
+        }
+      });
+      return;
+    }
+
+    // Mode Command (!mode)
+    if (trimmed === '!mode' || trimmed === '!status') {
+      parentPort.postMessage({
+        type: 'chat_command_mode',
+        data: { username }
+      });
+      return;
+    }
+
+    // Kit Request Command
     const match = trimmed.match(/^(?:!kit|!deliver|!get|\\/trade|!trade)\\s+([^\\s]+)(?:\\s+(-?\\d+)\\s+(-?\\d+))?$/i);
     if (match) {
       const chestName = match[1].trim();
@@ -158,8 +208,8 @@ function createBot(config) {
     }
   }
 
-  bot.on('chat', (username, message) => handleChatCommand(username, message));
-  bot.on('whisper', (username, message) => handleChatCommand(username, message));
+  bot.on('chat', (username, message) => handleChatCommand(username, message, false));
+  bot.on('whisper', (username, message) => handleChatCommand(username, message, true));
 
   bot.on('path_update', (result) => {
     parentPort.postMessage({
@@ -951,6 +1001,22 @@ export class BotInstance extends EventEmitter {
 
       case 'trade_request':
         this.emit('trade_request', msg.data);
+        break;
+
+      case 'chat_command_help':
+        this.emit('chat_command_help', msg.data);
+        break;
+
+      case 'chat_command_role':
+        this.emit('chat_command_role', msg.data);
+        break;
+
+      case 'chat_command_wlist':
+        this.emit('chat_command_wlist', msg.data);
+        break;
+
+      case 'chat_command_mode':
+        this.emit('chat_command_mode', msg.data);
         break;
 
       case 'scan_log':

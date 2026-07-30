@@ -359,6 +359,12 @@ export default function BotDetail() {
             />
           </div>
 
+          <Toggle
+            checked={!!deliveryConfig.WHITELIST_ENABLED}
+            onChange={(v) => setDeliveryConfig({ ...deliveryConfig, WHITELIST_ENABLED: v })}
+            label="Enforce In-Game Whitelist for Ordering"
+          />
+
           <Select
             label="Post-Delivery Action"
             value={deliveryConfig.POST_DELIVERY_ACTION}

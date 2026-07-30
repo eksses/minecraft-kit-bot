@@ -174,7 +174,16 @@ export function initDatabase() {
       random_z1 INTEGER NOT NULL DEFAULT -1000,
       random_x2 INTEGER NOT NULL DEFAULT 1000,
       random_z2 INTEGER NOT NULL DEFAULT 1000,
+      whitelist_enabled INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS player_whitelist (
+      id TEXT PRIMARY KEY,
+      player_name TEXT NOT NULL UNIQUE,
+      role TEXT NOT NULL DEFAULT 'user',
+      added_by TEXT DEFAULT 'system',
+      created_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS plugins (

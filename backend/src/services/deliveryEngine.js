@@ -18,6 +18,7 @@ export class DeliveryEngine {
       },
       BASE_COORDINATES: config.BASE_COORDINATES || { x: 0, y: 64, z: 0 },
       RANDOM_REGION_BOUNDS: config.RANDOM_REGION_BOUNDS || { x1: -1000, z1: -1000, x2: 1000, z2: 1000 },
+      WHITELIST_ENABLED: config.WHITELIST_ENABLED ?? false,
     };
     if (!opts.skipDbLoad) {
       this._loadFromDb();
@@ -39,6 +40,7 @@ export class DeliveryEngine {
         };
         this.config.BASE_COORDINATES = { x: row.baseX, y: row.baseY, z: row.baseZ };
         this.config.RANDOM_REGION_BOUNDS = { x1: row.randomX1, z1: row.randomZ1, x2: row.randomX2, z2: row.randomZ2 };
+        this.config.WHITELIST_ENABLED = !!row.whitelistEnabled;
       }
     } catch (err) {
       console.warn('[DeliveryEngine] Could not load config from DB, using defaults:', err.message);
@@ -64,6 +66,7 @@ export class DeliveryEngine {
         randomZ1: this.config.RANDOM_REGION_BOUNDS.z1,
         randomX2: this.config.RANDOM_REGION_BOUNDS.x2,
         randomZ2: this.config.RANDOM_REGION_BOUNDS.z2,
+        whitelistEnabled: this.config.WHITELIST_ENABLED ? 1 : 0,
         updatedAt: now,
       };
       db.insert(schema.deliveryConfig).values(values).onConflictDoUpdate({

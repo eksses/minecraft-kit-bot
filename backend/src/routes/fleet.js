@@ -28,8 +28,87 @@ function wireBotEvents(bot) {
   if (bot._eventsWired) return;
   bot._eventsWired = true;
 
+  bot.on('chat_command_help', async (data) => {
+    try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const userRole = await whitelistService.getRole(data.username);
+      const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
+
+      bot.sendCommand(`/w ${data.username} === MDB KIT BOT HELP ===`);
+      bot.sendCommand(`/w ${data.username} Your Role: [${userRole.toUpperCase()}] | Mode: ${deliveryCfg.DELIVERY_MODE || 'TPA'}`);
+      bot.sendCommand(`/w ${data.username} Commands:`);
+      bot.sendCommand(`/w ${data.username} • !help - Show command menu`);
+      bot.sendCommand(`/w ${data.username} • !list - View available kits`);
+      bot.sendCommand(`/w ${data.username} • !kit <name> [X Z] - Order kit delivery`);
+      bot.sendCommand(`/w ${data.username} • !role - Check your whitelist role`);
+      bot.sendCommand(`/w ${data.username} • !mode - Show delivery status & settings`);
+      if (userRole === 'admin') {
+        bot.sendCommand(`/w ${data.username} Admin Cmds: !wlist add/remove/list <player> [role]`);
+      }
+    } catch (err) {
+      console.error('[ChatCommand] Error sending help:', err.message);
+    }
+  });
+
+  bot.on('chat_command_role', async (data) => {
+    try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const userRole = await whitelistService.getRole(data.username);
+      const isWlisted = await whitelistService.isWhitelisted(data.username);
+      bot.sendCommand(`/w ${data.username} Role: ${userRole.toUpperCase()} | Whitelisted: ${isWlisted ? 'YES' : 'NO'}`);
+    } catch (err) {
+      console.error('[ChatCommand] Error checking role:', err.message);
+    }
+  });
+
+  bot.on('chat_command_mode', async (data) => {
+    try {
+      const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
+      bot.sendCommand(`/w ${data.username} DeliveryMode: ${deliveryCfg.DELIVERY_MODE || 'TPA'} | CoordMode: ${deliveryCfg.TARGET_COORD_MODE || 'USER'} | Action: ${deliveryCfg.POST_DELIVERY_ACTION || 'FLY_HOME'} | Whitelist: ${deliveryCfg.WHITELIST_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+    } catch (err) {
+      console.error('[ChatCommand] Error checking mode:', err.message);
+    }
+  });
+
+  bot.on('chat_command_wlist', async (data) => {
+    try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const senderRole = await whitelistService.getRole(data.username);
+      if (senderRole !== 'admin') {
+        bot.sendCommand(`/w ${data.username} Permission Denied: Admin role required to manage whitelist.`);
+        return;
+      }
+
+      if (data.subcmd === 'list') {
+        const all = await whitelistService.listAll();
+        const listStr = all.map(p => `${p.playerName} (${p.role})`).join(', ');
+        bot.sendCommand(`/w ${data.username} Whitelist (${all.length}): ${listStr || 'Empty'}`);
+      } else if (data.subcmd === 'add' && data.targetPlayer) {
+        await whitelistService.addPlayer(data.targetPlayer, data.role || 'user', data.username);
+        bot.sendCommand(`/w ${data.username} Added ${data.targetPlayer} to whitelist as [${(data.role || 'user').toUpperCase()}].`);
+      } else if (data.subcmd === 'remove' && data.targetPlayer) {
+        await whitelistService.removePlayer(data.targetPlayer);
+        bot.sendCommand(`/w ${data.username} Removed ${data.targetPlayer} from whitelist.`);
+      } else {
+        bot.sendCommand(`/w ${data.username} Usage: !wlist add <player> [admin|vip|user] OR !wlist remove <player> OR !wlist list`);
+      }
+    } catch (err) {
+      console.error('[ChatCommand] Error in !wlist:', err.message);
+    }
+  });
+
   bot.on('chat_command_list', async (data) => {
     try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
+      if (deliveryCfg.WHITELIST_ENABLED) {
+        const isWlisted = await whitelistService.isWhitelisted(data.username);
+        if (!isWlisted) {
+          bot.sendCommand(`/w ${data.username} Permission Denied: You are not whitelisted on this bot.`);
+          return;
+        }
+      }
+
       const items = await tradingService.getAvailableItems(bot.id);
       const names = items.map(i => i.name).filter(Boolean).join(', ');
       const msg = 'Available kits: ' + (names || 'None');
@@ -46,12 +125,25 @@ function wireBotEvents(bot) {
   bot.on('trade_request', async (tradeData) => {
     console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + (tradeData.chestName || tradeData.itemName));
     try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
+      const playerName = tradeData.playerName || 'player';
+
+      // Check Whitelist Enforcement
+      if (deliveryCfg.WHITELIST_ENABLED) {
+        const isWlisted = await whitelistService.isWhitelisted(playerName);
+        if (!isWlisted) {
+          bot.sendCommand(`/w ${playerName} Permission Denied: You are not whitelisted to order kits.`);
+          return;
+        }
+      }
+
       const options = {
         targetX: tradeData.targetX,
         targetZ: tradeData.targetZ,
         hasExplicitCoords: tradeData.hasExplicitCoords,
       };
-      await tradingService.fulfillOrder(bot.id, tradeData.playerName || 'player', tradeData.chestName || tradeData.itemName, 1, options);
+      await tradingService.fulfillOrder(bot.id, playerName, tradeData.chestName || tradeData.itemName, 1, options);
     } catch (err) {
       console.error('[Trade] Error fulfilling order:', err.message);
     }

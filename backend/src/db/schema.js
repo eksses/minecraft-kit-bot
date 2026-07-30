@@ -228,6 +228,17 @@ export const scanConfigsRelations = relations(scanConfigs, ({ one }) => ({
 }));
 
 // ============================================================
+// Player Whitelist & Roles Table (Ingame In-Game RBAC)
+// ============================================================
+export const playerWhitelist = sqliteTable('player_whitelist', {
+  id: text('id').primaryKey(),
+  playerName: text('player_name').notNull().unique(),
+  role: text('role', { enum: ['admin', 'vip', 'user'] }).notNull().default('user'),
+  addedBy: text('added_by').default('system'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ============================================================
 // Delivery Config Table (Global delivery settings, persisted)
 // ============================================================
 export const deliveryConfig = sqliteTable('delivery_config', {
@@ -246,6 +257,7 @@ export const deliveryConfig = sqliteTable('delivery_config', {
   randomZ1: integer('random_z1').notNull().default(-1000),
   randomX2: integer('random_x2').notNull().default(1000),
   randomZ2: integer('random_z2').notNull().default(1000),
+  whitelistEnabled: integer('whitelist_enabled', { mode: 'boolean' }).notNull().default(false),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 

@@ -62,9 +62,27 @@ Configure global delivery rules under **Settings** $\rightarrow$ **Delivery**:
 ## 🛠️ Features Overview
 
 - **Fleet Command**: Control multiple bots and swarms simultaneously.
+- **In-Game Whitelist & RBAC**: Admin, VIP, and User roles with strict whisper command security (`/w <bot> <command>`).
 - **Automatic Retries & Failover**: Automatic task re-queuing if a bot gets disconnected or kicked.
 - **Web Console & Chat**: Live interactive chat and command relay for all bots.
 - **Mobile Responsive**: Clean bottom navigation bar and touch-friendly interface.
+
+---
+
+## 🔒 In-Game Chat Commands & Roles
+
+All commands sent in public chat prompt a whisper reminder. **Only whispers are processed for privacy & security.**
+
+| Command | Allowed Roles | Description |
+|---------|---------------|-------------|
+| `/w <bot> !help` | All Users | Display command menu, user role, and bot mode |
+| `/w <bot> !list` | All (Whitelisted) | View all available kit chests scanned by bot |
+| `/w <bot> !kit <name> [X Z]` | All (Whitelisted) | Request kit delivery to player or target coordinates |
+| `/w <bot> !role` | All Users | Check current in-game role (`admin`, `vip`, or `user`) |
+| `/w <bot> !mode` | All Users | View active delivery mode, target mode & whitelist status |
+| `/w <bot> !wlist list` | Admin | List all whitelisted players and their assigned roles |
+| `/w <bot> !wlist add <player> [role]` | Admin | Whitelist a player with `admin`, `vip`, or `user` role |
+| `/w <bot> !wlist remove <player>` | Admin | Remove a player from the bot whitelist |
 
 ---
 
