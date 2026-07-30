@@ -79,7 +79,7 @@ export default function FleetDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="ghost" icon={RefreshCw} onClick={loadDashboard} aria-label="Refresh" />
-          <Button as={Link} to="/fleet/bots" icon={Plus}>Add Bot</Button>
+          <Button onClick={() => navigate('/fleet/bots?add=true')} icon={Plus}>Add Bot</Button>
         </div>
       </div>
 

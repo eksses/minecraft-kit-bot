@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
 import { Button, Card, Input, Select, StatusBadge, EmptyState, LoadingState, Drawer, IconButton, Avatar, SearchInput, Badge } from '../components/ui';
 import { RefreshCw, Plus, Bot, Play, Square, Search } from 'lucide-react';
 
 export default function BotControl() {
+  const location = useLocation();
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd] = useState(() => new URLSearchParams(location.search).get('add') === 'true');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({
     name: '',

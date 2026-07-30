@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { useToast } from '../components/ToastContainer';
-import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, ChevronRight, Box, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, ChevronRight, Box, Trash2, Shield } from 'lucide-react';
 import { Button, Card, CardHeader, Input, Select, Tabs, TabPanel, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge } from '../components/ui';
 import DeliverModal from '../components/DeliverModal';
 
@@ -11,6 +11,7 @@ const TAB_ITEMS = [
   { id: 'console', label: 'Console', icon: Terminal },
   { id: 'delivery', label: 'Delivery', icon: Box },
   { id: 'inventory', label: 'Inventory', icon: Package },
+  { id: 'whitelist', label: 'Whitelist', icon: Shield },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -316,6 +317,145 @@ export default function BotDetail() {
         </div>
       </div>
     </div>
+  // Whitelist
+  const [whitelist, setWhitelist] = useState([]);
+  const [showAddWhitelist, setShowAddWhitelist] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
+
+  const loadWhitelist = async () => {
+    try {
+      const data = await api.fleet.getWhitelist();
+      setWhitelist(data || []);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    loadWhitelist();
+  }, []);
+
+  const handleAddWhitelist = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingPlayer) {
+        await api.fleet.updateWhitelist(editingPlayer.playerName, { role: whitelistForm.role });
+        addToast({ type: 'success', title: 'Player role updated' });
+      } else {
+        await api.fleet.addWhitelist(whitelistForm);
+        addToast({ type: 'success', title: 'Player added to whitelist' });
+      }
+      setShowAddWhitelist(false);
+      setEditingPlayer(null);
+      setWhitelistForm({ playerName: '', role: 'user' });
+      loadWhitelist();
+    } catch (err) {
+      addToast({ type: 'error', title: err.error || 'Failed to save whitelist player' });
+    }
+  };
+
+  const handleDeleteWhitelist = async (playerName) => {
+    if (!confirm(`Remove ${playerName} from whitelist?`)) return;
+    try {
+      await api.fleet.deleteWhitelist(playerName);
+      loadWhitelist();
+      addToast({ type: 'success', title: 'Player removed from whitelist' });
+    } catch (_) {
+      addToast({ type: 'error', title: 'Failed to remove player' });
+    }
+  };
+
+  const renderWhitelist = () => (
+    <div className="max-w-[800px] space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Shield size={16} /> Whitelist ({whitelist.length})
+        </h2>
+        <Button size="sm" icon={Plus} onClick={() => { setEditingPlayer(null); setWhitelistForm({ playerName: '', role: 'user' }); setShowAddWhitelist(true); }}>
+          Add Player
+        </Button>
+      </div>
+
+      <Card padding="none">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Username</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Role</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-4 h-9 border-b border-mdb-border">Added By</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted border-b border-mdb-border"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-mdb-border">
+              {whitelist.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-mdb-text-muted">
+                    No players whitelisted. Click "Add Player" above to grant access.
+                  </td>
+                </tr>
+              ) : (
+                whitelist.map((p) => (
+                  <tr key={p.id || p.playerName} className="hover:bg-mdb-surface-high transition-colors">
+                    <td className="font-medium px-4 h-11 text-sm text-mdb-text">{p.playerName}</td>
+                    <td className="px-4 h-11 text-sm">
+                      <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                        p.role === 'admin'
+                          ? 'bg-mdb-primary/15 text-mdb-primary'
+                          : p.role === 'vip'
+                          ? 'bg-amber-500/15 text-amber-400'
+                          : 'bg-mdb-surface-high text-mdb-text-muted'
+                      }`}>
+                        {p.role ? p.role.toUpperCase() : 'USER'}
+                      </span>
+                    </td>
+                    <td className="text-mdb-text-muted text-sm px-4 h-11">{p.addedBy || 'system'}</td>
+                    <td className="text-right px-4 h-11 space-x-2">
+                      <Button variant="secondary" size="sm" onClick={() => { setEditingPlayer(p); setWhitelistForm({ playerName: p.playerName, role: p.role }); setShowAddWhitelist(true); }}>
+                        Edit
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDeleteWhitelist(p.playerName)}>
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Modal isOpen={showAddWhitelist} onClose={() => { setShowAddWhitelist(false); setEditingPlayer(null); }} title={editingPlayer ? `Edit Role: ${editingPlayer.playerName}` : 'Add Player to Whitelist'} size="sm">
+        <form onSubmit={handleAddWhitelist} className="space-y-4">
+          <Input
+            label="Minecraft Username"
+            value={whitelistForm.playerName}
+            onChange={(e) => setWhitelistForm({ ...whitelistForm, playerName: e.target.value })}
+            placeholder="e.g. FitMC"
+            disabled={!!editingPlayer}
+            required
+          />
+          <Select
+            label="In-Game Role"
+            value={whitelistForm.role}
+            onChange={(e) => setWhitelistForm({ ...whitelistForm, role: e.target.value })}
+            options={[
+              { value: 'user', label: 'User (Standard kit orders)' },
+              { value: 'vip', label: 'VIP (Priority kit orders)' },
+              { value: 'admin', label: 'Admin (In-game whitelist control)' },
+            ]}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" type="button" onClick={() => { setShowAddWhitelist(false); setEditingPlayer(null); }}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingPlayer ? 'Save Role' : 'Add to Whitelist'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 
   const renderSettings = () => (
@@ -498,6 +638,7 @@ export default function BotDetail() {
         {activeTab === 'console' && renderConsole()}
         {activeTab === 'delivery' && renderDelivery()}
         {activeTab === 'inventory' && renderInventory()}
+        {activeTab === 'whitelist' && renderWhitelist()}
         {activeTab === 'settings' && renderSettings()}
       </div>
 
