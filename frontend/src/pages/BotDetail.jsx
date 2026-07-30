@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { useToast } from '../components/ToastContainer';
-import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, ChevronRight, Box, Trash2, Shield } from 'lucide-react';
-import { Button, Card, CardHeader, Input, Select, Tabs, TabPanel, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge } from '../components/ui';
+import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, ChevronUp, ChevronRight, Box, Trash2, Shield, Plus } from 'lucide-react';
+import { Button, Card, CardHeader, Input, Select, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge } from '../components/ui';
 import DeliverModal from '../components/DeliverModal';
 
 const TAB_ITEMS = [
@@ -23,6 +23,7 @@ export default function BotDetail() {
   const [chests, setChests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('console');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const chatEndRef = useRef(null);
   const { addToast } = useToast();
@@ -558,16 +559,49 @@ export default function BotDetail() {
 
   return (
     <div className="flex h-full gap-0">
-      {/* Mobile Top Navigation Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface/95 backdrop-blur-md border-b border-mdb-border flex items-center justify-between px-4 z-40">
-        <div className="flex items-center gap-2 min-w-0">
+      {/* Mobile Top Navigation Header with Contextual Dropdown */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface/95 backdrop-blur-md border-b border-mdb-border flex items-center justify-between px-3 z-40">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back to Bots" />
-          <div className="min-w-0">
-            <div className="font-semibold text-sm truncate text-mdb-text">{bot.name}</div>
-            <div className="font-mono text-[10px] text-mdb-text-muted truncate">{bot.username}</div>
+          <div className="relative flex-1 min-w-0">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full flex items-center gap-2 bg-mdb-surface-high text-mdb-text text-sm font-semibold rounded-lg pl-3 pr-2 py-1.5 border border-mdb-border hover:border-mdb-border-hover transition-colors text-left"
+            >
+              {TAB_ITEMS.find(t => t.id === activeTab) && (() => {
+                const TabIcon = TAB_ITEMS.find(t => t.id === activeTab).icon;
+                return <TabIcon size={14} className="text-mdb-primary shrink-0" />;
+              })()}
+              <span className="truncate">{TAB_ITEMS.find(t => t.id === activeTab)?.label}</span>
+              <ChevronDown size={14} className={`ml-auto text-mdb-text-muted shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute top-full left-0 right-0 mt-1 bg-mdb-surface border border-mdb-border rounded-xl shadow-2xl overflow-hidden z-50 animate-scale-up">
+                  {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
+                      className={`flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors ${
+                        activeTab === id
+                          ? 'bg-mdb-primary/10 text-mdb-primary font-medium'
+                          : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span>{label}</span>
+                      {id === 'delivery' && chests.length > 0 && (
+                        <span className="ml-auto bg-mdb-primary/15 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 ml-2">
           <StatusBadge status={status} />
           {isOnline ? (
             <Button size="sm" variant="danger" icon={Square} onClick={handleStop} />
@@ -630,12 +664,7 @@ export default function BotDetail() {
       </div>
 
       {/* Content Area */}
-      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-14 md:pt-6`}>
-        {/* Mobile Tabs Segmented Nav */}
-        <div className="md:hidden sticky top-[56px] z-30 mb-4 -mx-4 px-4 bg-mdb-bg/95 backdrop-blur-md py-2 border-b border-mdb-border shrink-0">
-          <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="segmented" />
-        </div>
-
+      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6`}>
         {activeTab === 'console' && renderConsole()}
         {activeTab === 'delivery' && renderDelivery()}
         {activeTab === 'inventory' && renderInventory()}
