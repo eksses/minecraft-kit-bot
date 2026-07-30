@@ -129,12 +129,23 @@ function createBot(config) {
       return;
     }
 
-    const match = trimmed.match(/^(?:!kit|!deliver|!get|\\/trade|!trade)\\s+(.+)$/i);
+    const match = trimmed.match(/^(?:!kit|!deliver|!get|\/trade|!trade)\s+([^\s]+)(?:\s+(-?\d+)\s+(-?\d+))?$/i);
     if (match) {
       const chestName = match[1].trim();
+      let targetX, targetZ;
+      if (match[2] && match[3]) {
+        targetX = parseInt(match[2], 10);
+        targetZ = parseInt(match[3], 10);
+      }
       parentPort.postMessage({
         type: 'trade_request',
-        data: { chestName, playerName: username }
+        data: {
+          chestName,
+          playerName: username,
+          targetX,
+          targetZ,
+          hasExplicitCoords: targetX !== undefined && targetZ !== undefined,
+        }
       });
     }
   }
@@ -213,8 +224,8 @@ parentPort.on('message', (msg) => {
   }
 
   if (msg.type === 'take_item' && bot) {
-    const { chestX, chestY, chestZ, itemName, count, playerName } = msg.data;
-    handleTakeItem(bot, chestX, chestY, chestZ, itemName, count, playerName);
+    const { chestX, chestY, chestZ, itemName, count, playerName, targetX, targetZ, hasExplicitCoords } = msg.data;
+    handleTakeItem(bot, chestX, chestY, chestZ, itemName, count, playerName, { targetX, targetZ, hasExplicitCoords });
   }
 
   if (msg.type === 'scan' && bot) {
@@ -314,18 +325,37 @@ async function openChestSafely(bot, block) {
   }
 }
 
-async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
+async function handleTakeItem(bot, x, y, z, itemName, count, playerName, options = {}) {
   try {
     const { deliveryEngine } = await import('./deliveryEngine.js');
     const deliveryConfig = deliveryEngine.getConfig();
 
     if (deliveryConfig.DELIVERY_MODE === 'ELYTRA') {
-      const targetCoords = deliveryEngine.resolveTargetCoordinates({ x, y, z });
+      let targetCoords;
+      try {
+        const initialTarget = {
+          x: options.targetX !== undefined ? options.targetX : x,
+          y: 70,
+          z: options.targetZ !== undefined ? options.targetZ : z,
+          hasExplicitCoords: !!options.hasExplicitCoords,
+        };
+        targetCoords = await deliveryEngine.resolveTargetCoordinates(initialTarget, bot, playerName);
+      } catch (err) {
+        parentPort.postMessage({ type: 'item_take_error', data: { error: err.message } });
+        return;
+      }
+
       if (playerName) {
         bot.chat('/w ' + playerName + ' Initiating Elytra kit delivery for "' + itemName + '" to (' + targetCoords.x + ', ' + targetCoords.z + ')...');
       }
 
       const fakeChestService = { get: () => ({ x, y, z, item: itemName }) };
+      const preFlight = await deliveryEngine.runPreFlightChecklist(bot, fakeChestService, [itemName], targetCoords);
+      if (!preFlight.ok) {
+        if (playerName) bot.chat('/w ' + playerName + ' Pre-flight check failed: ' + preFlight.reason);
+        throw new Error('Pre-flight check failed: ' + preFlight.reason);
+      }
+
       await deliveryEngine.prepareBaseAndPurify(bot, fakeChestService, [itemName], targetCoords);
       await deliveryEngine.executeFlightAndDelivery(bot, targetCoords, [itemName]);
       await deliveryEngine.executePostDeliveryRoutine(bot);
@@ -930,9 +960,9 @@ export class BotInstance extends EventEmitter {
     }
   }
 
-  takeItem(chestX, chestY, chestZ, itemName, count, playerName) {
+  takeItem(chestX, chestY, chestZ, itemName, count, playerName, options = {}) {
     if (this.worker) {
-      this.worker.postMessage({ type: 'take_item', data: { chestX, chestY, chestZ, itemName, count, playerName } });
+      this.worker.postMessage({ type: 'take_item', data: { chestX, chestY, chestZ, itemName, count, playerName, ...options } });
     }
   }
 

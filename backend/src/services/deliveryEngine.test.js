@@ -61,4 +61,23 @@ const selected = engine.selectSuicideHazard(hazards);
 assert.strictEqual(selected.type, 'lava'); // Lava highest priority
 console.log('✅ Task 4: Suicide waterfall hazard selection priority test passed!');
 
-console.log('🎉 ALL DeliveryEngine unit tests passed successfully!');
+// Task 5: resolveTargetCoordinates & runPreFlightChecklist test
+async function testTargetAndPreflight() {
+  engine.updateConfig({ TARGET_COORD_MODE: 'USER' });
+  const explicitTarget = await engine.resolveTargetCoordinates({ x: 500, z: -800, hasExplicitCoords: true });
+  assert.strictEqual(explicitTarget.x, 500);
+  assert.strictEqual(explicitTarget.z, -800);
+
+  const mockBot = { entity: { position: { x: 0, y: 64, z: 0 } } };
+  const preflight = await engine.runPreFlightChecklist(mockBot, null, [], explicitTarget);
+  assert.strictEqual(preflight.ok, true);
+  assert.strictEqual(preflight.supplies.distance, 943);
+  console.log('✅ Task 5: resolveTargetCoordinates & runPreFlightChecklist passed!');
+}
+
+testTargetAndPreflight().then(() => {
+  console.log('🎉 ALL DeliveryEngine unit tests passed successfully!');
+}).catch((err) => {
+  console.error('❌ DeliveryEngine test failed:', err);
+  process.exit(1);
+});

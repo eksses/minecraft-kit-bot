@@ -9,7 +9,7 @@ export class TradingService extends EventEmitter {
     this.botLifecycleManager = botLifecycleManager;
   }
 
-  async fulfillOrder(botId, playerName, chestName, count = 1) {
+  async fulfillOrder(botId, playerName, chestName, count = 1, options = {}) {
     const bot = this.botLifecycleManager.getBot(botId);
     if (!bot) {
       return { success: false, error: 'Bot not found' };
@@ -25,7 +25,7 @@ export class TradingService extends EventEmitter {
     }
 
     const itemName = chest.itemName;
-    bot.takeItem(chest.x, chest.y, chest.z, itemName, count, playerName);
+    bot.takeItem(chest.x, chest.y, chest.z, itemName, count, playerName, options);
 
     bot.once('item_taken', () => {
       this.emit('order_complete', { playerName, chestName, itemName, count });

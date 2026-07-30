@@ -57,7 +57,7 @@ export class DeliveryEngine {
     };
   }
 
-  resolveTargetCoordinates(userTarget) {
+  async resolveTargetCoordinates(userTarget, bot = null, playerName = null) {
     if (this.config.TARGET_COORD_MODE === 'RANDOM_REGION') {
       const { x1, z1, x2, z2 } = this.config.RANDOM_REGION_BOUNDS;
       const minX = Math.min(x1, x2);
@@ -69,7 +69,75 @@ export class DeliveryEngine {
       const targetZ = Math.floor(Math.random() * (maxZ - minZ + 1)) + minZ;
       return { x: targetX, y: 70, z: targetZ };
     }
-    return userTarget;
+
+    if (this.config.TARGET_COORD_MODE === 'USER') {
+      if (userTarget && typeof userTarget.x === 'number' && typeof userTarget.z === 'number' && userTarget.hasExplicitCoords) {
+        return { x: userTarget.x, y: userTarget.y || 70, z: userTarget.z };
+      }
+
+      if (bot && playerName && typeof bot.chat === 'function') {
+        bot.chat(`/w ${playerName} [USER Coords Mode] Please send your target coordinates: /w ${bot.username} coords <X> <Z> (e.g. /w ${bot.username} coords 1500 -2300)`);
+
+        const coordinatesReceived = await new Promise((resolve) => {
+          let timeout = setTimeout(() => {
+            if (bot.removeListener) {
+              bot.removeListener('whisper', onWhisper);
+              bot.removeListener('chat', onWhisper);
+            }
+            resolve(null);
+          }, 30000);
+
+          function onWhisper(sender, msg) {
+            if (sender !== playerName) return;
+            const match = msg.match(/(?:coords|target|pos)?\s*(-?\d+)\s+(-?\d+)/i);
+            if (match) {
+              clearTimeout(timeout);
+              if (bot.removeListener) {
+                bot.removeListener('whisper', onWhisper);
+                bot.removeListener('chat', onWhisper);
+              }
+              const x = parseInt(match[1], 10);
+              const z = parseInt(match[2], 10);
+              resolve({ x, y: 70, z });
+            }
+          }
+
+          if (bot.on) {
+            bot.on('whisper', onWhisper);
+            bot.on('chat', onWhisper);
+          }
+        });
+
+        if (coordinatesReceived) {
+          bot.chat(`/w ${playerName} Target coordinates received: (${coordinatesReceived.x}, ${coordinatesReceived.z}). Starting pre-flight checks...`);
+          return coordinatesReceived;
+        } else {
+          bot.chat(`/w ${playerName} Delivery cancelled: No target coordinates received within 30 seconds.`);
+          throw new Error('No target coordinates received from user');
+        }
+      }
+    }
+
+    return userTarget || { x: 0, y: 70, z: 0 };
+  }
+
+  async runPreFlightChecklist(bot, chestService, deliveryItems = [], targetPos) {
+    if (!bot) throw new Error('Bot instance is required for pre-flight checks');
+
+    const basePos = bot.entity?.position
+      ? { x: Math.floor(bot.entity.position.x), y: Math.floor(bot.entity.position.y), z: Math.floor(bot.entity.position.z) }
+      : this.config.BASE_COORDINATES;
+
+    const supplies = this.calculateSupplies(basePos, targetPos);
+    console.log(`[PreFlight] Distance: ${supplies.distance}m | Total Travel Distance: ${supplies.totalDistance}m`);
+    console.log(`[PreFlight] Required Supplies: Rockets=${supplies.rockets}, ElytraDurability=${supplies.elytraDurability}, ElytraCount=${supplies.elytraCount}`);
+
+    return {
+      ok: true,
+      supplies,
+      basePos,
+      targetPos,
+    };
   }
 
   filterPurifiedItems(items) {

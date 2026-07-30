@@ -37,7 +37,12 @@ function wireBotEvents(bot) {
   bot.on('trade_request', async (tradeData) => {
     console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + (tradeData.chestName || tradeData.itemName));
     try {
-      await tradingService.fulfillOrder(bot.id, tradeData.playerName || 'player', tradeData.chestName || tradeData.itemName);
+      const options = {
+        targetX: tradeData.targetX,
+        targetZ: tradeData.targetZ,
+        hasExplicitCoords: tradeData.hasExplicitCoords,
+      };
+      await tradingService.fulfillOrder(bot.id, tradeData.playerName || 'player', tradeData.chestName || tradeData.itemName, 1, options);
     } catch (err) {
       console.error('[Trade] Error fulfilling order:', err.message);
     }
