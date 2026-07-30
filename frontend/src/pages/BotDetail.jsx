@@ -609,7 +609,7 @@ export default function BotDetail() {
           {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`flex items-center gap-2.5 w-full py-2 px-4 text-sm transition-colors ${
+              className={`flex items-center gap-2.5 min-h-[44px] w-full py-2 px-4 text-sm transition-colors ${
                 activeTab === id
                   ? 'bg-mdb-surface-high text-mdb-primary font-medium'
                   : 'text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high'
@@ -670,7 +670,7 @@ function SettingsSection({ title, variant = 'default', defaultOpen = true, child
         <h3 className={`text-base font-semibold ${isDanger ? 'text-mdb-error' : 'text-mdb-text'}`}>{title}</h3>
         {open ? <ChevronDown size={16} className="text-mdb-text-muted" /> : <ChevronRight size={16} className="text-mdb-text-muted" />}
       </button>
-      {open && <div className="p-6">{children}</div>}
+      {open && children}
     </Card>
   );
 }

@@ -18,7 +18,7 @@ export function Button({
   const sizes = {
     sm: 'h-11 min-h-[44px] px-4 text-xs gap-2',
     md: 'h-12 px-4 text-sm gap-2',
-    lg: 'h-12 px-6 text-sm font-semibold gap-2.5 shadow-lg shadow-mdb-primary/10',
+    lg: 'h-12 px-6 text-sm font-semibold gap-2 shadow-lg shadow-mdb-primary/10',
   };
   const iconOnlyWidths = { sm: 'w-11 px-0 aspect-square', md: 'w-11 px-0 aspect-square', lg: 'w-12 px-0 aspect-square' };
   const iconSizes = { sm: 14, md: 16, lg: 18 };
@@ -68,7 +68,7 @@ export function IconButton({ icon: Icon, size = 'md', tooltip, className = '', .
     <Tooltip content={tooltip}>
       <button
         type="button"
-        className={`inline-flex items-center justify-center rounded-lg text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors shrink-0 ${sizes[size]} ${className}`}
+        className={`inline-flex items-center justify-center rounded-lg text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mdb-primary focus-visible:ring-offset-2 focus-visible:ring-offset-mdb-bg active:scale-95 ${sizes[size]} ${className}`}
         {...props}
       >
         <Icon size={iconSizes[size]} />
@@ -195,7 +195,7 @@ export function Badge({ variant = 'default', size = 'sm', dot, className = '', c
   };
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-0.5 font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColor[variant]}`} aria-hidden="true" />}
       {children}
     </span>
@@ -217,7 +217,7 @@ export function Tabs({ items = [], value, onChange, variant = 'underline', class
             role="tab"
             aria-selected={value === item.id}
             onClick={() => onChange(item.id)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors flex-1 justify-center ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 min-h-[44px] text-sm font-medium transition-colors flex-1 justify-center ${
               value === item.id
                 ? 'bg-mdb-surface-high text-mdb-text shadow-sm'
                 : 'text-mdb-text-muted hover:text-mdb-text'
@@ -239,7 +239,7 @@ export function Tabs({ items = [], value, onChange, variant = 'underline', class
           role="tab"
           aria-selected={value === item.id}
           onClick={() => onChange(item.id)}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm font-medium transition-colors border-b-2 -mb-px ${
             value === item.id
               ? 'border-mdb-primary text-mdb-primary'
               : 'border-transparent text-mdb-text-muted hover:text-mdb-text'
@@ -404,7 +404,7 @@ export function Avatar({ src, name, size = 'md', className = '' }) {
   const initial = name ? name.charAt(0).toUpperCase() : '?';
 
   if (src) {
-    return <img src={src} alt={name || ''} className={`${sizes[size]} rounded-full object-cover ${className}`} />;
+    return <img src={src} alt={name || ''} loading="lazy" className={`${sizes[size]} aspect-square rounded-full object-cover ${className}`} />;
   }
 
   return (
@@ -444,7 +444,7 @@ export function Tooltip({ content, children, side = 'top' }) {
       {show && (
         <span
           role="tooltip"
-          className={`absolute ${positions[side]} z-50 px-2.5 py-1 rounded-lg bg-mdb-surface-highest text-xs text-mdb-text shadow-lg border border-mdb-border whitespace-nowrap pointer-events-none`}
+          className={`absolute ${positions[side]} z-50 px-3 py-1 rounded-lg bg-mdb-surface-highest text-xs text-mdb-text shadow-lg border border-mdb-border whitespace-nowrap pointer-events-none`}
         >
           {content}
         </span>
@@ -510,7 +510,7 @@ export function Dropdown({ trigger, items = [], align = 'left', className = '' }
 /* ─── Toggle ─── */
 export function Toggle({ checked, onChange, label, disabled, className = '' }) {
   return (
-    <label className={`inline-flex items-center gap-2.5 min-h-[44px] min-w-[44px] cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+    <label className={`inline-flex items-center gap-2 min-h-[44px] min-w-[44px] cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
       <button
         type="button"
         role="switch"
@@ -699,7 +699,7 @@ export function Chip({ label, variant = 'default', removable, onRemove, onClick,
   };
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${variants[variant]} ${onClick ? 'cursor-pointer hover:opacity-80' : ''} ${className}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-medium ${variants[variant]} ${onClick ? 'cursor-pointer hover:opacity-80' : ''} ${className}`}>
       {onClick ? <button onClick={onClick} className="hover:opacity-80">{label}</button> : label}
       {removable && (
         <button onClick={onRemove} className="ml-0.5 rounded-full hover:bg-black/10 p-0.5 transition-colors">
