@@ -223,27 +223,29 @@ export default function BotDetail() {
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleConsoleSubmit} className="flex items-center h-12 rounded-xl border border-slate-800 bg-[#0d1017] p-1 gap-2 shrink-0">
-        <Button
+      <form onSubmit={handleConsoleSubmit} className="w-full h-12 bg-[#0d1017] border border-slate-800 rounded-xl p-1.5 flex items-center gap-2 focus-within:border-emerald-500/50 transition-colors shadow-lg shrink-0">
+        <button
           type="button"
-          variant={consoleMode === 'command' ? 'success' : 'primary'}
-          size="sm"
           onClick={() => setConsoleMode(m => m === 'chat' ? 'command' : 'chat')}
-          className="shrink-0 font-mono h-full px-3"
+          className="h-full px-3 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold text-xs rounded-lg flex items-center justify-center shrink-0 transition-all"
         >
           {consoleMode === 'chat' ? 'Say' : '/'}
-        </Button>
-        <Input
+        </button>
+        <input
+          type="text"
           value={consoleInput}
           onChange={(e) => setConsoleInput(e.target.value)}
           placeholder={consoleMode === 'chat' ? 'Say something...' : '/command args...'}
-          className="flex-1 h-full"
           disabled={!isOnline}
+          className="flex-1 h-full bg-transparent text-slate-100 text-sm placeholder:text-slate-500 px-2 border-none focus:outline-none focus:ring-0"
         />
-        <Button type="submit" disabled={!isOnline || !consoleInput.trim()} icon={Send} className="h-full px-3" />
-        {chatMessages.length > 0 && (
-          <IconButton icon={Trash2} size="sm" onClick={() => setChatMessages([])} tooltip="Clear messages" className="h-full" />
-        )}
+        <button
+          type="submit"
+          disabled={!isOnline || !consoleInput.trim()}
+          className="h-full aspect-square bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 rounded-lg flex items-center justify-center shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Send size={16} />
+        </button>
       </form>
     </div>
   );
@@ -581,24 +583,28 @@ export default function BotDetail() {
               {dropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#131722]/95 backdrop-blur-md border border-white/10 shadow-2xl rounded-xl overflow-hidden z-50 animate-scale-up">
-                    {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
-                        className={`flex items-center gap-3 w-full min-h-[44px] px-4 py-3 text-sm transition-colors ${
-                          activeTab === id
-                            ? 'bg-mdb-primary/10 text-mdb-primary font-medium'
-                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        <span>{label}</span>
-                        {id === 'delivery' && chests.length > 0 && (
-                          <span className="ml-auto bg-mdb-primary/15 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
-                        )}
-                      </button>
-                    ))}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-60 bg-[#131722] border border-slate-700/80 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-800/50 animate-scale-up">
+                    <div className="py-1">
+                      {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
+                        <button
+                          key={id}
+                          onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
+                          className={`w-full h-11 px-4 flex items-center justify-between text-sm font-medium transition-colors ${
+                            activeTab === id
+                              ? 'text-emerald-400 bg-emerald-500/10'
+                              : 'text-slate-300 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon size={16} className={activeTab === id ? 'text-emerald-400' : 'text-slate-400'} />
+                            <span>{label}</span>
+                          </div>
+                          {id === 'delivery' && chests.length > 0 && (
+                            <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 rounded-full font-bold">{chests.length}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
