@@ -621,6 +621,20 @@ fleetRoutes.delete('/chests/:id', requireAuth, async (c) => {
 });
 
 // ============================================================
+// Delivery Configuration Routes
+// ============================================================
+fleetRoutes.get('/delivery-config', requireAuth, (c) => {
+  const config = botService.deliveryEngine.getConfig();
+  return c.json(config);
+});
+
+fleetRoutes.post('/delivery-config', requireAuth, async (c) => {
+  const body = await c.req.json();
+  const updated = botService.deliveryEngine.updateConfig(body);
+  return c.json({ success: true, config: updated });
+});
+
+// ============================================================
 // Global Tasks (all user's tasks across all swarms)
 // ============================================================
 fleetRoutes.get('/tasks', requireAuth, async (c) => {

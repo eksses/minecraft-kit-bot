@@ -6,6 +6,7 @@ import { chestService } from './chest.js';
 import { configService } from './config.js';
 import { ChestScanner } from './chest-scanner.js';
 import { openChestSafely } from '../utils/chest-helpers.js';
+import { DeliveryEngine } from './deliveryEngine.js';
 import { db, schema } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 
@@ -19,6 +20,7 @@ export class BotService extends EventEmitter {
     this.movements = null;
     this.connected = false;
     this.scanner = null; // Will be initialized after spawn
+    this.deliveryEngine = new DeliveryEngine();
   }
   
   async start() {
@@ -43,6 +45,8 @@ export class BotService extends EventEmitter {
         this.bot.pathfinder.setMovements(this.movements);
         
         this.connected = true;
+        this.bot.service = this;
+        this.bot.deliveryEngine = this.deliveryEngine;
         this.bot.chat(`/login ${this.botConfig.password}`);
         
         // Set bot metadata on the mineflayer object for ChestScanner DB writes

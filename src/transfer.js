@@ -39,6 +39,19 @@ module.exports = (bot) => {
     }
 
     const chestPos = new Vec3(chestData.x, chestData.y, chestData.z);
+
+    // If DeliveryEngine is attached and DELIVERY_MODE is ELYTRA, execute full Elytra delivery pipeline
+    if (botInstance.deliveryEngine && botInstance.deliveryEngine.getConfig().DELIVERY_MODE === 'ELYTRA') {
+      const targetCoords = botInstance.deliveryEngine.resolveTargetCoordinates({ x: chestData.x, y: chestData.y, z: chestData.z });
+      botInstance.chat(`/w ${player} Initiating Elytra kit delivery for "${chestName}" to (${targetCoords.x}, ${targetCoords.z})...`);
+      
+      const fakeChestService = { get: (name) => chestsData[name] || { x: chestData.x, y: chestData.y, z: chestData.z, item: chestData.item } };
+      await botInstance.deliveryEngine.prepareBaseAndPurify(botInstance, fakeChestService, [chestData.item], targetCoords);
+      await botInstance.deliveryEngine.executeFlightAndDelivery(botInstance, targetCoords, [chestData.item]);
+      await botInstance.deliveryEngine.executePostDeliveryRoutine(botInstance);
+      return;
+    }
+
     const distance = botInstance.entity?.position ? botInstance.entity.position.distanceTo(chestPos) : 999;
 
     if (distance > 2.3) {
