@@ -77,7 +77,7 @@ export default function TaskQueue() {
         <div className="space-y-2">
           {filteredTasks.map((task) => (
             <Card key={task.id}>
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="font-medium text-sm text-mdb-text">{task.type}</div>
                   <div className="text-xs text-mdb-text-muted mt-0.5">{new Date(task.createdAt).toLocaleString()}</div>

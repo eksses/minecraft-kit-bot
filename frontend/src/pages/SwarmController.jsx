@@ -196,7 +196,7 @@ export default function SwarmController() {
               { value: 'ROUND_ROBIN', label: 'Round Robin' },
             ]}
           />
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-2">
             <Button variant="secondary" type="button" className="flex-1" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button type="submit" className="flex-1">Create</Button>
           </div>
@@ -230,7 +230,7 @@ export default function SwarmController() {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{swarm.name}</div>
-                      <div className="flex items-center gap-3 text-xs text-mdb-text-muted mt-1">
+                      <div className="flex items-center gap-4 text-xs text-mdb-text-muted mt-1">
                         <span>{stats.totalBots} bots</span>
                         <span>{stats.activeTasks} tasks</span>
                       </div>
@@ -265,8 +265,8 @@ export default function SwarmController() {
               {/* Swarm header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold">{selectedSwarm.name}</h2>
-                  <div className="flex items-center gap-3 text-sm text-mdb-text-muted mt-1">
+                  <h2 className="text-xl font-bold">{selectedSwarm.name}</h2>
+                  <div className="flex items-center gap-4 text-sm text-mdb-text-muted mt-1">
                     <Badge variant="success" dot>{getSwarmStats(selectedSwarm.id).onlineBots} online</Badge>
                     <Badge>{getSwarmStats(selectedSwarm.id).totalBots} bots</Badge>
                     <Badge>{getSwarmStats(selectedSwarm.id).activeTasks} active tasks</Badge>
@@ -303,7 +303,7 @@ export default function SwarmController() {
                         <div
                           key={bot.id}
                           onClick={() => navigate(`/fleet/bots/${bot.id}`)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-mdb-surface-high/50 cursor-pointer transition-colors"
+                          className="flex items-center gap-4 px-5 py-3 hover:bg-mdb-surface-high/50 cursor-pointer transition-colors"
                         >
                           <StatusBadge status={status} />
                           <div className="flex-1 min-w-0">
@@ -357,7 +357,7 @@ export default function SwarmController() {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold">Tasks</h3>
+                    <h3 className="text-base font-semibold">Tasks</h3>
                     <p className="text-xs text-mdb-text-muted mt-0.5">
                       {getSwarmStats(selectedSwarm.id).activeTasks} active · {tasks.filter(t => t.swarmId === selectedSwarm.id).length} total
                     </p>
