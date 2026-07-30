@@ -12,6 +12,7 @@ import ServerManager from './pages/ServerManager';
 import TaskQueue from './pages/TaskQueue';
 import PluginStore from './pages/PluginStore';
 import Plugins from './pages/Plugins';
+import DeliveryPage from './pages/DeliveryPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -40,6 +41,7 @@ function App() {
         }>
           <Route path="/" element={<Navigate to="/fleet" replace />} />
           <Route path="/fleet" element={<FleetDashboard />} />
+          <Route path="/fleet/delivery" element={<DeliveryPage />} />
           <Route path="/fleet/bots" element={<BotControl />} />
           <Route path="/fleet/bots/:botId" element={<BotDetail />} />
           <Route path="/fleet/servers" element={<ServerManager />} />

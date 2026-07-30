@@ -10,10 +10,12 @@ import {
   Gamepad2,
   Puzzle,
   ShoppingCart,
+  Truck,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/fleet', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/fleet/delivery', label: 'Delivery', icon: Truck },
   { path: '/fleet/bots', label: 'Bots', icon: Bot },
   { path: '/fleet/servers', label: 'Servers', icon: Server },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
