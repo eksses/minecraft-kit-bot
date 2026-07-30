@@ -1,7 +1,11 @@
 import { calculateRequiredElytraDurability } from '@eksses/eafe';
+import { db, schema } from '../db/index.js';
+import { eq } from 'drizzle-orm';
+
+const CONFIG_ID = 'global';
 
 export class DeliveryEngine {
-  constructor(config = {}) {
+  constructor(config = {}, opts = {}) {
     this.config = {
       DELIVERY_MODE: config.DELIVERY_MODE || 'TPA',
       TARGET_COORD_MODE: config.TARGET_COORD_MODE || 'USER',
@@ -15,6 +19,60 @@ export class DeliveryEngine {
       BASE_COORDINATES: config.BASE_COORDINATES || { x: 0, y: 64, z: 0 },
       RANDOM_REGION_BOUNDS: config.RANDOM_REGION_BOUNDS || { x1: -1000, z1: -1000, x2: 1000, z2: 1000 },
     };
+    if (!opts.skipDbLoad) {
+      this._loadFromDb();
+    }
+  }
+
+  _loadFromDb() {
+    try {
+      const row = db.select().from(schema.deliveryConfig).where(eq(schema.deliveryConfig.id, CONFIG_ID)).get();
+      if (row) {
+        this.config.DELIVERY_MODE = row.deliveryMode;
+        this.config.TARGET_COORD_MODE = row.targetCoordMode;
+        this.config.POST_DELIVERY_ACTION = row.postDeliveryAction;
+        this.config.STORAGE_KEYS = {
+          ender: row.storageKeyEnder,
+          chest: row.storageKeyChest,
+          elytra: row.storageKeyElytra,
+          rocket: row.storageKeyRocket,
+        };
+        this.config.BASE_COORDINATES = { x: row.baseX, y: row.baseY, z: row.baseZ };
+        this.config.RANDOM_REGION_BOUNDS = { x1: row.randomX1, z1: row.randomZ1, x2: row.randomX2, z2: row.randomZ2 };
+      }
+    } catch (err) {
+      console.warn('[DeliveryEngine] Could not load config from DB, using defaults:', err.message);
+    }
+  }
+
+  _saveToDb() {
+    try {
+      const now = new Date();
+      const values = {
+        id: CONFIG_ID,
+        deliveryMode: this.config.DELIVERY_MODE,
+        targetCoordMode: this.config.TARGET_COORD_MODE,
+        postDeliveryAction: this.config.POST_DELIVERY_ACTION,
+        storageKeyEnder: this.config.STORAGE_KEYS.ender,
+        storageKeyChest: this.config.STORAGE_KEYS.chest,
+        storageKeyElytra: this.config.STORAGE_KEYS.elytra,
+        storageKeyRocket: this.config.STORAGE_KEYS.rocket,
+        baseX: this.config.BASE_COORDINATES.x,
+        baseY: this.config.BASE_COORDINATES.y,
+        baseZ: this.config.BASE_COORDINATES.z,
+        randomX1: this.config.RANDOM_REGION_BOUNDS.x1,
+        randomZ1: this.config.RANDOM_REGION_BOUNDS.z1,
+        randomX2: this.config.RANDOM_REGION_BOUNDS.x2,
+        randomZ2: this.config.RANDOM_REGION_BOUNDS.z2,
+        updatedAt: now,
+      };
+      db.insert(schema.deliveryConfig).values(values).onConflictDoUpdate({
+        target: schema.deliveryConfig.id,
+        set: { ...values, id: undefined },
+      }).run();
+    } catch (err) {
+      console.error('[DeliveryEngine] Failed to save config to DB:', err.message);
+    }
   }
 
   getConfig() {
@@ -26,7 +84,16 @@ export class DeliveryEngine {
       this.config.STORAGE_KEYS = { ...this.config.STORAGE_KEYS, ...updates.STORAGE_KEYS };
       delete updates.STORAGE_KEYS;
     }
+    if (updates.BASE_COORDINATES) {
+      this.config.BASE_COORDINATES = { ...this.config.BASE_COORDINATES, ...updates.BASE_COORDINATES };
+      delete updates.BASE_COORDINATES;
+    }
+    if (updates.RANDOM_REGION_BOUNDS) {
+      this.config.RANDOM_REGION_BOUNDS = { ...this.config.RANDOM_REGION_BOUNDS, ...updates.RANDOM_REGION_BOUNDS };
+      delete updates.RANDOM_REGION_BOUNDS;
+    }
     Object.assign(this.config, updates);
+    this._saveToDb();
     return this.getConfig();
   }
 

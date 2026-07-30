@@ -219,6 +219,28 @@ export const scanConfigsRelations = relations(scanConfigs, ({ one }) => ({
 }));
 
 // ============================================================
+// Delivery Config Table (Global delivery settings, persisted)
+// ============================================================
+export const deliveryConfig = sqliteTable('delivery_config', {
+  id: text('id').primaryKey(), // always 'global'
+  deliveryMode: text('delivery_mode').notNull().default('TPA'),
+  targetCoordMode: text('target_coord_mode').notNull().default('USER'),
+  postDeliveryAction: text('post_delivery_action').notNull().default('FLY_HOME'),
+  storageKeyEnder: text('storage_key_ender').notNull().default('ender'),
+  storageKeyChest: text('storage_key_chest').notNull().default('chest'),
+  storageKeyElytra: text('storage_key_elytra').notNull().default('elytra'),
+  storageKeyRocket: text('storage_key_rocket').notNull().default('rocket'),
+  baseX: integer('base_x').notNull().default(0),
+  baseY: integer('base_y').notNull().default(64),
+  baseZ: integer('base_z').notNull().default(0),
+  randomX1: integer('random_x1').notNull().default(-1000),
+  randomZ1: integer('random_z1').notNull().default(-1000),
+  randomX2: integer('random_x2').notNull().default(1000),
+  randomZ2: integer('random_z2').notNull().default(1000),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ============================================================
 // Plugins Table
 // ============================================================
 export const plugins = sqliteTable('plugins', {

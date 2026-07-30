@@ -158,6 +158,25 @@ export function initDatabase() {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS delivery_config (
+      id TEXT PRIMARY KEY,
+      delivery_mode TEXT NOT NULL DEFAULT 'TPA',
+      target_coord_mode TEXT NOT NULL DEFAULT 'USER',
+      post_delivery_action TEXT NOT NULL DEFAULT 'FLY_HOME',
+      storage_key_ender TEXT NOT NULL DEFAULT 'ender',
+      storage_key_chest TEXT NOT NULL DEFAULT 'chest',
+      storage_key_elytra TEXT NOT NULL DEFAULT 'elytra',
+      storage_key_rocket TEXT NOT NULL DEFAULT 'rocket',
+      base_x INTEGER NOT NULL DEFAULT 0,
+      base_y INTEGER NOT NULL DEFAULT 64,
+      base_z INTEGER NOT NULL DEFAULT 0,
+      random_x1 INTEGER NOT NULL DEFAULT -1000,
+      random_z1 INTEGER NOT NULL DEFAULT -1000,
+      random_x2 INTEGER NOT NULL DEFAULT 1000,
+      random_z2 INTEGER NOT NULL DEFAULT 1000,
+      updated_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS plugins (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,

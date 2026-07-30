@@ -22,6 +22,14 @@ let movements = null;
 let reconnectAttempts = 0;
 let scanning = false;
 let scanAbort = false;
+let deliveryConfig = workerData.deliveryConfig || {
+  DELIVERY_MODE: 'TPA',
+  TARGET_COORD_MODE: 'USER',
+  POST_DELIVERY_ACTION: 'FLY_HOME',
+  STORAGE_KEYS: { ender: 'ender', chest: 'chest', elytra: 'elytra', rocket: 'rocket' },
+  BASE_COORDINATES: { x: 0, y: 64, z: 0 },
+  RANDOM_REGION_BOUNDS: { x1: -1000, z1: -1000, x2: 1000, z2: 1000 },
+};
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_BASE_DELAY = 1000;
 
@@ -107,7 +115,7 @@ function createBot(config) {
   });
 
   bot.on('messagestr', (message) => {
-    const tradeMatch = message.match(/(?:\[trade\]|\/trade)\s+(.+)/i);
+    const tradeMatch = message.match(/(?:\\[trade\\]|\\/trade)\\s+(.+)/i);
     if (tradeMatch) {
       parentPort.postMessage({
         type: 'trade_request',
@@ -129,7 +137,7 @@ function createBot(config) {
       return;
     }
 
-    const match = trimmed.match(/^(?:!kit|!deliver|!get|\/trade|!trade)\s+([^\s]+)(?:\s+(-?\d+)\s+(-?\d+))?$/i);
+    const match = trimmed.match(/^(?:!kit|!deliver|!get|\\/trade|!trade)\\s+([^\\s]+)(?:\\s+(-?\\d+)\\s+(-?\\d+))?$/i);
     if (match) {
       const chestName = match[1].trim();
       let targetX, targetZ;
@@ -327,8 +335,8 @@ async function openChestSafely(bot, block) {
 
 async function handleTakeItem(bot, x, y, z, itemName, count, playerName, options = {}) {
   try {
-    const { deliveryEngine } = await import('./deliveryEngine.js');
-    const deliveryConfig = deliveryEngine.getConfig();
+    const { DeliveryEngine } = await import('./backend/src/services/deliveryEngine.js');
+    const deliveryEngine = new DeliveryEngine(deliveryConfig, { skipDbLoad: true });
 
     if (deliveryConfig.DELIVERY_MODE === 'ELYTRA') {
       let targetCoords;

@@ -22,5 +22,41 @@
     "y": 55,
     "z": 0,
     "item": "Dirt"
+  },
+  "grass_block": {
+    "x": 105,
+    "y": 64,
+    "z": 205,
+    "item": "grass_block"
+  },
+  "chest": {
+    "x": -146,
+    "y": 70,
+    "z": -334,
+    "item": "chest"
+  },
+  "ender": {
+    "x": -146,
+    "y": 70,
+    "z": -332,
+    "item": "ender_chest"
+  },
+  "rocket": {
+    "x": -148,
+    "y": 70,
+    "z": -336,
+    "item": "firework_rocket"
+  },
+  "gass": {
+    "x": -151,
+    "y": 70,
+    "z": -332,
+    "item": "grass_block"
+  },
+  "elytra": {
+    "x": -151,
+    "y": 70,
+    "z": -336,
+    "item": "elytra"
   }
 }
