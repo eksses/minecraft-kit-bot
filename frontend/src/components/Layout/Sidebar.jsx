@@ -58,12 +58,12 @@ export default function Sidebar({ currentPath, user, onLogout }) {
         ))}
       </div>
 
-      <div className="px-3 py-3 border-t border-mdb-border max-[1025px]:px-0 max-[1025px]:flex max-[1025px]:justify-center">
-        <div className="flex items-center gap-3 max-[1025px]:hidden px-2">
+      <div className="px-3 py-3 border-t border-mdb-border max-[1025px]:px-0">
+        <div className="flex items-center gap-3 px-2 max-[1025px]:justify-center max-[1025px]:px-0">
           <div className="w-8 h-8 rounded-full bg-mdb-surface-high flex items-center justify-center text-xs font-medium text-mdb-primary shrink-0">
             {user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 max-[1025px]:hidden">
             <div className="text-sm font-medium text-mdb-text truncate leading-tight">
               {user?.username}
             </div>
@@ -73,14 +73,9 @@ export default function Sidebar({ currentPath, user, onLogout }) {
             icon={LogOut}
             size="sm"
             onClick={onLogout}
-            className="text-mdb-text-muted hover:text-mdb-error"
+            className="max-[1025px]:hidden text-mdb-text-muted hover:text-mdb-error"
             tooltip="Logout"
           />
-        </div>
-        <div className="hidden max-[1025px]:flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full bg-mdb-surface-high flex items-center justify-center text-xs font-medium text-mdb-primary">
-            {user?.username?.[0]?.toUpperCase() || 'U'}
-          </div>
         </div>
       </div>
     </nav>

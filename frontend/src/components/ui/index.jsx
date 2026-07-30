@@ -16,11 +16,11 @@ export function Button({
 }) {
   const base = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mdb-primary focus-visible:ring-offset-2 focus-visible:ring-offset-mdb-bg';
   const sizes = {
-    sm: 'h-9 px-3.5 text-xs gap-1.5',
-    md: 'h-10 px-4 text-sm gap-2',
+    sm: 'h-11 px-3.5 text-xs gap-1.5',
+    md: 'h-11 px-4 text-sm gap-2',
     lg: 'h-12 px-6 text-sm font-semibold gap-2.5 shadow-lg shadow-mdb-primary/10',
   };
-  const iconOnlyWidths = { sm: 'w-9 px-0 aspect-square', md: 'w-10 px-0 aspect-square', lg: 'w-12 px-0 aspect-square' };
+  const iconOnlyWidths = { sm: 'w-11 px-0 aspect-square', md: 'w-11 px-0 aspect-square', lg: 'w-12 px-0 aspect-square' };
   const iconSizes = { sm: 14, md: 16, lg: 18 };
   const variants = {
     primary: 'bg-mdb-primary text-white hover:bg-mdb-primary-hover shadow-md shadow-mdb-primary/20',
@@ -61,7 +61,7 @@ export function Button({
 
 /* ─── IconButton ─── */
 export function IconButton({ icon: Icon, size = 'md', tooltip, className = '', ...props }) {
-  const sizes = { sm: 'h-8 w-8', md: 'h-9 w-9', lg: 'h-10 w-10' };
+  const sizes = { sm: 'h-11 w-11', md: 'h-11 w-11', lg: 'h-12 w-12' };
   const iconSizes = { sm: 16, md: 18, lg: 20 };
 
   return (
@@ -118,7 +118,7 @@ export function Select({ label, options = [], size = 'md', className = '', ...pr
 
 /* ─── Card ─── */
 export function Card({ variant = 'default', padding = 'md', className = '', children }) {
-  const pads = { none: '', sm: 'p-4', md: 'p-5', lg: 'p-6' };
+  const pads = { none: '', sm: 'p-4', md: 'p-6', lg: 'p-8' };
   const variants = {
     default: 'bg-mdb-surface rounded-xl border border-mdb-border',
     highlighted: 'bg-mdb-surface rounded-xl border border-mdb-primary/30',
@@ -135,7 +135,7 @@ export function Card({ variant = 'default', padding = 'md', className = '', chil
 /* ─── CardHeader ─── */
 export function CardHeader({ title, subtitle, action, className = '' }) {
   return (
-    <div className={`flex items-center justify-between px-5 py-4 border-b border-mdb-border ${className}`}>
+    <div className={`flex items-center justify-between px-6 py-4 border-b border-mdb-border ${className}`}>
       <div>
         <h3 className="text-sm font-semibold text-mdb-text">{title}</h3>
         {subtitle && <p className="text-xs text-mdb-text-muted mt-0.5">{subtitle}</p>}
@@ -163,7 +163,7 @@ export function StatCard({ label, value, icon: Icon, trend, color = 'default', c
   const trendColors = { up: 'text-mdb-success', down: 'text-mdb-error', neutral: 'text-mdb-text-muted' };
 
   return (
-    <div className={`bg-mdb-surface rounded-xl border border-mdb-border p-5 relative overflow-hidden ${className}`}>
+    <div className={`bg-mdb-surface rounded-xl border border-mdb-border p-6 relative overflow-hidden ${className}`}>
       {Icon && <Icon size={48} className={`absolute -right-2 -bottom-2 ${iconColors[color]}`} strokeWidth={1} />}
       <p className="text-xs font-medium text-mdb-text-muted">{label}</p>
       <p className={`text-2xl font-bold mt-1 ${colors[color]}`}>{value}</p>
@@ -322,11 +322,11 @@ export function Modal({ isOpen, onClose, title, size = 'md', children }) {
         aria-modal="true"
         aria-label={title}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-mdb-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-mdb-border">
           <h2 className="text-base font-semibold text-mdb-text">{title}</h2>
           <IconButton icon={X} size="sm" onClick={onClose} aria-label="Close" />
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );
@@ -354,11 +354,11 @@ export function Drawer({ isOpen, onClose, title, side = 'right', children }) {
         aria-modal="true"
         aria-label={title}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-mdb-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-mdb-border">
           <h2 className="text-base font-semibold text-mdb-text">{title}</h2>
           <IconButton icon={X} size="sm" onClick={onClose} aria-label="Close" />
         </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );
@@ -553,7 +553,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', classN
 /* ─── Table ─── */
 export function Table({ columns = [], data = [], onRowClick, emptyMessage = 'No data', striped, className = '' }) {
   return (
-    <div className={`bg-mdb-surface rounded-xl border border-mdb-border overflow-hidden ${className}`}>
+    <div className={`bg-mdb-surface rounded-xl border border-mdb-border overflow-x-auto ${className}`}>
       <table className="w-full">
         <thead>
           <tr className="bg-mdb-surface-high">

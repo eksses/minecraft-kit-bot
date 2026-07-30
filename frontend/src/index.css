@@ -7,8 +7,8 @@
   --color-mdb-surface-highest: #252a3a;
   --color-mdb-surface-low: #101318;
   --color-mdb-surface-lowest: #080a0e;
-  --color-mdb-primary: #10b981;
-  --color-mdb-primary-hover: #059669;
+  --color-mdb-primary: #059669;
+  --color-mdb-primary-hover: #047857;
   --color-mdb-primary-light: #10b98120;
   --color-mdb-on-primary: #ffffff;
   --color-mdb-text: #e8ecf1;
@@ -44,6 +44,8 @@ body {
 
 a { color: var(--color-mdb-primary); text-decoration: none; transition: color 0.15s ease; }
 a:hover { color: var(--color-mdb-primary-hover); }
+
+a:focus-visible, button:focus-visible { outline: 2px solid var(--color-mdb-primary); outline-offset: 2px; border-radius: 6px; }
 
 /* ============================================
    Inputs & Selects
