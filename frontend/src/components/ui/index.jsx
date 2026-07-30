@@ -79,7 +79,7 @@ export function IconButton({ icon: Icon, size = 'md', tooltip, className = '', .
 
 /* ─── Input ─── */
 export function Input({ label, error, helperText, size = 'md', className = '', ...props }) {
-  const h = size === 'lg' ? 'h-12' : 'h-10';
+  const h = size === 'lg' ? 'h-12' : 'min-h-[44px] h-11';
   const focus = error
     ? 'border-mdb-error ring-2 ring-mdb-error/20'
     : 'border-mdb-border focus:border-mdb-primary focus:ring-2 focus:ring-mdb-primary/20';
@@ -536,7 +536,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', classN
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-10 bg-mdb-bg border border-mdb-border rounded-lg pl-10 pr-10 text-sm text-mdb-text placeholder:text-mdb-text-muted outline-none focus:border-mdb-primary focus:ring-2 focus:ring-mdb-primary/20 transition-colors"
+        className="w-full min-h-[44px] h-11 bg-mdb-bg border border-mdb-border rounded-lg pl-10 pr-10 text-sm text-mdb-text placeholder:text-mdb-text-muted outline-none focus:border-mdb-primary focus:ring-2 focus:ring-mdb-primary/20 transition-colors"
       />
       {value && (
         <button
@@ -749,7 +749,7 @@ export function NumberInput({ value, onChange, min, max, step = 1, label, classN
         <button
           onClick={() => onChange(clamp(value - step))}
           disabled={min != null && value <= min}
-          className="h-10 w-10 flex items-center justify-center bg-mdb-surface-high hover:bg-mdb-surface-highest text-mdb-text-secondary rounded-l-lg transition-colors disabled:opacity-50"
+          className="min-h-[44px] h-11 w-11 flex items-center justify-center bg-mdb-surface-high hover:bg-mdb-surface-highest text-mdb-text-secondary rounded-l-lg transition-colors disabled:opacity-50"
         >
           <span className="text-lg leading-none">−</span>
         </button>
@@ -757,12 +757,12 @@ export function NumberInput({ value, onChange, min, max, step = 1, label, classN
           type="number"
           value={value}
           onChange={(e) => onChange(clamp(Number(e.target.value) || 0))}
-          className="h-10 w-16 text-center border-x border-mdb-border bg-mdb-bg text-sm text-mdb-text outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="min-h-[44px] h-11 w-16 text-center border-x border-mdb-border bg-mdb-bg text-sm text-mdb-text outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
         <button
           onClick={() => onChange(clamp(value + step))}
           disabled={max != null && value >= max}
-          className="h-10 w-10 flex items-center justify-center bg-mdb-surface-high hover:bg-mdb-surface-highest text-mdb-text-secondary rounded-r-lg transition-colors disabled:opacity-50"
+          className="min-h-[44px] h-11 w-11 flex items-center justify-center bg-mdb-surface-high hover:bg-mdb-surface-highest text-mdb-text-secondary rounded-r-lg transition-colors disabled:opacity-50"
         >
           <span className="text-lg leading-none">+</span>
         </button>

@@ -28,7 +28,7 @@ const navItems = [
 export default function Sidebar({ currentPath, user, onLogout }) {
   return (
     <nav
-      className="fixed left-0 top-0 bottom-0 hidden lg:flex flex-col w-[260px] bg-mdb-surface border-r border-mdb-border z-40"
+      className="fixed left-0 top-0 bottom-0 hidden lg:flex flex-col w-[256px] bg-mdb-surface border-r border-mdb-border z-40"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -45,7 +45,7 @@ export default function Sidebar({ currentPath, user, onLogout }) {
             key={path}
             to={path}
             className={({ isActive }) =>
-              `flex items-center gap-3 h-10 mx-2 px-3.5 rounded-lg text-sm font-medium no-underline transition-all duration-150 max-[1025px]:justify-center max-[1025px]:mx-0 max-[1025px]:px-0 ${
+              `flex items-center gap-3 min-h-[44px] h-11 mx-2 px-3.5 rounded-lg text-sm font-medium no-underline transition-all duration-150 max-[1025px]:justify-center max-[1025px]:mx-0 max-[1025px]:px-0 ${
                 isActive
                   ? 'bg-mdb-surface-high text-mdb-primary'
                   : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'

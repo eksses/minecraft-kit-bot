@@ -116,15 +116,16 @@ export default function FleetDashboard() {
             {bots.slice(0, 6).map(bot => {
               const status = bot.liveStatus?.status || bot.status;
               return (
-                <div
+                <button
+                  type="button"
                   key={bot.id}
-                  className="px-5 py-3 flex items-center gap-3 cursor-pointer hover:bg-mdb-surface-high transition-colors"
+                  className="w-full text-left px-6 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-mdb-surface-high transition-colors"
                   onClick={() => navigate(`/fleet/bots/${bot.id}`)}
                 >
                   <Avatar name={bot.name} size="sm" />
                   <span className="flex-1 text-sm font-medium truncate">{bot.name}</span>
                   <StatusBadge status={status} />
-                </div>
+                </button>
               );
             })}
           </div>
