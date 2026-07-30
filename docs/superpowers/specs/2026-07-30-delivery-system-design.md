@@ -27,17 +27,24 @@ Chests are stored with key-value pair identifiers in the SQLite database table `
 
 ---
 
-## 2. Web UI Delivery Flow (`BotDetail.jsx`)
+## 2. Web UI Delivery Flow & Navigation
 
-### 2.1 Chest List Cards & Display
-In `BotDetail.jsx` under the **Chests** tab:
-- Each chest is presented as a visual card highlighting its key-value pair `name` (e.g. `pvp`), item details (`itemName`, `itemCount`), and coordinates (`x, y, z`).
-- Card actions:
-  - **"Deliver Kit"** button (Primary action, green/accent highlight).
-  - **"Rescan"** button (Secondary action, refresh icon).
+### 2.1 Navigation Locations
+To make the delivery system immediately accessible across the admin dashboard:
+1. **Main Admin Sidebar Navigation (`Sidebar.jsx`)**:
+   - Added a top-level navigation entry: **"Delivery"** (route `/fleet/delivery`, icon `Truck`/`Send`).
+   - Displays a dedicated Global Delivery Dashboard showing all available key-value chests across all active bots, grouped by bot/server with one-click delivery triggers.
+2. **Bot Detail Sub-Navigation (`BotDetail.jsx`)**:
+   - Renamed/Enhanced the `Chests` tab to **"Delivery & Chests"** (icon `Truck`/`Box`).
+   - Located in the bot sidebar menu right below `Console`.
 
-### 2.2 Delivery Modal (`DeliverModal`)
-Clicking **"Deliver Kit"** on any chest opens a dedicated modal dialog:
+### 2.2 Global Delivery Page (`/fleet/delivery`)
+- Displays all key-value pair chests (e.g. `pvp`, `kit1`, `8b8t`) across all online bots.
+- Filter by bot or search by chest name / item type.
+- Each chest card features a primary **"Deliver Kit"** button.
+
+### 2.3 Chest Cards & Delivery Modal (`DeliverModal`)
+Clicking **"Deliver Kit"** on any chest (from either the main Delivery page or Bot Detail page) opens the modal dialog:
 - Title: `Deliver Kit: <chestName>`
 - Input 1: **Minecraft Username** (text input, required, autofocus).
 - Input 2: **Quantity** (number input, default 1, min 1, max 64).
