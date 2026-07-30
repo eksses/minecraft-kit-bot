@@ -343,4 +343,5 @@ export class DeliveryEngine {
   }
 }
 
+export const deliveryEngine = new DeliveryEngine();
 export default DeliveryEngine;

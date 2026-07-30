@@ -7,6 +7,7 @@ import { botLifecycleManager } from '../services/botLifecycle.js';
 import { swarmCoordinator } from '../services/swarmCoordinator.js';
 import { TradingService } from '../services/tradingService.js';
 import { chestService } from '../services/chest.js';
+import { deliveryEngine } from '../services/deliveryEngine.js';
 import mc from 'minecraft-protocol';
 
 export const fleetRoutes = new Hono();
@@ -624,13 +625,13 @@ fleetRoutes.delete('/chests/:id', requireAuth, async (c) => {
 // Delivery Configuration Routes
 // ============================================================
 fleetRoutes.get('/delivery-config', requireAuth, (c) => {
-  const config = botService.deliveryEngine.getConfig();
+  const config = deliveryEngine.getConfig();
   return c.json(config);
 });
 
 fleetRoutes.post('/delivery-config', requireAuth, async (c) => {
   const body = await c.req.json();
-  const updated = botService.deliveryEngine.updateConfig(body);
+  const updated = deliveryEngine.updateConfig(body);
   return c.json({ success: true, config: updated });
 });
 
