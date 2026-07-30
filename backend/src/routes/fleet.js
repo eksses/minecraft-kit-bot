@@ -17,10 +17,25 @@ function wireBotEvents(bot) {
   if (bot._eventsWired) return;
   bot._eventsWired = true;
 
-  bot.on('trade_request', async (tradeData) => {
-    console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + tradeData.itemName);
+  bot.on('chat_command_list', async (data) => {
     try {
-      await tradingService.fulfillOrder(bot.id, 'player', tradeData.itemName);
+      const items = await tradingService.getAvailableItems(bot.id);
+      const names = items.map(i => i.name).filter(Boolean).join(', ');
+      const msg = 'Available kits: ' + (names || 'None');
+      if (data.username) {
+        bot.sendCommand('/w ' + data.username + ' ' + msg);
+      } else {
+        bot.sendCommand(msg);
+      }
+    } catch (err) {
+      console.error('[ChatCommand] Error listing kits:', err.message);
+    }
+  });
+
+  bot.on('trade_request', async (tradeData) => {
+    console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + (tradeData.chestName || tradeData.itemName));
+    try {
+      await tradingService.fulfillOrder(bot.id, tradeData.playerName || 'player', tradeData.chestName || tradeData.itemName);
     } catch (err) {
       console.error('[Trade] Error fulfilling order:', err.message);
     }

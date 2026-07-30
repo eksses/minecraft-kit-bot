@@ -116,6 +116,32 @@ function createBot(config) {
     }
   });
 
+  function handleChatCommand(username, message) {
+    if (!message || typeof message !== 'string') return;
+    if (username === bot.username) return;
+    const trimmed = message.trim();
+
+    if (trimmed === '!list' || trimmed === '!kits') {
+      parentPort.postMessage({
+        type: 'chat_command_list',
+        data: { username }
+      });
+      return;
+    }
+
+    const match = trimmed.match(/^(?:!kit|!deliver|!get|\\/trade|!trade)\\s+(.+)$/i);
+    if (match) {
+      const chestName = match[1].trim();
+      parentPort.postMessage({
+        type: 'trade_request',
+        data: { chestName, playerName: username }
+      });
+    }
+  }
+
+  bot.on('chat', (username, message) => handleChatCommand(username, message));
+  bot.on('whisper', (username, message) => handleChatCommand(username, message));
+
   bot.on('path_update', (result) => {
     parentPort.postMessage({
       type: 'path_update',
