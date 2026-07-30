@@ -6,9 +6,13 @@ import {
   ShoppingCart,
   Puzzle,
   LogOut,
+  Server,
+  ListTodo,
 } from 'lucide-react';
 
 const moreItems = [
+  { path: '/fleet/servers', label: 'Servers', icon: Server },
+  { path: '/fleet/tasks', label: 'Tasks', icon: ListTodo },
   { path: '/settings', label: 'Settings', icon: Settings },
   { path: '/plugin-store', label: 'Plugin Store', icon: ShoppingCart },
   { path: '/plugins', label: 'Plugins', icon: Puzzle },

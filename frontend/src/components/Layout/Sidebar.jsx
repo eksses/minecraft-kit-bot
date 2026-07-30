@@ -10,6 +10,8 @@ import {
   Puzzle,
   ShoppingCart,
   Truck,
+  Server,
+  ListTodo,
 } from 'lucide-react';
 
 const navItems = [
@@ -17,6 +19,8 @@ const navItems = [
   { path: '/fleet/delivery', label: 'Delivery', icon: Truck },
   { path: '/fleet/bots', label: 'Bots', icon: Bot },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
+  { path: '/fleet/servers', label: 'Servers', icon: Server },
+  { path: '/fleet/tasks', label: 'Tasks', icon: ListTodo },
   { path: '/plugin-store', label: 'Plugins', icon: ShoppingCart },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
