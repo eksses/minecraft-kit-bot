@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
-import { Button, Card, Input, Select, StatusBadge, EmptyState, LoadingState, Drawer, IconButton, Avatar, SearchInput, Badge } from '../components/ui';
+import { Button, Card, Input, Select, StatusBadge, EmptyState, LoadingState, Drawer, IconButton, Avatar, Badge } from '../components/ui';
 import { RefreshCw, Plus, Bot, Play, Square, Search } from 'lucide-react';
 
 export default function BotControl() {
@@ -69,30 +69,32 @@ export default function BotControl() {
 
   if (loading) {
     return (
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div className="space-y-2">
-            <div className="h-7 w-24 bg-mdb-surface-high rounded-lg animate-pulse" />
-            <div className="h-4 w-32 bg-mdb-surface-high rounded-lg animate-pulse" />
-          </div>
-          <div className="flex gap-2">
-            <div className="h-9 w-9 bg-mdb-surface-high rounded-lg animate-pulse" />
-            <div className="h-9 w-24 bg-mdb-surface-high rounded-lg animate-pulse" />
+      <div className="w-full max-w-7xl mx-auto px-4 py-4 space-y-4 text-slate-100">
+        <div className="flex items-center justify-between w-full">
+          <h1 className="text-2xl font-bold text-white">Bots</h1>
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="p-2.5 text-slate-400 hover:text-white bg-slate-800/60 rounded-lg border border-slate-700/50">
+              <RefreshCw className="w-4 h-4"/>
+            </button>
+            <button className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-md">
+              <Plus className="w-4 h-4 stroke-[3]"/>
+              Add Bot
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} padding="sm" className="animate-pulse">
+            <Card key={i} padding="sm" className="animate-pulse bg-[#131824] border border-slate-800/80">
               <div className="flex items-center gap-4 mb-4">
-                <div className="h-10 w-10 rounded-full bg-mdb-surface-high" />
+                <div className="h-10 w-10 rounded-full bg-slate-800/50" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-4 w-28 bg-mdb-surface-high rounded" />
-                  <div className="h-3 w-20 bg-mdb-surface-high rounded" />
+                  <div className="h-4 w-28 bg-slate-800/50 rounded" />
+                  <div className="h-3 w-20 bg-slate-800/50 rounded" />
                 </div>
-                <div className="h-5 w-14 bg-mdb-surface-high rounded-full" />
+                <div className="h-5 w-14 bg-slate-800/50 rounded-full" />
               </div>
-              <div className="pt-3 border-t border-mdb-border">
-                <div className="h-8 w-20 bg-mdb-surface-high rounded-lg" />
+              <div className="pt-3 border-t border-slate-800/60">
+                <div className="h-8 w-20 bg-slate-800/50 rounded-lg" />
               </div>
             </Card>
           ))}
@@ -102,41 +104,56 @@ export default function BotControl() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Bots</h1>
-          <p className="text-sm text-mdb-text-muted mt-0.5">
-            {bots.length} bot{bots.length !== 1 ? 's' : ''} configured
-            {bots.length > 0 && (
-              <span className="ml-2">
-                <Badge variant="success" size="sm" dot>{onlineCount} online</Badge>
-                {bots.length - onlineCount > 0 && (
-                  <Badge variant="default" size="sm" dot className="ml-1.5">{bots.length - onlineCount} offline</Badge>
-                )}
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <IconButton icon={RefreshCw} onClick={loadData} tooltip="Refresh" />
-          <Button icon={<Plus size={16} />} onClick={() => setShowAdd(true)}>Add Bot</Button>
+    <div className="w-full max-w-7xl mx-auto px-4 py-4 space-y-4 text-slate-100">
+      {/* Header */}
+      <div className="flex items-center justify-between w-full">
+        <h1 className="text-2xl font-bold text-white">Bots</h1>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={loadData} className="p-2.5 text-slate-400 hover:text-white bg-slate-800/60 rounded-lg border border-slate-700/50 transition-colors">
+            <RefreshCw className="w-4 h-4"/>
+          </button>
+          <button onClick={() => setShowAdd(true)} className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-md transition-colors">
+            <Plus className="w-4 h-4 stroke-[3]"/>
+            Add Bot
+          </button>
         </div>
       </div>
 
+      {/* Status Badges Row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-slate-400 font-medium">{bots.length} bot{bots.length !== 1 ? 's' : ''} configured</span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          {onlineCount} online
+        </span>
+        {bots.length - onlineCount > 0 && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+            {bots.length - onlineCount} offline
+          </span>
+        )}
+      </div>
+
+      {/* Search Bar */}
       {bots.length > 0 && (
-        <div className="mb-4">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search bots by name or username..." />
+        <div className="relative w-full">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"/>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search bots by name or username..."
+            className="w-full bg-[#131824] border border-slate-800 text-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-emerald-500/60 placeholder:text-slate-500"
+          />
         </div>
       )}
 
+      {/* Add Bot Drawer */}
       <Drawer isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add New Bot">
         <form onSubmit={handleAddBot} className="space-y-4">
           <Input label="Bot Name" required placeholder="Delivery Bot 1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Input label="Minecraft Username" required placeholder="bot_username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
 
-          <div className="pt-2 border-t border-mdb-border">
-            <span className="text-[11px] font-semibold text-mdb-text-muted uppercase tracking-widest">Server Connection</span>
+          <div className="pt-2 border-t border-slate-800/50">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Server Connection</span>
           </div>
 
           <Input label="Server IP / Host" required placeholder="play.example.com" value={form.serverHost} onChange={(e) => setForm({ ...form, serverHost: e.target.value })} />
@@ -156,8 +173,8 @@ export default function BotControl() {
             ]} />
           </div>
 
-          <div className="pt-2 border-t border-mdb-border">
-            <span className="text-[11px] font-semibold text-mdb-text-muted uppercase tracking-widest">Auth Mode</span>
+          <div className="pt-2 border-t border-slate-800/50">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Auth Mode</span>
           </div>
 
           <Select label="Authentication" value={form.authMode} onChange={(e) => setForm({ ...form, authMode: e.target.value })} options={[
@@ -169,13 +186,14 @@ export default function BotControl() {
             <Input label="Login Password" type="password" placeholder="Server login password" helperText="Bot will execute /login <password> on spawn" value={form.authPassword} onChange={(e) => setForm({ ...form, authPassword: e.target.value })} />
           )}
 
-          <div className="flex gap-4 pt-4 border-t border-mdb-border">
+          <div className="flex gap-4 pt-4 border-t border-slate-800/50">
             <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowAdd(false)}>Cancel</Button>
             <Button type="submit" className="flex-1">Add Bot</Button>
           </div>
         </form>
       </Drawer>
 
+      {/* Bot List / Empty States */}
       {bots.length === 0 ? (
         <EmptyState
           icon={Bot}
@@ -196,31 +214,24 @@ export default function BotControl() {
             const status = bot.liveStatus?.status || bot.status;
             const isOnline = !['OFFLINE', 'ERROR'].includes(status);
             return (
-              <Card key={bot.id} padding="sm">
-                <div className="flex items-center gap-4 mb-4">
+              <Card key={bot.id} className="bg-[#131824] border border-slate-800/80 rounded-xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center gap-4">
                   <Avatar name={bot.name} />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-mdb-text truncate">{bot.name}</div>
-                    <div className="text-xs text-mdb-text-muted font-mono truncate">{bot.username}</div>
+                    <div className="font-medium text-white truncate">{bot.name}</div>
+                    <div className="text-xs text-slate-400 font-mono truncate">{bot.username}</div>
                   </div>
                   <StatusBadge status={status} />
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-mdb-border">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/fleet/bots/${bot.id}`)}
-                  >
+                <div className="flex items-center justify-between pt-3 border-t border-slate-800/60">
+                  <button onClick={() => navigate(`/fleet/bots/${bot.id}`)} className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700/60 transition-colors">
                     Details
-                  </Button>
-                  <div>
-                    {isOnline ? (
-                      <Button variant="danger" size="sm" icon={<Square size={12} />} onClick={() => handleStop(bot.id)}>Stop</Button>
-                    ) : (
-                      <Button variant="success" size="sm" icon={<Play size={12} />} onClick={() => handleStart(bot.id)}>Start</Button>
-                    )}
-                  </div>
+                  </button>
+                  <button className="px-3.5 py-1.5 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors" onClick={isOnline ? () => handleStop(bot.id) : () => handleStart(bot.id)}>
+                    <Play className="w-3.5 h-3.5 fill-current"/>
+                    {isOnline ? 'Stop' : 'Start'}
+                  </button>
                 </div>
               </Card>
             );
