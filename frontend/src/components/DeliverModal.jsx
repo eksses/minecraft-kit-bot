@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Send, X, User, Package } from 'lucide-react';
 import { api } from '../services/api';
-import toast from 'react-hot-toast';
+import { useToast } from './ToastContainer';
 
 export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeliverSuccess }) {
   const [username, setUsername] = useState('');
   const [count, setCount] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -24,11 +25,11 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
     setLoading(true);
     try {
       await api.chests.orderItem(botId, chestName, count, username.trim());
-      toast.success(`Delivery started for ${username.trim()} (${chestName})`);
+      addToast({ type: 'success', title: `Delivery started for ${username.trim()} (${chestName})` });
       if (onDeliverSuccess) onDeliverSuccess();
       onClose();
     } catch (error) {
-      toast.error(error.message || 'Failed to start delivery');
+      addToast({ type: 'error', title: error.message || 'Failed to start delivery' });
     } finally {
       setLoading(false);
     }
