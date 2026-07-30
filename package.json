@@ -39,7 +39,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.6.0",
-    "mineflayer": "^4.20.1",
+    "mineflayer": "^4.37.1",
     "mineflayer-auto-eat": "^3.3.6",
     "mineflayer-blockfinder": "^0.0.7",
     "mineflayer-collectblock": "^1.4.1",

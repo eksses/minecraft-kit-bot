@@ -20,18 +20,25 @@ const { pathfinder: pathfinderPlugin, Movements, goals } = pathfinderModule;
 let bot = null;
 let movements = null;
 let reconnectAttempts = 0;
+let scanning = false;
+let scanAbort = false;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_BASE_DELAY = 1000;
 
 function createBot(config) {
-  bot = mineflayer.createBot({
+  const mlConfig = {
     host: config.host,
     port: config.port,
     username: config.username,
-    password: config.password,
-    version: config.version,
     auth: config.authType || 'offline',
-  });
+  };
+  if (config.version && config.version !== 'auto') {
+    mlConfig.version = config.version;
+  }
+  if (config.password) {
+    mlConfig.password = config.password;
+  }
+  bot = mineflayer.createBot(mlConfig);
 
   bot.loadPlugin(pathfinderPlugin);
 
@@ -97,6 +104,16 @@ function createBot(config) {
 
   bot.on('goal_reached', () => {
     parentPort.postMessage({ type: 'goal_reached' });
+  });
+
+  bot.on('messagestr', (message) => {
+    const tradeMatch = message.match(/(?:\\[trade\\]|\\/trade)\\s+(.+)/i);
+    if (tradeMatch) {
+      parentPort.postMessage({
+        type: 'trade_request',
+        data: { itemName: tradeMatch[1].trim() }
+      });
+    }
   });
 
   bot.on('path_update', (result) => {
@@ -170,8 +187,17 @@ parentPort.on('message', (msg) => {
   }
 
   if (msg.type === 'take_item' && bot) {
-    const { chestX, chestY, chestZ, itemName, count } = msg.data;
-    handleTakeItem(bot, chestX, chestY, chestZ, itemName, count);
+    const { chestX, chestY, chestZ, itemName, count, playerName } = msg.data;
+    handleTakeItem(bot, chestX, chestY, chestZ, itemName, count, playerName);
+  }
+
+  if (msg.type === 'scan' && bot) {
+    const { radius, scanMarkedOnly } = msg.data;
+    handleScan(bot, radius, scanMarkedOnly);
+  }
+
+  if (msg.type === 'scan_abort') {
+    scanAbort = true;
   }
 
   if (msg.type === 'stop') {
@@ -182,7 +208,7 @@ parentPort.on('message', (msg) => {
   }
 });
 
-async function handleTakeItem(bot, x, y, z, itemName, count) {
+async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
   try {
     const chestPos = new (require('vec3').Vec3)(x, y, z);
     bot.pathfinder.setGoal(new goals.GoalNear(x, y, z, 1));
@@ -203,15 +229,20 @@ async function handleTakeItem(bot, x, y, z, itemName, count) {
     
     if (!item) {
       chest.close();
-      throw new Error(\`Item \${itemName} not found in chest\`);
+      throw new Error('Item ' + itemName + ' not found in chest');
     }
 
     await chest.withdraw(item.type, null, count || 1);
     chest.close();
     
+    if (playerName) {
+      bot.chat('/w ' + playerName + ' Here is ' + (count || 1) + ' ' + itemName + '!');
+      bot.chat('tpa ' + playerName);
+    }
+    
     parentPort.postMessage({
       type: 'item_taken',
-      data: { itemName, count: count || 1, success: true }
+      data: { itemName, count: count || 1, playerName: playerName, success: true }
     });
   } catch (err) {
     parentPort.postMessage({
@@ -219,6 +250,293 @@ async function handleTakeItem(bot, x, y, z, itemName, count) {
       data: { error: err.message }
     });
   }
+}
+
+async function handleScan(bot, radius, scanMarkedOnly) {
+  if (scanning) {
+    parentPort.postMessage({ type: 'scan_error', data: { error: 'Scan already in progress' } });
+    return;
+  }
+  
+  scanning = true;
+  scanAbort = false;
+  
+  try {
+    parentPort.postMessage({ type: 'scan_progress', data: { phase: 'discovery', percent: 0 } });
+    
+    const allBlocks = findChestBlocks(bot, radius);
+    const chestBlocks = deduplicateChests(allBlocks);
+    const total = chestBlocks.length;
+    
+    parentPort.postMessage({ type: 'scan_progress', data: { phase: 'scanning', percent: 0, found: total } });
+    parentPort.postMessage({ type: 'scan_log', data: { message: 'Found ' + allBlocks.length + ' chest blocks, ' + total + ' unique chests (' + chestBlocks.filter(c => c.isDouble).length + ' double)' } });
+    
+    const results = [];
+    
+    for (let i = 0; i < total; i++) {
+      if (scanAbort) break;
+      
+      const blockInfo = chestBlocks[i];
+      try {
+        const chestData = await scanSingleChest(bot, blockInfo, scanMarkedOnly);
+        if (chestData) {
+          results.push(chestData);
+          parentPort.postMessage({ type: 'scan_log', data: { message: 'Scanned chest at ' + blockInfo.block.position.x + ',' + blockInfo.block.position.y + ',' + blockInfo.block.position.z + ' name=' + chestData.name + ' double=' + chestData.isDouble } });
+        }
+      } catch (err) {
+        parentPort.postMessage({ type: 'scan_chest_error', data: { x: blockInfo.block.position.x, y: blockInfo.block.position.y, z: blockInfo.block.position.z, error: err.message } });
+        parentPort.postMessage({ type: 'scan_log', data: { message: 'Error scanning chest at ' + blockInfo.block.position.x + ',' + blockInfo.block.position.y + ',' + blockInfo.block.position.z + ': ' + err.message } });
+      }
+      
+      const percent = Math.round(((i + 1) / total) * 100);
+      parentPort.postMessage({ type: 'scan_progress', data: { phase: 'scanning', percent, current: i + 1, total } });
+    }
+    
+    parentPort.postMessage({ type: 'scan_complete', data: { found: results.length, chests: results } });
+  } catch (err) {
+    parentPort.postMessage({ type: 'scan_error', data: { error: err.message } });
+  } finally {
+    scanning = false;
+  }
+}
+
+function findChestBlocks(bot, radius) {
+  const botPos = bot.entity.position;
+  const blocks = [];
+  
+  for (let x = -radius; x <= radius; x++) {
+    for (let y = -radius; y <= radius; y++) {
+      for (let z = -radius; z <= radius; z++) {
+        const pos = bot.entity.position.offset(x, y, z);
+        const block = bot.blockAt(pos);
+        if (block && (block.name === 'chest' || block.name === 'trapped_chest')) {
+          blocks.push(block);
+        }
+      }
+    }
+  }
+  
+  return blocks;
+}
+
+function deduplicateChests(chestBlocks) {
+  const seen = new Set();
+  const unique = [];
+  
+  for (const block of chestBlocks) {
+    const key = block.position.x + ',' + block.position.y + ',' + block.position.z;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(block);
+    }
+  }
+  
+  const merged = [];
+  const usedDouble = new Set();
+  
+  for (const block of unique) {
+    const key = block.position.x + ',' + block.position.y + ',' + block.position.z;
+    if (usedDouble.has(key)) continue;
+    
+    const pos = block.position;
+    const neighbors = [
+      { dx: 1, dy: 0, dz: 0 },
+      { dx: -1, dy: 0, dz: 0 },
+      { dx: 0, dy: 0, dz: 1 },
+      { dx: 0, dy: 0, dz: -1 },
+    ];
+    
+    let isDouble = false;
+    for (const n of neighbors) {
+      const nPos = pos.offset(n.dx, n.dy, n.dz);
+      const nBlock = unique.find(b => 
+        b.position.x === nPos.x && 
+        b.position.y === nPos.y && 
+        b.position.z === nPos.z &&
+        !usedDouble.has(b.position.x + ',' + b.position.y + ',' + b.position.z)
+      );
+      if (nBlock) {
+        const nKey = nPos.x + ',' + nPos.y + ',' + nPos.z;
+        usedDouble.add(nKey);
+        isDouble = true;
+        break;
+      }
+    }
+    
+    merged.push({ block, isDouble });
+  }
+  
+  return merged;
+}
+
+function findAttachedSign(bot, chestBlock) {
+  const pos = chestBlock.position;
+  const faces = [
+    { dx: 0, dy: 0, dz: -1, name: 'north' },
+    { dx: 0, dy: 0, dz: 1, name: 'south' },
+    { dx: -1, dy: 0, dz: 0, name: 'west' },
+    { dx: 1, dy: 0, dz: 0, name: 'east' },
+    { dx: 0, dy: 1, dz: 0, name: 'above' },
+    { dx: 0, dy: -1, dz: 0, name: 'below' },
+    { dx: -1, dy: 0, dz: -1, name: 'northwest' },
+    { dx: 1, dy: 0, dz: -1, name: 'northeast' },
+    { dx: -1, dy: 0, dz: 1, name: 'southwest' },
+    { dx: 1, dy: 0, dz: 1, name: 'southeast' },
+    { dx: 0, dy: 1, dz: -1, name: 'above_north' },
+    { dx: 0, dy: 1, dz: 1, name: 'above_south' },
+    { dx: -1, dy: 1, dz: 0, name: 'above_west' },
+    { dx: 1, dy: 1, dz: 0, name: 'above_east' },
+  ];
+  
+  for (const face of faces) {
+    const signPos = pos.offset(face.dx, face.dy, face.dz);
+    const block = bot.blockAt(signPos);
+    if (block && (block.name.includes('sign') || block.name.endsWith('_wall_sign'))) {
+      return block;
+    }
+  }
+  
+  return null;
+}
+
+function readSignLines(signBlock) {
+  const entity = signBlock?.entity;
+  if (!entity) {
+    return [];
+  }
+  
+  if (entity.value && typeof entity.value === 'object') {
+    const val = entity.value;
+    const lines = [];
+    for (let i = 1; i <= 4; i++) {
+      const key = 'Text' + i;
+      const raw = val[key];
+      if (!raw) {
+        lines.push('');
+        continue;
+      }
+      let text = '';
+      if (typeof raw === 'string') {
+        text = raw;
+      } else if (typeof raw === 'object') {
+        text = raw.value || raw.text || '';
+      }
+      text = text.replace(/^"|"$/g, '').trim();
+      lines.push(text);
+    }
+    return lines;
+  }
+  
+  const lines = [];
+  for (let i = 1; i <= 4; i++) {
+    const raw = entity['Text' + i] || entity['text' + i] || '';
+    let text = '';
+    if (typeof raw === 'string') {
+      text = raw;
+    } else if (typeof raw === 'object' && raw !== null) {
+      text = raw.value || raw.text || '';
+    }
+    text = text.replace(/^"|"$/g, '').trim();
+    lines.push(text);
+  }
+  
+  return lines;
+}
+
+function parseSignData(lines) {
+  const data = {};
+  for (const line of lines) {
+    const cleaned = line.replace(/["{}]/g, '').trim();
+    const parts = cleaned.split('#').filter(Boolean);
+    for (const part of parts) {
+      const match = part.match(/^(.+?):(.+)$/);
+      if (match) {
+        data[match[1].trim().toLowerCase()] = match[2].trim();
+      }
+    }
+  }
+  return data;
+}
+
+function readContainerContents(bot, container) {
+  const items = container.slots
+    .filter(slot => slot !== null)
+    .map(slot => ({
+      name: bot.registry.items[slot.type]?.name || 'unknown',
+      count: slot.count,
+      slot: slot.slot,
+    }));
+  
+  return { items, totalSlots: container.slots.length };
+}
+
+async function pathTo(bot, pos) {
+  return new Promise((resolve, reject) => {
+    bot.pathfinder.setGoal(new goals.GoalNear(pos.x, pos.y, pos.z, 1));
+    
+    const onGoalReached = () => {
+      clearTimeout(timeout);
+      bot.removeListener('goal_reached', onGoalReached);
+      resolve();
+    };
+    
+    const timeout = setTimeout(() => {
+      bot.removeListener('goal_reached', onGoalReached);
+      reject(new Error('Pathfinding timeout'));
+    }, 60000);
+    
+    bot.once('goal_reached', onGoalReached);
+  });
+}
+
+async function scanSingleChest(bot, blockInfo, scanMarkedOnly) {
+  const { block, isDouble } = blockInfo;
+  const pos = block.position;
+  
+  await pathTo(bot, pos);
+  
+  let signData = null;
+  let chestName = null;
+  
+  const signBlock = findAttachedSign(bot, block);
+  if (signBlock) {
+    const lines = readSignLines(signBlock);
+    parentPort.postMessage({ type: 'scan_log', data: { message: 'Sign at ' + block.position.x + ',' + block.position.y + ',' + block.position.z + ' lines: ' + JSON.stringify(lines) } });
+    signData = parseSignData(lines);
+    chestName = signData.name || null;
+    
+    if (scanMarkedOnly && !chestName) {
+      return null;
+    }
+  }
+  
+  const container = await bot.openContainer(block);
+  const contents = readContainerContents(bot, container);
+  container.close();
+  
+  if (!chestName) {
+    const primaryItem = contents.items[0]?.name;
+    if (primaryItem) {
+      chestName = 'unnamed:' + primaryItem;
+    } else {
+      chestName = 'empty:' + pos.x + ',' + pos.y + ',' + pos.z;
+    }
+  }
+  
+  return {
+    name: chestName,
+    x: pos.x,
+    y: pos.y,
+    z: pos.z,
+    isDouble: isDouble,
+    item: contents.items[0]?.name || 'unknown',
+    itemCount: contents.items[0]?.count || 0,
+    allItems: contents.items,
+    source: signData ? 'sign' : 'scan',
+    signData,
+    status: 'active',
+    lastScanned: Date.now(),
+  };
 }
 
 // Start bot with worker data
@@ -244,6 +562,8 @@ export class BotInstance extends EventEmitter {
     this.saturation = 5;
     this.currentTask = null;
     this.lastSeen = null;
+    this.scanning = false;
+    this.scanProgress = null;
   }
 
   start() {
@@ -262,8 +582,20 @@ export class BotInstance extends EventEmitter {
     });
 
     this.worker.on('message', (msg) => this.handleMessage(msg));
-    this.worker.on('error', (err) => this.emit('error', err));
-    this.worker.on('exit', (code) => this.emit('exit', code));
+    this.worker.on('error', (err) => {
+      console.error('[BotLifecycle] Worker error for', this.name, ':', err.message);
+      this.status = 'ERROR';
+      this.emit('error', err);
+      this.emit('status_change', this.status);
+    });
+    this.worker.on('exit', (code) => {
+      console.log('[BotLifecycle] Worker exited for', this.name, 'code:', code);
+      if (this.status !== 'OFFLINE') {
+        this.status = 'OFFLINE';
+        this.emit('status_change', this.status);
+      }
+      this.emit('exit', code);
+    });
 
     this.status = 'OFFLINE';
     this.emit('status_change', this.status);
@@ -340,6 +672,36 @@ export class BotInstance extends EventEmitter {
       case 'item_take_error':
         this.emit('item_take_error', msg.data);
         break;
+
+      case 'scan_progress':
+        this.scanProgress = msg.data;
+        this.emit('scan_progress', msg.data);
+        break;
+
+      case 'scan_complete':
+        this.scanning = false;
+        this.scanProgress = null;
+        this.emit('scan_complete', msg.data);
+        break;
+
+      case 'scan_error':
+        this.scanning = false;
+        this.scanProgress = null;
+        this.emit('scan_error', msg.data);
+        break;
+
+      case 'scan_chest_error':
+        this.emit('scan_chest_error', msg.data);
+        break;
+
+      case 'trade_request':
+        this.emit('trade_request', msg.data);
+        break;
+
+      case 'scan_log':
+        console.log('[Scan Worker]', msg.data.message);
+        this.emit('scan_log', msg.data);
+        break;
     }
   }
 
@@ -355,9 +717,25 @@ export class BotInstance extends EventEmitter {
     }
   }
 
-  takeItem(chestX, chestY, chestZ, itemName, count) {
+  takeItem(chestX, chestY, chestZ, itemName, count, playerName) {
     if (this.worker) {
-      this.worker.postMessage({ type: 'take_item', data: { chestX, chestY, chestZ, itemName, count } });
+      this.worker.postMessage({ type: 'take_item', data: { chestX, chestY, chestZ, itemName, count, playerName } });
+    }
+  }
+
+  startScan(radius, scanMarkedOnly) {
+    if (this.worker && !this.scanning) {
+      this.scanning = true;
+      this.scanProgress = { phase: 'starting', percent: 0 };
+      this.worker.postMessage({ type: 'scan', data: { radius, scanMarkedOnly } });
+    }
+  }
+
+  abortScan() {
+    if (this.worker && this.scanning) {
+      this.worker.postMessage({ type: 'scan_abort' });
+      this.scanning = false;
+      this.scanProgress = null;
     }
   }
 
@@ -400,7 +778,12 @@ export class BotLifecycleManager extends EventEmitter {
 
   async startBot(botData, serverConfig) {
     if (this.bots.has(botData.id)) {
-      throw new Error(`Bot ${botData.id} is already running`);
+      const existing = this.bots.get(botData.id);
+      if (existing.status !== 'OFFLINE' && existing.status !== 'ERROR') {
+        throw new Error(`Bot ${botData.id} is already running`);
+      }
+      existing.stop();
+      this.bots.delete(botData.id);
     }
 
     const instance = new BotInstance(botData, serverConfig);

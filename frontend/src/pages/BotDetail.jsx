@@ -27,8 +27,12 @@ export default function BotDetail() {
   const [chatInput, setChatInput] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
-  const [scanConfig, setScanConfig] = useState({ radius: 32, autoRescan: true });
+  const [scanConfig, setScanConfig] = useState({ scanRadius: 16, autoRescan: true });
   const [showScanConfig, setShowScanConfig] = useState(false);
+  const [orderItem, setOrderItem] = useState('');
+  const [orderCount, setOrderCount] = useState(1);
+  const [orderPlayer, setOrderPlayer] = useState('');
+  const [ordering, setOrdering] = useState(false);
   const chatEndRef = useRef(null);
   const { addToast } = useToast();
 
@@ -57,7 +61,7 @@ export default function BotDetail() {
         api.fleet.getBotInventory(botId),
         api.fleet.getBotLogs(botId),
         api.chests.listForBot(botId).catch(() => []),
-        api.chests.getScanConfig(botId).catch(() => ({ radius: 32, autoRescan: true })),
+        api.chests.getScanConfig(botId).catch(() => ({ scanRadius: 16, autoRescan: true })),
       ]);
       setBot(botData);
       setInventory(invData);
@@ -109,7 +113,7 @@ export default function BotDetail() {
     setScanning(true);
     setScanProgress({ phase: 'Starting...', percent: 0 });
     try {
-      await api.chests.triggerScan(botId, scanConfig.radius);
+      await api.chests.triggerScan(botId, scanConfig.scanRadius);
       addToast({ type: 'success', title: 'Scan started' });
       pollScanStatus();
     } catch (err) {
@@ -158,6 +162,27 @@ export default function BotDetail() {
     }
   };
 
+  const handleOrder = async (e) => {
+    e.preventDefault();
+    if (!orderItem.trim()) return;
+    setOrdering(true);
+    try {
+      const result = await api.chests.orderItem(botId, orderItem, orderCount, orderPlayer || 'player');
+      if (result.success) {
+        addToast({ type: 'success', title: 'Order placed: ' + orderItem + ' x' + orderCount });
+        setOrderItem('');
+        setOrderCount(1);
+        setOrderPlayer('');
+      } else {
+        addToast({ type: 'error', title: result.error || 'Order failed' });
+      }
+    } catch (err) {
+      addToast({ type: 'error', title: 'Order failed: ' + (err.message || 'Unknown error') });
+    } finally {
+      setOrdering(false);
+    }
+  };
+
   if (loading) return <div className="loading-state">Loading...</div>;
   if (!bot) return (
     <div className="empty-state">
@@ -167,7 +192,7 @@ export default function BotDetail() {
   );
 
   const status = bot.liveStatus?.status || bot.status;
-  const isOnline = status === 'ONLINE';
+  const isOnline = !['OFFLINE', 'ERROR'].includes(status);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -265,6 +290,46 @@ export default function BotDetail() {
                 </div>
               ))
             )}
+            <div className="divider" />
+            <div className="bot-panel-section-header" style={{ marginTop: '8px' }}>
+              <Package size={18} />
+              <span>Order Item</span>
+            </div>
+            <form onSubmit={handleOrder} className="order-form">
+              <div className="form-row">
+                <input
+                  type="text"
+                  placeholder="Item name (e.g. diamond_sword)"
+                  value={orderItem}
+                  onChange={(e) => setOrderItem(e.target.value)}
+                  className="form-input"
+                  disabled={ordering}
+                />
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  value={orderCount}
+                  onChange={(e) => setOrderCount(parseInt(e.target.value) || 1)}
+                  min={1}
+                  max={64}
+                  className="form-input form-input-sm"
+                  disabled={ordering}
+                />
+              </div>
+              <div className="form-row">
+                <input
+                  type="text"
+                  placeholder="Player name (for tpa)"
+                  value={orderPlayer}
+                  onChange={(e) => setOrderPlayer(e.target.value)}
+                  className="form-input"
+                  disabled={ordering}
+                />
+                <button type="submit" className="btn btn-primary" disabled={ordering || !orderItem.trim()}>
+                  {ordering ? 'Ordering...' : 'Order'}
+                </button>
+              </div>
+            </form>
             {showScanConfig && (
               <div className="drawer-overlay animate-fade-in" onClick={() => setShowScanConfig(false)}>
                 <div className="drawer animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
@@ -275,7 +340,7 @@ export default function BotDetail() {
                   <div className="drawer-body">
                     <div className="form-group">
                       <label className="form-label">Scan Radius (blocks)</label>
-                      <input type="number" value={scanConfig.radius} onChange={(e) => setScanConfig({...scanConfig, radius: parseInt(e.target.value) || 32})} min={8} max={128} />
+                      <input type="number" value={scanConfig.scanRadius} onChange={(e) => setScanConfig({...scanConfig, scanRadius: parseInt(e.target.value) || 16})} min={8} max={128} />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Auto-rescan after delivery</label>
@@ -365,7 +430,7 @@ export default function BotDetail() {
               <div className="section-header">Scan Settings</div>
               <div className="form-group">
                 <label className="form-label">Scan Radius</label>
-                <input type="number" value={scanConfig.radius} onChange={(e) => setScanConfig({...scanConfig, radius: parseInt(e.target.value) || 32})} min={8} max={128} />
+                <input type="number" value={scanConfig.scanRadius} onChange={(e) => setScanConfig({...scanConfig, scanRadius: parseInt(e.target.value) || 16})} min={8} max={128} />
               </div>
               <div className="form-group">
                 <label className="form-label">Auto-rescan</label>

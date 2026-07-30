@@ -73,6 +73,11 @@ export const chestAPI = {
       method: 'POST',
       body: JSON.stringify({ x, y, z }),
     }),
+  orderItem: (botId, itemName, count, playerName) =>
+    request(`/fleet/bots/${botId}/trade`, {
+      method: 'POST',
+      body: JSON.stringify({ itemName, count, playerName }),
+    }),
 };
 
 // ============================================================

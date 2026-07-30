@@ -143,6 +143,7 @@ export const chestLocations = sqliteTable('chest_locations', {
   source: text('source', { enum: ['manual', 'scan', 'sign'] }).notNull().default('manual'),
   signData: text('sign_data'), // JSON stringified #Key:Value pairs
   status: text('status', { enum: ['active', 'unavailable', 'disabled'] }).notNull().default('active'),
+  isDouble: integer('is_double', { mode: 'boolean' }).notNull().default(false),
   lastScanned: integer('last_scanned', { mode: 'timestamp' }),
   botId: text('bot_id').references(() => bots.id, { onDelete: 'set null' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

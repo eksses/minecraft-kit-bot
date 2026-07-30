@@ -264,6 +264,36 @@ select {
   margin-bottom: var(--space-md);
 }
 
+.order-form {
+  padding: var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-surface-high);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.form-row .form-input {
+  flex: 1;
+}
+
+.form-row .form-input-sm {
+  flex: 0 0 80px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--bg-surface-high);
+  margin: var(--space-md) 0;
+}
+
 .form-label {
   display: block;
   font-family: var(--font-mono);

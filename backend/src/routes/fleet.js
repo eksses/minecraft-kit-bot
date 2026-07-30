@@ -5,8 +5,71 @@ import { eq, and } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { botLifecycleManager } from '../services/botLifecycle.js';
 import { swarmCoordinator } from '../services/swarmCoordinator.js';
+import { TradingService } from '../services/tradingService.js';
+import mc from 'minecraft-protocol';
 
 export const fleetRoutes = new Hono();
+
+// Wire up trade request handling for all bots
+const tradingService = new TradingService(botLifecycleManager);
+
+function wireBotEvents(bot) {
+  if (bot._eventsWired) return;
+  bot._eventsWired = true;
+
+  bot.on('trade_request', async (tradeData) => {
+    console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + tradeData.itemName);
+    try {
+      await tradingService.fulfillOrder(bot.id, 'player', tradeData.itemName);
+    } catch (err) {
+      console.error('[Trade] Error fulfilling order:', err.message);
+    }
+  });
+
+  bot.on('scan_complete', async (scanData) => {
+    console.log('[Scan] Bot ' + bot.name + ' completed scan, found ' + scanData.found + ' chests');
+    try {
+      for (const chest of scanData.chests) {
+        await db.insert(schema.chestLocations).values({
+          id: randomUUID(),
+          userId: bot.userId,
+          serverId: bot.serverConfig?.id || null,
+          name: chest.name,
+          x: chest.x,
+          y: chest.y,
+          z: chest.z,
+          itemName: chest.item,
+          itemCount: chest.itemCount,
+          allItems: JSON.stringify(chest.allItems),
+          source: chest.source,
+          signData: chest.signData ? JSON.stringify(chest.signData) : null,
+            status: chest.status,
+            isDouble: chest.isDouble || false,
+            lastScanned: new Date(chest.lastScanned),
+          botId: bot.id,
+            createdAt: new Date(),
+        });
+      }
+      console.log('[Scan] Saved ' + scanData.chests.length + ' chests to database');
+    } catch (err) {
+      console.error('[Scan] Error saving chests:', err.message);
+    }
+  });
+
+  bot.on('scan_error', (err) => {
+    console.error('[Scan] Bot ' + bot.name + ' scan error:', err.error);
+  });
+}
+
+botLifecycleManager.on('bot:spawned', (data) => {
+  const bot = botLifecycleManager.getBot(data.botId);
+  if (bot) wireBotEvents(bot);
+});
+
+// Wire up any already-running bots
+for (const [id, bot] of botLifecycleManager.bots) {
+  wireBotEvents(bot);
+}
 
 // ============================================================
 // Server Management
@@ -104,6 +167,11 @@ fleetRoutes.post('/bots', requireAuth, async (c) => {
     name: body.name,
     username: body.username,
     passwordEncrypted: body.password,
+    serverHost: body.serverHost,
+    serverPort: body.serverPort || 25565,
+    serverVersion: body.serverVersion || 'auto',
+    authMode: body.authMode || 'ONLINE',
+    authPassword: body.authPassword,
     status: 'OFFLINE',
     createdAt: new Date(),
   });
@@ -148,6 +216,9 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
       port: server.port,
       version: server.version,
       authType: server.authType,
+      authMode: bot.authMode,
+      authPassword: bot.authPassword,
+      passwordEncrypted: bot.passwordEncrypted,
     };
   } else if (bot.serverHost) {
     // New: use direct server fields
@@ -157,6 +228,9 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
       port: bot.serverPort || 25565,
       version: bot.serverVersion || 'auto',
       authType: bot.authMode === 'OFFLINE' ? 'offline' : 'microsoft',
+      authMode: bot.authMode,
+      authPassword: bot.authPassword,
+      passwordEncrypted: bot.passwordEncrypted,
     };
   } else {
     return c.json({ error: 'Bot has no server configured. Set server host directly or assign a server.' }, 400);
@@ -164,6 +238,34 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
   
   // Start the bot
   try {
+    // Auto-detect server version if set to 'auto'
+    let detectedVersion = serverConfig.version;
+    if (!detectedVersion || detectedVersion === 'auto') {
+      try {
+        detectedVersion = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Version detection timeout')), 10000);
+          const client = mc.createClient({
+            host: serverConfig.host,
+            port: serverConfig.port,
+            username: 'VersionCheck',
+          });
+          client.on('login', () => {
+            clearTimeout(timeout);
+            const v = client.version;
+            client.end();
+            resolve(v);
+          });
+          client.on('error', (e) => { clearTimeout(timeout); reject(e); });
+        });
+      } catch (e) {
+        detectedVersion = '1.20.4';
+      }
+      // Save detected version back to DB
+      await db.update(schema.bots)
+        .set({ serverVersion: detectedVersion })
+        .where(eq(schema.bots.id, botId));
+    }
+
     const instance = await botLifecycleManager.startBot({
       id: bot.id,
       userId: bot.userId,
@@ -171,6 +273,7 @@ fleetRoutes.post('/bots/:id/start', requireAuth, async (c) => {
       username: bot.username,
     }, {
       ...serverConfig,
+      version: detectedVersion,
       passwordEncrypted: bot.passwordEncrypted,
       authMode: bot.authMode,
       authPassword: bot.authPassword,
@@ -546,4 +649,49 @@ fleetRoutes.get('/dashboard', requireAuth, async (c) => {
       failed: failedTasks,
     },
   });
+});
+
+// ============================================================
+// Trading Routes
+// ============================================================
+fleetRoutes.post('/bots/:id/trade', requireAuth, async (c) => {
+  const user = c.get('session');
+  const botId = c.req.param('id');
+  const body = await c.req.json();
+  const { itemName, playerName, count } = body;
+
+  const bot = botLifecycleManager.getBot(botId);
+  if (!bot) {
+    return c.json({ error: 'Bot not found' }, 404);
+  }
+
+  if (bot.userId !== user.id) {
+    return c.json({ error: 'Access denied' }, 403);
+  }
+
+  const { TradingService } = await import('../services/tradingService.js');
+  const tradingService = new TradingService(botLifecycleManager);
+  
+  const result = await tradingService.fulfillOrder(botId, playerName || 'player', itemName, count || 1);
+  return c.json(result);
+});
+
+fleetRoutes.get('/bots/:id/items', requireAuth, async (c) => {
+  const user = c.get('session');
+  const botId = c.req.param('id');
+
+  const bot = botLifecycleManager.getBot(botId);
+  if (!bot) {
+    return c.json({ error: 'Bot not found' }, 404);
+  }
+
+  if (bot.userId !== user.id) {
+    return c.json({ error: 'Access denied' }, 403);
+  }
+
+  const { TradingService } = await import('../services/tradingService.js');
+  const tradingService = new TradingService(botLifecycleManager);
+  
+  const items = await tradingService.getAvailableItems(botId);
+  return c.json(items);
 });
