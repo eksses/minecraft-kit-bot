@@ -83,7 +83,7 @@ export default function FleetDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Bots Online" value={`${onlineBots.length}/${bots.length}`} icon={Bot} />
         <StatCard label="Active Tasks" value={dashboard?.tasks?.active || 0} icon={Activity} color="warning" />
         <StatCard label="Swarms" value={swarms.length} icon={Layers} />

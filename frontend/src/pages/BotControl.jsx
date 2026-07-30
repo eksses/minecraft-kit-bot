@@ -195,12 +195,7 @@ export default function BotControl() {
             const status = bot.liveStatus?.status || bot.status;
             const isOnline = !['OFFLINE', 'ERROR'].includes(status);
             return (
-              <Card
-                key={bot.id}
-                padding="sm"
-                className="cursor-pointer hover:border-mdb-primary/50 transition-colors group"
-                onClick={() => navigate(`/fleet/bots/${bot.id}`)}
-              >
+              <Card key={bot.id} padding="sm">
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar name={bot.name} />
                   <div className="flex-1 min-w-0">
@@ -214,11 +209,11 @@ export default function BotControl() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => { e.stopPropagation(); navigate(`/fleet/bots/${bot.id}`); }}
+                    onClick={() => navigate(`/fleet/bots/${bot.id}`)}
                   >
                     Details
                   </Button>
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div>
                     {isOnline ? (
                       <Button variant="danger" size="sm" icon={<Square size={12} />} onClick={() => handleStop(bot.id)}>Stop</Button>
                     ) : (

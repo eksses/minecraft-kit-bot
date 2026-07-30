@@ -107,6 +107,7 @@ export default function DeliveryPage() {
           onClose={() => setDeliver(null)}
           chestName={deliver.chestName}
           botId={deliver.botId}
+          onDeliverSuccess={() => { api.fleet.getChests().then(setChests).catch(() => {}); }}
         />
       )}
     </div>

@@ -60,7 +60,7 @@ export default function DeliverModal({ isOpen, onClose, chestName, botId, onDeli
   const coordMode = deliveryConfig?.TARGET_COORD_MODE || 'USER';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Deliver Item" size="full">
+    <Modal isOpen={isOpen} onClose={onClose} title="Deliver Item" size="md">
       <p className="text-xs text-mdb-text-muted mb-5">{chestName}</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">

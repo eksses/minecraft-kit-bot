@@ -196,8 +196,8 @@ export default function BotDetail() {
   const isOnline = !['OFFLINE', 'ERROR'].includes(status);
 
   const renderConsole = () => (
-    <div className="flex flex-col h-full max-w-[800px] pb-6">
-      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5 min-h-[200px] max-h-[calc(100vh-320px)]">
+    <div className="flex flex-col flex-1 min-h-0 max-w-[800px]">
+      <div className="flex-1 overflow-y-auto bg-mdb-bg rounded-xl border border-mdb-border p-4 mb-3 font-mono text-xs space-y-0.5 min-h-[200px]">
         {chatMessages.length === 0 ? (
           <div className="text-mdb-text-muted py-8 text-center">No messages yet. Send a message or command below.</div>
         ) : (
@@ -213,7 +213,7 @@ export default function BotDetail() {
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleConsoleSubmit} className="flex gap-2 items-center">
+      <form onSubmit={handleConsoleSubmit} className="flex gap-2 items-center shrink-0">
         <Button
           type="button"
           variant={consoleMode === 'command' ? 'success' : 'primary'}
@@ -298,20 +298,22 @@ export default function BotDetail() {
       <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
         <Package size={16} /> Inventory ({inventory.length} items)
       </h2>
-      <div className="grid grid-cols-9 gap-px bg-mdb-border rounded-xl border border-mdb-border overflow-hidden">
-        {Array.from({ length: 36 }, (_, i) => {
-          const item = inventory.find(inv => inv.slot === i);
-          return (
-            <div key={i} className={`aspect-square bg-mdb-bg flex items-center justify-center flex-col p-0.5 min-h-[40px] ${item ? 'bg-mdb-surface' : ''}`}>
-              {item ? (
-                <>
-                  <span className="font-mono text-[9px] text-mdb-text-muted text-center overflow-hidden text-ellipsis whitespace-nowrap w-full">{item.name}</span>
-                  {item.count > 1 && <span className="font-mono text-[11px] font-bold text-mdb-text">{item.count}</span>}
-                </>
-              ) : null}
-            </div>
-          );
-        })}
+      <div className="overflow-x-auto pb-2">
+        <div className="grid grid-cols-9 gap-px bg-mdb-border rounded-xl border border-mdb-border overflow-hidden min-w-[460px]">
+          {Array.from({ length: 36 }, (_, i) => {
+            const item = inventory.find(inv => inv.slot === i);
+            return (
+              <div key={i} className={`aspect-square bg-mdb-bg flex items-center justify-center flex-col p-0.5 min-h-[44px] ${item ? 'bg-mdb-surface' : ''}`}>
+                {item ? (
+                  <>
+                    <span className="font-mono text-[9px] text-mdb-text-muted text-center overflow-hidden text-ellipsis whitespace-nowrap w-full">{item.name}</span>
+                    {item.count > 1 && <span className="font-mono text-[11px] font-bold text-mdb-text">{item.count}</span>}
+                  </>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -487,9 +489,9 @@ export default function BotDetail() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6">
+      <div className={`flex-1 ${activeTab === 'console' ? 'flex flex-col min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 md:p-6 pb-32 max-md:pb-36 md:pb-10 pt-16 md:pt-6`}>
         {/* Mobile Tabs Segmented Nav */}
-        <div className="md:hidden mb-4 bg-mdb-bg/95 backdrop-blur-md py-1 border-b border-mdb-border">
+        <div className="md:hidden mb-4 bg-mdb-bg/95 backdrop-blur-md py-1 border-b border-mdb-border shrink-0">
           <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="segmented" />
         </div>
 
