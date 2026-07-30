@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
-import { StatusBadge } from '../components/ui/StatusComponents';
-import { RefreshCw, ListTodo, XCircle } from 'lucide-react';
+import { ListTodo, XCircle } from 'lucide-react';
+import {
+  Card, Button, Tabs, EmptyState, LoadingState, StatusBadge
+} from '../components/ui';
 
-const filters = ['ALL', 'PENDING', 'LOCKED', 'IN_PROGRESS', 'COMPLETED', 'FAILED'];
+const TAB_ITEMS = [
+  { id: 'ALL', label: 'All' },
+  { id: 'PENDING', label: 'Pending' },
+  { id: 'LOCKED', label: 'Locked' },
+  { id: 'IN_PROGRESS', label: 'In Progress' },
+  { id: 'COMPLETED', label: 'Completed' },
+  { id: 'FAILED', label: 'Failed' },
+];
 
 export default function TaskQueue() {
   const [tasks, setTasks] = useState([]);
@@ -13,20 +22,15 @@ export default function TaskQueue() {
   const { addToast } = useToast();
 
   useEffect(() => { loadTasks(); }, []);
-
   useEffect(() => {
     const interval = setInterval(loadTasks, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const loadTasks = async () => {
-    try {
-      setTasks(await api.fleet.getTasks());
-    } catch (err) {
-      addToast({ type: 'error', title: 'Failed to load tasks' });
-    } finally {
-      setLoading(false);
-    }
+    try { setTasks(await api.fleet.getTasks()); }
+    catch (err) { addToast({ type: 'error', title: 'Failed to load tasks' }); }
+    finally { setLoading(false); }
   };
 
   const handleCancel = async (taskId) => {
@@ -42,9 +46,14 @@ export default function TaskQueue() {
 
   const filteredTasks = filter === 'ALL' ? tasks : tasks.filter(t => t.status === filter);
 
-  if (loading) {
-    return <div className="p-12 text-center text-mdb-text-muted">Loading tasks...</div>;
-  }
+  const tabsWithCounts = TAB_ITEMS.map(tab => ({
+    ...tab,
+    label: tab.id === 'ALL'
+      ? `All (${tasks.length})`
+      : `${tab.label.replace('_', ' ')} (${tasks.filter(t => t.status === tab.id).length})`
+  }));
+
+  if (loading) return <LoadingState text="Loading tasks..." />;
 
   return (
     <div>
@@ -53,41 +62,21 @@ export default function TaskQueue() {
           <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Task Queue</h1>
           <p className="text-sm text-mdb-text-muted mt-0.5">Monitor and manage delivery tasks</p>
         </div>
-        <button
-          className="h-9 px-3 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors inline-flex items-center gap-2"
-          onClick={loadTasks}
-        >
-          <RefreshCw size={16} />
-        </button>
+        <Button variant="secondary" icon={<XCircle size={16} />} onClick={loadTasks} />
       </div>
 
-      <div className="flex gap-1.5 bg-mdb-surface rounded-xl p-1 border border-mdb-border mb-6 overflow-x-auto">
-        {filters.map((s) => (
-          <button
-            key={s}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-              filter === s
-                ? 'bg-mdb-primary text-white'
-                : 'text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high'
-            }`}
-            onClick={() => setFilter(s)}
-          >
-            {s.replace('_', ' ')}
-            {s !== 'ALL' && <span className="ml-1 opacity-70">({tasks.filter(t => t.status === s).length})</span>}
-          </button>
-        ))}
-      </div>
+      <Tabs items={tabsWithCounts} value={filter} onChange={setFilter} variant="pills" className="mb-6" />
 
       {filteredTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-mdb-text-muted">
-          <ListTodo size={48} className="mb-4 opacity-30" />
-          <div className="text-lg font-medium mb-1 text-mdb-text">No tasks</div>
-          <div className="text-sm">No tasks match the current filter</div>
-        </div>
+        <EmptyState
+          icon={ListTodo}
+          title="No tasks"
+          description="No tasks match the current filter"
+        />
       ) : (
         <div className="space-y-2">
           {filteredTasks.map((task) => (
-            <div key={task.id} className="bg-mdb-surface rounded-xl border border-mdb-border p-4">
+            <Card key={task.id}>
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className="font-medium text-sm text-mdb-text">{task.type}</div>
@@ -96,12 +85,9 @@ export default function TaskQueue() {
                 <div className="flex items-center gap-2">
                   <StatusBadge status={task.status} />
                   {(task.status === 'PENDING' || task.status === 'LOCKED') && (
-                    <button
-                      className="h-7 px-2.5 rounded-lg border border-red-400/30 text-red-400 text-xs font-medium inline-flex items-center gap-1 hover:bg-red-400/10 transition-colors"
-                      onClick={() => handleCancel(task.id)}
-                    >
-                      <XCircle size={12} /> Cancel
-                    </button>
+                    <Button variant="danger" size="sm" icon={<XCircle size={12} />} onClick={() => handleCancel(task.id)}>
+                      Cancel
+                    </Button>
                   )}
                 </div>
               </div>
@@ -121,13 +107,15 @@ export default function TaskQueue() {
                 {task.details && (
                   <div className="col-span-2 flex justify-between">
                     <span className="text-mdb-text-muted">Details</span>
-                    <span className="text-mdb-text-secondary font-mono truncate max-w-[60%] text-right">{typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}</span>
+                    <span className="text-mdb-text-secondary font-mono truncate max-w-[60%] text-right">
+                      {typeof task.details === 'string' ? task.details : JSON.stringify(task.details)}
+                    </span>
                   </div>
                 )}
                 {task.errorMessage && (
                   <div className="col-span-2 flex justify-between">
                     <span className="text-mdb-text-muted">Error</span>
-                    <span className="text-red-400 truncate max-w-[60%] text-right">{task.errorMessage}</span>
+                    <span className="text-mdb-error truncate max-w-[60%] text-right">{task.errorMessage}</span>
                   </div>
                 )}
                 {task.retryCount > 0 && (
@@ -137,7 +125,7 @@ export default function TaskQueue() {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

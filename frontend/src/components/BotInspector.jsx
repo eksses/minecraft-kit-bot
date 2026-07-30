@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { StatusBadge, HealthBar, FoodBar } from './ui/StatusComponents';
+import { StatusBadge } from './ui';
+import { HealthBar, FoodBar } from './ui/StatusComponents';
 import { useToast } from './ToastContainer';
 import { X, Send } from 'lucide-react';
 

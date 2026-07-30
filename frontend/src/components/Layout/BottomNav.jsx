@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Bot, Package, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Bot, Truck, MoreHorizontal } from 'lucide-react';
 import MoreSheet from './MoreSheet';
 
 const bottomNavItems = [
   { path: '/fleet', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/fleet/bots', label: 'Bots', icon: Bot },
-  { path: '/fleet/tasks', label: 'Tasks', icon: Package },
+  { path: '/fleet/delivery', label: 'Delivery', icon: Truck },
 ];
 
 export default function BottomNav({ currentPath, onLogout }) {

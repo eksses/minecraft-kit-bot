@@ -8,8 +8,6 @@ import BotControl from './pages/BotControl';
 import BotDetail from './pages/BotDetail';
 import Settings from './pages/Settings';
 import SwarmController from './pages/SwarmController';
-import ServerManager from './pages/ServerManager';
-import TaskQueue from './pages/TaskQueue';
 import PluginStore from './pages/PluginStore';
 import Plugins from './pages/Plugins';
 import DeliveryPage from './pages/DeliveryPage';
@@ -44,9 +42,7 @@ function App() {
           <Route path="/fleet/delivery" element={<DeliveryPage />} />
           <Route path="/fleet/bots" element={<BotControl />} />
           <Route path="/fleet/bots/:botId" element={<BotDetail />} />
-          <Route path="/fleet/servers" element={<ServerManager />} />
           <Route path="/fleet/swarms" element={<SwarmController />} />
-          <Route path="/fleet/tasks" element={<TaskQueue />} />
           <Route path="/plugin-store" element={<PluginStore />} />
           <Route path="/plugins" element={<Plugins />} />
           <Route path="/settings" element={<Settings />} />

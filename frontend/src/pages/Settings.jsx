@@ -2,8 +2,34 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
+import { Button, Card, CardHeader, Input, Select, Tabs, Modal } from '../components/ui';
 
-const TABS = ['general', 'bot', 'delivery', 'users'];
+const TAB_ITEMS = [
+  { id: 'general', label: 'General' },
+  { id: 'bot', label: 'Bot' },
+  { id: 'delivery', label: 'Delivery' },
+  { id: 'users', label: 'Users' },
+];
+
+const VERSION_OPTIONS = [
+  { value: 'auto', label: 'Auto Detect' },
+  { value: '1.21.4', label: '1.21.4' },
+  { value: '1.21.3', label: '1.21.3' },
+  { value: '1.21.2', label: '1.21.2' },
+  { value: '1.21.1', label: '1.21.1' },
+  { value: '1.21', label: '1.21' },
+  { value: '1.20.6', label: '1.20.6' },
+  { value: '1.20.4', label: '1.20.4' },
+  { value: '1.20.2', label: '1.20.2' },
+  { value: '1.20.1', label: '1.20.1' },
+  { value: '1.20', label: '1.20' },
+  { value: '1.19.4', label: '1.19.4' },
+  { value: '1.19.3', label: '1.19.3' },
+  { value: '1.18.2', label: '1.18.2' },
+  { value: '1.17.1', label: '1.17.1' },
+  { value: '1.16.5', label: '1.16.5' },
+  { value: '1.12.2', label: '1.12.2' },
+];
 
 export default function Settings() {
   const { addToast } = useToast();
@@ -115,190 +141,244 @@ export default function Settings() {
     return <div className="p-12 text-center text-mdb-text-muted">Loading...</div>;
   }
 
-  const renderGeneral = () => (
-    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
-      <div className="text-base font-semibold mb-4">General Settings</div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Server Port</label>
-          <input type="number" value={generalForm.SERVER_PORT} onChange={(e) => setGeneralForm({ ...generalForm, SERVER_PORT: e.target.value })} placeholder="8081" className="h-10" />
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">WebSocket Port</label>
-          <input type="number" value={generalForm.WS_PORT} onChange={(e) => setGeneralForm({ ...generalForm, WS_PORT: e.target.value })} placeholder="3000" className="h-10" />
-        </div>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-mdb-text tracking-tight">Settings</h1>
+        <p className="text-sm text-mdb-text-muted mt-0.5">Manage your server configuration</p>
       </div>
-      <button
-        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
-        onClick={handleSaveGeneral}
-        disabled={savingGeneral}
-      >
-        {savingGeneral ? 'Saving...' : 'Save General Settings'}
-      </button>
+
+      <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} variant="pills" />
+
+      {activeTab === 'general' && (
+        <GeneralTab form={generalForm} setForm={setGeneralForm} saving={savingGeneral} onSave={handleSaveGeneral} />
+      )}
+      {activeTab === 'bot' && (
+        <BotTab form={botForm} setForm={setBotForm} saving={savingBot} onSave={handleSaveBot} />
+      )}
+      {activeTab === 'delivery' && (
+        <DeliveryTab form={deliveryForm} setForm={setDeliveryForm} saving={savingDelivery} onSave={handleSaveDelivery} />
+      )}
+      {activeTab === 'users' && (
+        <UsersTab users={users} onAdd={handleAdd} onDelete={handleDelete} showAdd={showAdd} setShowAdd={setShowAdd} form={form} setForm={setForm} />
+      )}
     </div>
   );
+}
 
-  const renderBot = () => (
-    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
-      <div className="text-base font-semibold mb-4">Default Bot Settings</div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Host</label>
-        <input type="text" value={botForm.IP} onChange={(e) => setBotForm({ ...botForm, IP: e.target.value })} placeholder="6b6t.org" className="h-10" />
-      </div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Port</label>
-          <input type="number" value={botForm.PORT} onChange={(e) => setBotForm({ ...botForm, PORT: e.target.value })} placeholder="25565" className="h-10" />
+function GeneralTab({ form, setForm, saving, onSave }) {
+  return (
+    <Card padding="none">
+      <CardHeader title="General Settings" subtitle="Server connection ports" />
+      <div className="p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Server Port"
+            type="number"
+            value={form.SERVER_PORT}
+            onChange={(e) => setForm({ ...form, SERVER_PORT: e.target.value })}
+            placeholder="8081"
+          />
+          <Input
+            label="WebSocket Port"
+            type="number"
+            value={form.WS_PORT}
+            onChange={(e) => setForm({ ...form, WS_PORT: e.target.value })}
+            placeholder="3000"
+          />
         </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Default Version</label>
-          <select value={botForm.VERSION} onChange={(e) => setBotForm({ ...botForm, VERSION: e.target.value })} className="h-10">
-            <option value="auto">Auto Detect</option>
-            <option value="1.21.4">1.21.4</option>
-            <option value="1.21.3">1.21.3</option>
-            <option value="1.21.2">1.21.2</option>
-            <option value="1.21.1">1.21.1</option>
-            <option value="1.21">1.21</option>
-            <option value="1.20.6">1.20.6</option>
-            <option value="1.20.4">1.20.4</option>
-            <option value="1.20.2">1.20.2</option>
-            <option value="1.20.1">1.20.1</option>
-            <option value="1.20">1.20</option>
-            <option value="1.19.4">1.19.4</option>
-            <option value="1.19.3">1.19.3</option>
-            <option value="1.18.2">1.18.2</option>
-            <option value="1.17.1">1.17.1</option>
-            <option value="1.16.5">1.16.5</option>
-            <option value="1.12.2">1.12.2</option>
-          </select>
+        <div className="mt-5">
+          <Button variant="primary" size="lg" loading={saving} onClick={onSave}>
+            Save General Settings
+          </Button>
         </div>
       </div>
-      <button
-        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
-        onClick={handleSaveBot}
-        disabled={savingBot}
-      >
-        {savingBot ? 'Saving...' : 'Save Bot Defaults'}
-      </button>
-    </div>
+    </Card>
   );
+}
 
-  const renderDelivery = () => (
-    <div className="bg-mdb-surface rounded-xl border border-mdb-border p-6">
-      <div className="text-base font-semibold mb-4">Delivery Configuration</div>
-
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Delivery Mode</label>
-          <select value={deliveryForm.DELIVERY_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, DELIVERY_MODE: e.target.value })} className="h-10">
-            <option value="TPA">TPA (Teleport Request)</option>
-            <option value="ELYTRA">ELYTRA (Autonomous Flight)</option>
-          </select>
+function BotTab({ form, setForm, saving, onSave }) {
+  return (
+    <Card padding="none">
+      <CardHeader title="Default Bot Settings" subtitle="Default connection parameters for new bots" />
+      <div className="p-5 space-y-4">
+        <Input
+          label="Default Host"
+          value={form.IP}
+          onChange={(e) => setForm({ ...form, IP: e.target.value })}
+          placeholder="6b6t.org"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Default Port"
+            type="number"
+            value={form.PORT}
+            onChange={(e) => setForm({ ...form, PORT: e.target.value })}
+            placeholder="25565"
+          />
+          <Select
+            label="Default Version"
+            value={form.VERSION}
+            onChange={(e) => setForm({ ...form, VERSION: e.target.value })}
+            options={VERSION_OPTIONS}
+          />
         </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Target Coord Mode</label>
-          <select value={deliveryForm.TARGET_COORD_MODE} onChange={(e) => setDeliveryForm({ ...deliveryForm, TARGET_COORD_MODE: e.target.value })} className="h-10">
-            <option value="USER">USER (Direct Coordinates)</option>
-            <option value="RANDOM_REGION">RANDOM_REGION (Bounded Region)</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Post Delivery Action</label>
-        <select value={deliveryForm.POST_DELIVERY_ACTION} onChange={(e) => setDeliveryForm({ ...deliveryForm, POST_DELIVERY_ACTION: e.target.value })} className="h-10">
-          <option value="FLY_HOME">FLY_HOME (Fly back to base)</option>
-          <option value="ECHEST_SAVE_AND_DIE">ECHEST_SAVE_AND_DIE (Stash gear in EChest then suicide)</option>
-          <option value="DIRECT_DIE">DIRECT_DIE (Skip stashing, immediate suicide)</option>
-        </select>
-      </div>
-
-      <div className="border-t border-mdb-border my-6 pt-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Storage Keys</div>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Ender Chest Key</label>
-            <input type="text" value={deliveryForm.STORAGE_KEYS?.ender || 'ender'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, ender: e.target.value } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Standard Chest Key</label>
-            <input type="text" value={deliveryForm.STORAGE_KEYS?.chest || 'chest'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, chest: e.target.value } })} className="h-10" />
-          </div>
-        </div>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Elytra Key</label>
-            <input type="text" value={deliveryForm.STORAGE_KEYS?.elytra || 'elytra'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, elytra: e.target.value } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Rocket Key</label>
-            <input type="text" value={deliveryForm.STORAGE_KEYS?.rocket || 'rocket'} onChange={(e) => setDeliveryForm({ ...deliveryForm, STORAGE_KEYS: { ...deliveryForm.STORAGE_KEYS, rocket: e.target.value } })} className="h-10" />
-          </div>
+        <div className="pt-2">
+          <Button variant="primary" size="lg" loading={saving} onClick={onSave}>
+            Save Bot Defaults
+          </Button>
         </div>
       </div>
-
-      <div className="border-t border-mdb-border my-6 pt-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Base Coordinates</div>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X</label>
-            <input type="number" value={deliveryForm.BASE_COORDINATES?.x ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, x: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Y</label>
-            <input type="number" value={deliveryForm.BASE_COORDINATES?.y ?? 64} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, y: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z</label>
-            <input type="number" value={deliveryForm.BASE_COORDINATES?.z ?? 0} onChange={(e) => setDeliveryForm({ ...deliveryForm, BASE_COORDINATES: { ...deliveryForm.BASE_COORDINATES, z: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-mdb-border my-6 pt-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Random Region Bounds</div>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X1</label>
-            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x1: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z1</label>
-            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z1 ?? -1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z1: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">X2</label>
-            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.x2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, x2: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Z2</label>
-            <input type="number" value={deliveryForm.RANDOM_REGION_BOUNDS?.z2 ?? 1000} onChange={(e) => setDeliveryForm({ ...deliveryForm, RANDOM_REGION_BOUNDS: { ...deliveryForm.RANDOM_REGION_BOUNDS, z2: parseInt(e.target.value) || 0 } })} className="h-10" />
-          </div>
-        </div>
-      </div>
-
-      <button
-        className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors mt-4"
-        onClick={handleSaveDelivery}
-        disabled={savingDelivery}
-      >
-        {savingDelivery ? 'Saving...' : 'Save Delivery Settings'}
-      </button>
-    </div>
+    </Card>
   );
+}
 
-  const renderUsers = () => (
+function DeliveryTab({ form, setForm, saving, onSave }) {
+  return (
+    <Card padding="none">
+      <CardHeader title="Delivery Configuration" subtitle="Kit delivery behavior and coordinates" />
+      <div className="p-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="Delivery Mode"
+            value={form.DELIVERY_MODE}
+            onChange={(e) => setForm({ ...form, DELIVERY_MODE: e.target.value })}
+            options={[
+              { value: 'TPA', label: 'TPA (Teleport Request)' },
+              { value: 'ELYTRA', label: 'ELYTRA (Autonomous Flight)' },
+            ]}
+          />
+          <Select
+            label="Target Coord Mode"
+            value={form.TARGET_COORD_MODE}
+            onChange={(e) => setForm({ ...form, TARGET_COORD_MODE: e.target.value })}
+            options={[
+              { value: 'USER', label: 'USER (Direct Coordinates)' },
+              { value: 'RANDOM_REGION', label: 'RANDOM_REGION (Bounded Region)' },
+            ]}
+          />
+        </div>
+        <Select
+          label="Post Delivery Action"
+          value={form.POST_DELIVERY_ACTION}
+          onChange={(e) => setForm({ ...form, POST_DELIVERY_ACTION: e.target.value })}
+          options={[
+            { value: 'FLY_HOME', label: 'FLY_HOME (Fly back to base)' },
+            { value: 'ECHEST_SAVE_AND_DIE', label: 'ECHEST_SAVE_AND_DIE (Stash gear then suicide)' },
+            { value: 'DIRECT_DIE', label: 'DIRECT_DIE (Skip stashing, immediate suicide)' },
+          ]}
+        />
+
+        <details className="border-t border-mdb-border my-6 pt-4">
+          <summary className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted cursor-pointer select-none hover:text-mdb-text transition-colors">
+            Advanced Settings
+          </summary>
+          <div className="mt-4 space-y-5">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Storage Keys</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Ender Chest Key"
+                  value={form.STORAGE_KEYS?.ender || 'ender'}
+                  onChange={(e) => setForm({ ...form, STORAGE_KEYS: { ...form.STORAGE_KEYS, ender: e.target.value } })}
+                />
+                <Input
+                  label="Standard Chest Key"
+                  value={form.STORAGE_KEYS?.chest || 'chest'}
+                  onChange={(e) => setForm({ ...form, STORAGE_KEYS: { ...form.STORAGE_KEYS, chest: e.target.value } })}
+                />
+                <Input
+                  label="Elytra Key"
+                  value={form.STORAGE_KEYS?.elytra || 'elytra'}
+                  onChange={(e) => setForm({ ...form, STORAGE_KEYS: { ...form.STORAGE_KEYS, elytra: e.target.value } })}
+                />
+                <Input
+                  label="Rocket Key"
+                  value={form.STORAGE_KEYS?.rocket || 'rocket'}
+                  onChange={(e) => setForm({ ...form, STORAGE_KEYS: { ...form.STORAGE_KEYS, rocket: e.target.value } })}
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-mdb-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Base Coordinates</div>
+              <div className="grid grid-cols-3 gap-4">
+                <Input
+                  label="X"
+                  type="number"
+                  value={form.BASE_COORDINATES?.x ?? 0}
+                  onChange={(e) => setForm({ ...form, BASE_COORDINATES: { ...form.BASE_COORDINATES, x: parseInt(e.target.value) || 0 } })}
+                />
+                <Input
+                  label="Y"
+                  type="number"
+                  value={form.BASE_COORDINATES?.y ?? 64}
+                  onChange={(e) => setForm({ ...form, BASE_COORDINATES: { ...form.BASE_COORDINATES, y: parseInt(e.target.value) || 0 } })}
+                />
+                <Input
+                  label="Z"
+                  type="number"
+                  value={form.BASE_COORDINATES?.z ?? 0}
+                  onChange={(e) => setForm({ ...form, BASE_COORDINATES: { ...form.BASE_COORDINATES, z: parseInt(e.target.value) || 0 } })}
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-mdb-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted mb-3">Random Region Bounds</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Input
+                  label="X1"
+                  type="number"
+                  value={form.RANDOM_REGION_BOUNDS?.x1 ?? -1000}
+                  onChange={(e) => setForm({ ...form, RANDOM_REGION_BOUNDS: { ...form.RANDOM_REGION_BOUNDS, x1: parseInt(e.target.value) || 0 } })}
+                />
+                <Input
+                  label="Z1"
+                  type="number"
+                  value={form.RANDOM_REGION_BOUNDS?.z1 ?? -1000}
+                  onChange={(e) => setForm({ ...form, RANDOM_REGION_BOUNDS: { ...form.RANDOM_REGION_BOUNDS, z1: parseInt(e.target.value) || 0 } })}
+                />
+                <Input
+                  label="X2"
+                  type="number"
+                  value={form.RANDOM_REGION_BOUNDS?.x2 ?? 1000}
+                  onChange={(e) => setForm({ ...form, RANDOM_REGION_BOUNDS: { ...form.RANDOM_REGION_BOUNDS, x2: parseInt(e.target.value) || 0 } })}
+                />
+                <Input
+                  label="Z2"
+                  type="number"
+                  value={form.RANDOM_REGION_BOUNDS?.z2 ?? 1000}
+                  onChange={(e) => setForm({ ...form, RANDOM_REGION_BOUNDS: { ...form.RANDOM_REGION_BOUNDS, z2: parseInt(e.target.value) || 0 } })}
+                />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div className="pt-2">
+          <Button variant="primary" size="lg" loading={saving} onClick={onSave}>
+            Save Delivery Settings
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function UsersTab({ users, onAdd, onDelete, showAdd, setShowAdd, form, setForm }) {
+  return (
     <>
-      <div className="bg-mdb-surface rounded-xl border border-mdb-border">
-        <div className="px-5 py-4 border-b border-mdb-border flex items-center justify-between">
-          <span className="text-base font-semibold">Users</span>
-          <button
-            className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors"
-            onClick={() => setShowAdd(true)}
-          >
-            Add User
-          </button>
-        </div>
+      <Card padding="none">
+        <CardHeader
+          title="Users"
+          subtitle={`${users.length} user${users.length !== 1 ? 's' : ''}`}
+          action={
+            <Button variant="primary" size="sm" onClick={() => setShowAdd(true)}>
+              Add User
+            </Button>
+          }
+        />
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -320,7 +400,7 @@ export default function Settings() {
                   <td className="text-right px-5 h-12">
                     <button
                       className="text-sm font-medium text-mdb-text-muted hover:text-mdb-error hover:bg-mdb-error/10 px-3 py-1.5 rounded-lg transition-colors"
-                      onClick={() => handleDelete(u.id)}
+                      onClick={() => onDelete(u.id)}
                     >
                       Delete
                     </button>
@@ -330,91 +410,43 @@ export default function Settings() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {showAdd && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={() => setShowAdd(false)}>
-          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-border flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-5 border-b border-mdb-border">
-              <span className="text-lg font-semibold">Add New User</span>
-              <button
-                className="inline-flex items-center justify-center w-8 h-8 text-mdb-text-muted hover:text-mdb-text hover:bg-mdb-surface-high rounded-lg transition-colors"
-                onClick={() => setShowAdd(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex-1 p-6 overflow-y-auto">
-              <form onSubmit={handleAdd}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Username</label>
-                  <input type="text" value={form.username} onChange={(e) => setForm({...form, username: e.target.value})} required className="h-10" />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Password</label>
-                  <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required className="h-10" />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-mdb-text-secondary mb-1.5">Role</label>
-                  <select value={form.role} onChange={(e) => setForm({...form, role: e.target.value})} className="h-10">
-                    <option value="viewer">Viewer</option>
-                    <option value="operator">Operator</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high rounded-lg transition-colors"
-                    onClick={() => setShowAdd(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium bg-mdb-primary text-mdb-on-primary rounded-lg hover:bg-mdb-primary-hover transition-colors"
-                  >
-                    Add User
-                  </button>
-                </div>
-              </form>
-            </div>
+      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add New User" size="sm">
+        <form onSubmit={onAdd} className="space-y-4">
+          <Input
+            label="Username"
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+          <Select
+            label="Role"
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            options={[
+              { value: 'viewer', label: 'Viewer' },
+              { value: 'operator', label: 'Operator' },
+              { value: 'admin', label: 'Admin' },
+            ]}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" type="button" onClick={() => setShowAdd(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Add User
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </>
-  );
-
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-mdb-text tracking-tight">Settings</h1>
-        <p className="text-sm text-mdb-text-muted mt-0.5">Manage your server configuration</p>
-      </div>
-
-      {/* Tab Bar */}
-      <div className="flex gap-1 bg-mdb-surface rounded-xl p-1 border border-mdb-border">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg text-center transition-colors ${
-              activeTab === tab
-                ? 'bg-mdb-surface-high text-mdb-text'
-                : 'text-mdb-text-muted hover:text-mdb-text'
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'general' && renderGeneral()}
-      {activeTab === 'bot' && renderBot()}
-      {activeTab === 'delivery' && renderDelivery()}
-      {activeTab === 'users' && renderUsers()}
-    </div>
   );
 }

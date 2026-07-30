@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { IconButton } from './ui';
 
 const ToastContext = createContext();
 
@@ -33,45 +35,24 @@ function Toast({ toast, onRemove }) {
     return () => clearTimeout(timer);
   }, [toast.id, onRemove]);
 
-  const styles = {
-    success: 'border-l-4 border-l-emerald-400 bg-emerald-400/5',
-    error: 'border-l-4 border-l-red-400 bg-red-400/5',
-    info: 'border-l-4 border-l-mdb-primary bg-mdb-primary/5',
-    warning: 'border-l-4 border-l-amber-400 bg-amber-400/5',
-  };
-
-  const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'i',
-  };
-
-  const iconColors = {
-    success: 'text-emerald-400',
-    error: 'text-red-400',
-    warning: 'text-amber-400',
-    info: 'text-mdb-primary',
-  };
+  const colorClass = {
+    success: 'bg-mdb-success',
+    error: 'bg-mdb-error',
+    warning: 'bg-mdb-warning',
+    info: 'bg-mdb-primary',
+  }[toast.type] || 'bg-mdb-primary';
 
   return (
     <div
-      className={`flex items-start gap-3 p-3.5 rounded-lg shadow-lg border border-mdb-border bg-mdb-surface min-w-[280px] max-w-[400px] animate-slide-in-right ${styles[toast.type] || styles.info}`}
+      className="bg-mdb-surface rounded-xl border border-mdb-border shadow-xl p-4 flex gap-3 min-w-[300px] max-w-[400px] animate-slide-in-right"
       role="alert"
     >
-      <span className={`text-sm font-bold mt-0.5 ${iconColors[toast.type] || iconColors.info}`}>
-        {icons[toast.type] || icons.info}
-      </span>
+      <div className={`w-1 rounded-full flex-shrink-0 ${colorClass}`} />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-mdb-text">{toast.title}</div>
-        {toast.message && <div className="text-xs text-mdb-text-muted mt-0.5">{toast.message}</div>}
+        <p className="text-sm font-medium text-mdb-text">{toast.title}</p>
+        {toast.message && <p className="text-xs text-mdb-text-muted mt-0.5">{toast.message}</p>}
       </div>
-      <button
-        className="text-mdb-text-muted hover:text-mdb-text text-sm p-0.5 rounded hover:bg-mdb-surface-high transition-colors"
-        onClick={(e) => { e.stopPropagation(); onRemove(toast.id); }}
-      >
-        ×
-      </button>
+      <IconButton icon={X} size="sm" onClick={() => onRemove(toast.id)} className="flex-shrink-0" />
     </div>
   );
 }

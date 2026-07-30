@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
 import { useRealtime } from '../hooks/useRealtime';
-import { StatusBadge, HealthBar, FoodBar } from '../components/ui/StatusComponents';
-import { RefreshCw, Plus, Play, Square, Scan, Send, Trash2, ChevronRight, X, Bot, Activity, Zap } from 'lucide-react';
+import { Button, Card, Input, StatusBadge, EmptyState, IconButton, Badge, Modal, Select } from '../components/ui';
+import { RefreshCw, Plus, Play, Square, Send, ChevronRight, ChevronLeft, ExternalLink, ArrowDown, ArrowUp } from 'lucide-react';
 
 export default function SwarmController() {
   const [swarms, setSwarms] = useState([]);
@@ -14,6 +14,7 @@ export default function SwarmController() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [broadcastCmd, setBroadcastCmd] = useState('');
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [form, setForm] = useState({ name: '', loadBalancing: 'NEAREST' });
   const { addToast } = useToast();
   const navigate = useNavigate();
@@ -56,16 +57,12 @@ export default function SwarmController() {
         api.fleet.getSwarmTasks(selectedSwarm.id),
       ]);
       setBots(prev => {
-        const swarmBotIds = new Set(swarmBots.map(b => b.id));
-        const updated = prev.map(b => swarmBotIds.has(b.id) ? { ...b, ...swarmBots.find(sb => sb.id === b.id) } : b);
-        const newBots = swarmBots.filter(b => !prev.find(p => p.id === b.id));
-        return [...updated, ...newBots];
+        const ids = new Set(swarmBots.map(b => b.id));
+        return [...prev.filter(b => !ids.has(b.id)), ...swarmBots];
       });
       setTasks(prev => {
-        const swarmTaskIds = new Set(swarmTasks.map(t => t.id));
-        const updated = prev.map(t => swarmTaskIds.has(t.id) ? { ...t, ...swarmTasks.find(st => st.id === t.id) } : t);
-        const newTasks = swarmTasks.filter(t => !prev.find(p => p.id === t.id));
-        return [...updated, ...newTasks];
+        const ids = new Set(swarmTasks.map(t => t.id));
+        return [...prev.filter(t => !ids.has(t.id)), ...swarmTasks];
       });
     } catch (err) {
       console.error('Failed to load swarm data:', err);
@@ -129,304 +126,249 @@ export default function SwarmController() {
 
   const handleStartAll = async () => {
     const offline = getSwarmBots(selectedSwarm.id).filter(b => (b.liveStatus?.status || b.status) === 'OFFLINE');
-    for (const bot of offline) {
-      try { await api.fleet.startBot(bot.id); } catch {}
-    }
+    for (const bot of offline) { try { await api.fleet.startBot(bot.id); } catch {} }
     addToast({ type: 'success', title: `Starting ${offline.length} bots` });
     setTimeout(loadSwarmData, 2000);
   };
 
   const handleStopAll = async () => {
     const online = getSwarmBots(selectedSwarm.id).filter(b => (b.liveStatus?.status || b.status) === 'ONLINE');
-    for (const bot of online) {
-      try { await api.fleet.stopBot(bot.id); } catch {}
-    }
+    for (const bot of online) { try { await api.fleet.stopBot(bot.id); } catch {} }
     addToast({ type: 'success', title: `Stopping ${online.length} bots` });
     setTimeout(loadSwarmData, 2000);
-  };
-
-  const handleScanAll = async () => {
-    const online = getSwarmBots(selectedSwarm.id).filter(b => (b.liveStatus?.status || b.status) === 'ONLINE');
-    for (const bot of online) {
-      try { await api.chests.triggerScan(bot.id, 32); } catch {}
-    }
-    addToast({ type: 'success', title: `Scanning with ${online.length} bots` });
   };
 
   const handleBroadcast = async (e) => {
     e.preventDefault();
     if (!broadcastCmd.trim()) return;
     const online = getSwarmBots(selectedSwarm.id).filter(b => (b.liveStatus?.status || b.status) === 'ONLINE');
-    for (const bot of online) {
-      try { await api.fleet.sendCommand(bot.id, broadcastCmd); } catch {}
-    }
+    for (const bot of online) { try { await api.fleet.sendCommand(bot.id, broadcastCmd); } catch {} }
     addToast({ type: 'success', title: `Command sent to ${online.length} bots` });
     setBroadcastCmd('');
   };
 
   const getSwarmBots = (id) => bots.filter(b => b.swarmId === id);
-  const getSwarmTasks = (id) => tasks.filter(t => t.swarmId === id);
 
   const getSwarmStats = (swarmId) => {
     const swarmBots = getSwarmBots(swarmId);
-    const swarmTasks = getSwarmTasks(swarmId);
-    const onlineBots = swarmBots.filter(b => (b.liveStatus?.status || b.status) === 'ONLINE');
-    const totalHealth = swarmBots.reduce((sum, b) => sum + (b.liveStatus?.health || 0), 0);
-    const totalFood = swarmBots.reduce((sum, b) => sum + (b.liveStatus?.food || 0), 0);
+    const swarmTasks = tasks.filter(t => t.swarmId === swarmId);
+    const online = swarmBots.filter(b => (b.liveStatus?.status || b.status) === 'ONLINE');
     return {
       totalBots: swarmBots.length,
-      onlineBots: onlineBots.length,
-      offlineBots: swarmBots.length - onlineBots.length,
-      avgHealth: swarmBots.length > 0 ? Math.round(totalHealth / swarmBots.length) : 0,
-      avgFood: swarmBots.length > 0 ? Math.round(totalFood / swarmBots.length) : 0,
+      onlineBots: online.length,
       activeTasks: swarmTasks.filter(t => t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS').length,
-      completedTasks: swarmTasks.filter(t => t.status === 'COMPLETED').length,
-      failedTasks: swarmTasks.filter(t => t.status === 'FAILED').length,
     };
   };
 
-  const getDimension = (bot) => {
-    if (!bot.liveStatus?.position) return 'Unknown';
-    const y = bot.liveStatus.position.y;
-    if (y > 320) return 'End';
-    if (y < -64) return 'Nether';
-    return 'Overworld';
-  };
-
-  if (loading) return <div className="p-12 text-center text-mdb-text-muted">Loading swarms...</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Swarm Controller</h1>
           <p className="text-sm text-mdb-text-muted mt-0.5">{swarms.length} swarms · {bots.length} total bots</p>
         </div>
         <div className="flex gap-2">
-          <button className="h-9 px-3 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high transition-colors inline-flex items-center gap-2" onClick={loadData}>
-            <RefreshCw size={16} />
-          </button>
-          <button className="h-9 px-4 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium inline-flex items-center gap-2 transition-colors" onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> Create Swarm
-          </button>
+          <IconButton icon={RefreshCw} onClick={loadData} />
+          <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>Create Swarm</Button>
         </div>
       </div>
 
-      {showCreate && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-stretch justify-end animate-fade-in" onClick={() => setShowCreate(false)}>
-          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-border flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-mdb-border">
-              <h2 className="text-lg font-semibold">Create New Swarm</h2>
-              <button className="h-8 w-8 rounded-lg hover:bg-mdb-surface-high flex items-center justify-center text-mdb-text-muted hover:text-mdb-text transition-colors" onClick={() => setShowCreate(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex-1 p-6 overflow-y-auto">
-              <form onSubmit={handleCreateSwarm} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Swarm Name</label>
-                  <input type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} required placeholder="Delivery Swarm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Load Balancing</label>
-                  <select value={form.loadBalancing} onChange={(e) => setForm({...form, loadBalancing: e.target.value})}>
-                    <option value="NEAREST">Nearest Bot</option>
-                    <option value="LEAST_BUSY">Least Busy</option>
-                    <option value="ROUND_ROBIN">Round Robin</option>
-                  </select>
-                </div>
-                <div className="flex gap-3 pt-4 border-t border-mdb-border">
-                  <button type="button" className="flex-1 h-10 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:bg-mdb-surface-high transition-colors" onClick={() => setShowCreate(false)}>Cancel</button>
-                  <button type="submit" className="flex-1 h-10 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium transition-colors">Create</button>
-                </div>
-              </form>
-            </div>
+      {/* Create modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create Swarm" size="sm">
+        <form onSubmit={handleCreateSwarm} className="space-y-4">
+          <Input
+            label="Swarm Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            placeholder="Delivery Swarm"
+          />
+          <Select
+            label="Load Balancing"
+            value={form.loadBalancing}
+            onChange={(e) => setForm({ ...form, loadBalancing: e.target.value })}
+            options={[
+              { value: 'NEAREST', label: 'Nearest Bot' },
+              { value: 'LEAST_BUSY', label: 'Least Busy' },
+              { value: 'ROUND_ROBIN', label: 'Round Robin' },
+            ]}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" type="button" className="flex-1" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button type="submit" className="flex-1">Create</Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-sm font-semibold mb-3 text-mdb-text-secondary uppercase tracking-wider">Swarms</h2>
+      {/* Layout: desktop side-by-side, mobile stacked */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left: Swarm list */}
+        <div className={`lg:w-80 shrink-0 ${selectedSwarm ? 'hidden lg:block' : ''}`}>
           {swarms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-mdb-text-muted">
-              <div className="text-base font-medium mb-1 text-mdb-text">No swarms yet</div>
-              <div className="text-sm">Create a swarm to group your bots</div>
-            </div>
+            <EmptyState
+              title="No swarms yet"
+              description="Create a swarm to group your bots"
+              action={<Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>Create Swarm</Button>}
+            />
           ) : (
-            swarms.map((swarm) => {
-              const stats = getSwarmStats(swarm.id);
-              return (
-                <div
-                  key={swarm.id}
-                  className={`bg-mdb-surface rounded-xl border p-4 mb-3 cursor-pointer transition-colors hover:border-mdb-primary/50 ${
-                    selectedSwarm?.id === swarm.id ? 'border-mdb-primary' : 'border-mdb-border'
-                  }`}
-                  onClick={() => setSelectedSwarm(swarm)}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-sm">{swarm.name}</span>
-                    <button className="h-7 w-7 rounded-lg border border-mdb-border text-mdb-text-muted hover:text-red-400 hover:border-red-400/30 flex items-center justify-center transition-colors" onClick={(e) => { e.stopPropagation(); handleDeleteSwarm(swarm.id); }}>
-                      <Trash2 size={12} />
-                    </button>
+            <div className="space-y-2">
+              {swarms.map((swarm) => {
+                const stats = getSwarmStats(swarm.id);
+                const isActive = selectedSwarm?.id === swarm.id;
+                return (
+                  <div
+                    key={swarm.id}
+                    onClick={() => setSelectedSwarm(swarm)}
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${
+                      isActive
+                        ? 'bg-mdb-surface border-mdb-primary'
+                        : 'bg-mdb-surface border-mdb-border hover:border-mdb-primary/50'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{swarm.name}</div>
+                      <div className="flex items-center gap-3 text-xs text-mdb-text-muted mt-1">
+                        <span>{stats.totalBots} bots</span>
+                        <span>{stats.activeTasks} tasks</span>
+                      </div>
+                    </div>
+                    <IconButton
+                      icon={ChevronRight}
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setSelectedSwarm(swarm); }}
+                    />
                   </div>
-                  <div className="flex gap-4 text-xs text-mdb-text-muted">
-                    <span><span className="text-emerald-400 font-medium">{stats.onlineBots}</span> online</span>
-                    <span>{stats.totalBots} bots</span>
-                    <span>{stats.activeTasks} tasks</span>
-                  </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
 
-        <div>
+        {/* Right: Selected swarm detail */}
+        <div className={`flex-1 min-w-0 ${!selectedSwarm ? 'hidden lg:flex' : ''}`}>
           {selectedSwarm ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-mdb-text-secondary uppercase tracking-wider">{selectedSwarm.name}</h2>
+            <div className="space-y-4">
+              {/* Back button (mobile only) */}
+              <button
+                className="lg:hidden flex items-center gap-1 text-sm text-mdb-text-muted hover:text-mdb-text transition-colors"
+                onClick={() => setSelectedSwarm(null)}
+              >
+                <ChevronLeft size={16} /> Back to swarms
+              </button>
+
+              {/* Swarm header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">{selectedSwarm.name}</h2>
+                  <div className="flex items-center gap-3 text-sm text-mdb-text-muted mt-1">
+                    <Badge variant="success" dot>{getSwarmStats(selectedSwarm.id).onlineBots} online</Badge>
+                    <Badge>{getSwarmStats(selectedSwarm.id).totalBots} bots</Badge>
+                    <Badge>{getSwarmStats(selectedSwarm.id).activeTasks} active tasks</Badge>
+                  </div>
+                </div>
                 <div className="flex gap-2">
-                  <button className="h-8 px-3 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium inline-flex items-center gap-1.5 hover:bg-emerald-500/20 transition-colors" onClick={handleStartAll}>
-                    <Play size={12} /> Start All
-                  </button>
-                  <button className="h-8 px-3 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium inline-flex items-center gap-1.5 hover:bg-red-500/20 transition-colors" onClick={handleStopAll}>
-                    <Square size={12} /> Stop All
-                  </button>
-                  <button className="h-8 px-3 rounded-lg border border-mdb-border text-xs font-medium text-mdb-text-secondary hover:bg-mdb-surface-high transition-colors inline-flex items-center gap-1.5" onClick={handleScanAll}>
-                    <Scan size={12} /> Scan All
-                  </button>
+                  <Button variant="success" size="sm" icon={<Play size={14} />} onClick={handleStartAll}>Start All</Button>
+                  <Button variant="danger" size="sm" icon={<Square size={14} />} onClick={handleStopAll}>Stop All</Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                {[
-                  { label: 'Online', value: getSwarmStats(selectedSwarm.id).onlineBots, sub: `/${getSwarmStats(selectedSwarm.id).totalBots}`, icon: Bot, color: 'text-emerald-400' },
-                  { label: 'Active Tasks', value: getSwarmStats(selectedSwarm.id).activeTasks, icon: Activity, color: 'text-amber-400' },
-                  { label: 'Avg HP', value: getSwarmStats(selectedSwarm.id).avgHealth, icon: null, color: 'text-mdb-text' },
-                  { label: 'Avg Food', value: getSwarmStats(selectedSwarm.id).avgFood, icon: null, color: 'text-mdb-text' },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-mdb-surface rounded-xl border border-mdb-border p-4">
-                    <div className="text-2xl font-bold tracking-tight">
-                      <span className={stat.color}>{stat.value}</span>
-                      {stat.sub && <span className="text-mdb-text-muted text-lg">{stat.sub}</span>}
-                    </div>
-                    <div className="text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1 flex items-center gap-1">
-                      {stat.icon && <stat.icon size={12} />}
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5 mb-6">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-mdb-border">
-                  <span className="text-sm font-medium">Bot Fleet</span>
-                  <select
-                    className="h-8 px-3 rounded-lg bg-mdb-surface-high border border-mdb-border text-xs font-medium text-mdb-text-secondary w-auto"
-                    onChange={(e) => {
-                      if (e.target.value) { handleAddBot(e.target.value); e.target.value = ''; }
-                    }}
-                  >
-                    <option value="">+ Add Bot</option>
-                    {bots.filter(b => !b.swarmId).map(bot => (
-                      <option key={bot.id} value={bot.id}>{bot.name}</option>
-                    ))}
-                  </select>
+              {/* Bot list */}
+              <Card padding="none">
+                <div className="px-5 py-4 border-b border-mdb-border flex items-center justify-between">
+                  <span className="text-sm font-semibold">Bots</span>
+                  <Select
+                    value=""
+                    onChange={(e) => { if (e.target.value) { handleAddBot(e.target.value); e.target.value = ''; } }}
+                    options={[
+                      { value: '', label: '+ Add Bot' },
+                      ...bots.filter(b => !b.swarmId).map(b => ({ value: b.id, label: b.name })),
+                    ]}
+                    className="w-40"
+                  />
                 </div>
-
                 {getSwarmBots(selectedSwarm.id).length === 0 ? (
-                  <div className="py-12 text-center text-mdb-text-muted">
-                    <div className="text-sm">No bots in swarm</div>
-                  </div>
+                  <div className="py-12 text-center text-sm text-mdb-text-muted">No bots in swarm</div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="divide-y divide-mdb-border">
                     {getSwarmBots(selectedSwarm.id).map((bot) => {
                       const status = bot.liveStatus?.status || bot.status;
                       const isOnline = status === 'ONLINE';
                       return (
-                        <div key={bot.id} className="bg-mdb-bg rounded-lg border border-mdb-border p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <StatusBadge status={status} />
-                              <span className="text-sm font-medium">{bot.name}</span>
-                            </div>
-                            <div className="flex gap-1">
-                              {isOnline ? (
-                                <button className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors" onClick={() => handleStopBot(bot.id)}>
-                                  <Square size={12} />
-                                </button>
-                              ) : (
-                                <button className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 transition-colors" onClick={() => handleStartBot(bot.id)}>
-                                  <Play size={12} />
-                                </button>
-                              )}
-                              <button className="h-7 w-7 rounded-lg border border-mdb-border text-mdb-text-muted flex items-center justify-center hover:text-mdb-primary hover:border-mdb-primary/30 transition-colors" onClick={() => navigate(`/fleet/bots/${bot.id}`)}>
-                                <ChevronRight size={12} />
-                              </button>
-                            </div>
+                        <div
+                          key={bot.id}
+                          onClick={() => navigate(`/fleet/bots/${bot.id}`)}
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-mdb-surface-high/50 cursor-pointer transition-colors"
+                        >
+                          <StatusBadge status={status} />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate">{bot.name}</span>
                           </div>
-                          <div className="text-xs text-mdb-text-muted font-mono mb-1">{bot.username}</div>
-                          {isOnline && (
-                            <div className="space-y-1.5 mt-2">
-                              <HealthBar value={bot.liveStatus?.health || 0} />
-                              <FoodBar value={bot.liveStatus?.food || 0} />
-                              <div className="flex items-center gap-2 text-xs text-mdb-text-muted">
-                                <span>{bot.liveStatus?.position ? `${Math.round(bot.liveStatus.position.x)}, ${Math.round(bot.liveStatus.position.y)}, ${Math.round(bot.liveStatus.position.z)}` : 'N/A'}</span>
-                                <span>·</span>
-                                <span>{getDimension(bot)}</span>
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex justify-end mt-2 pt-2 border-t border-mdb-border">
-                            <button className="text-xs text-mdb-text-muted hover:text-red-400 transition-colors inline-flex items-center gap-1" onClick={() => handleRemoveBot(bot.id)}>
-                              <Trash2 size={10} /> Remove
-                            </button>
+                          <div className="flex gap-1">
+                            {isOnline ? (
+                              <IconButton icon={Square} size="sm" className="text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); handleStopBot(bot.id); }} />
+                            ) : (
+                              <IconButton icon={Play} size="sm" className="text-emerald-400 hover:text-emerald-300" onClick={(e) => { e.stopPropagation(); handleStartBot(bot.id); }} />
+                            )}
+                            <IconButton
+                              icon={ExternalLink}
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/fleet/bots/${bot.id}`); }}
+                            />
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
-              </div>
+              </Card>
 
-              <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5 mb-6">
-                <h3 className="text-sm font-medium mb-3">Broadcast Command</h3>
-                <form onSubmit={handleBroadcast} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={broadcastCmd}
-                    onChange={(e) => setBroadcastCmd(e.target.value)}
-                    placeholder="/say Hello swarm!"
-                    className="flex-1 font-mono text-sm"
-                  />
-                  <button type="submit" className="h-10 px-4 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium inline-flex items-center gap-2 transition-colors">
-                    <Send size={14} /> Send
-                  </button>
-                </form>
-              </div>
-
-              <div className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
-                <h3 className="text-sm font-medium mb-3">Tasks ({getSwarmStats(selectedSwarm.id).activeTasks} active)</h3>
-                {getSwarmTasks(selectedSwarm.id).length === 0 ? (
-                  <div className="py-8 text-center text-mdb-text-muted text-sm">No tasks</div>
-                ) : (
-                  <div className="space-y-2">
-                    {getSwarmTasks(selectedSwarm.id).slice(0, 10).map((task) => (
-                      <div key={task.id} className="flex items-center justify-between py-2 px-3 bg-mdb-bg rounded-lg border border-mdb-border">
-                        <div>
-                          <div className="text-sm font-medium">{task.type || task.itemName}</div>
-                          <div className="text-xs text-mdb-text-muted">{task.assignedBot?.name || 'Auto-assigned'}</div>
-                        </div>
-                        <StatusBadge status={task.status} />
-                      </div>
-                    ))}
-                  </div>
+              {/* Broadcast */}
+              <Card>
+                <button
+                  className="flex items-center justify-between w-full text-left"
+                  onClick={() => setBroadcastOpen(o => !o)}
+                >
+                  <span className="text-sm font-semibold">Broadcast Command</span>
+                  <ArrowDown size={16} className={`text-mdb-text-muted transition-transform ${broadcastOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {broadcastOpen && (
+                  <form onSubmit={handleBroadcast} className="flex gap-2 mt-3">
+                    <Input
+                      value={broadcastCmd}
+                      onChange={(e) => setBroadcastCmd(e.target.value)}
+                      placeholder="/say Hello swarm!"
+                      className="flex-1 font-mono"
+                    />
+                    <Button type="submit" icon={<Send size={14} />}>Send</Button>
+                  </form>
                 )}
-              </div>
+              </Card>
+
+              {/* Tasks link */}
+              <Card>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold">Tasks</h3>
+                    <p className="text-xs text-mdb-text-muted mt-0.5">
+                      {getSwarmStats(selectedSwarm.id).activeTasks} active · {tasks.filter(t => t.swarmId === selectedSwarm.id).length} total
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<ExternalLink size={14} />}
+                    onClick={() => navigate(`/fleet/tasks?swarm=${selectedSwarm.id}`)}
+                  >
+                    View Tasks
+                  </Button>
+                </div>
+              </Card>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-mdb-text-muted">
+            <div className="hidden lg:flex flex-col items-center justify-center py-20 text-mdb-text-muted">
               <div className="text-lg font-medium mb-1 text-mdb-text">Select a swarm</div>
               <div className="text-sm">Choose a swarm from the list to open the controller</div>
             </div>

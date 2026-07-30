@@ -2,9 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Bot,
-  Server,
   Layers,
-  Package,
   Settings,
   LogOut,
   Gamepad2,
@@ -17,11 +15,8 @@ const navItems = [
   { path: '/fleet', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/fleet/delivery', label: 'Delivery', icon: Truck },
   { path: '/fleet/bots', label: 'Bots', icon: Bot },
-  { path: '/fleet/servers', label: 'Servers', icon: Server },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
-  { path: '/fleet/tasks', label: 'Tasks', icon: Package },
-  { path: '/plugin-store', label: 'Plugin Store', icon: ShoppingCart },
-  { path: '/plugins', label: 'Plugins', icon: Puzzle },
+  { path: '/plugin-store', label: 'Plugins', icon: ShoppingCart },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

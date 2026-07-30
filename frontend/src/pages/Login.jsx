@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Gamepad2, Loader2 } from 'lucide-react';
+import { Gamepad2 } from 'lucide-react';
+import { Card, Input, Button, Alert } from '../components/ui';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -15,7 +16,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       await login(username, password);
       navigate('/fleet', { replace: true });
@@ -29,7 +29,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-mdb-bg">
       <div className="w-full max-w-[400px]">
-        <div className="bg-mdb-surface rounded-xl border border-mdb-border p-8 shadow-xl">
+        <Card>
           <div className="flex items-center justify-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-mdb-primary/10 border border-mdb-primary/20 flex items-center justify-center">
               <Gamepad2 size={24} className="text-mdb-primary" />
@@ -40,49 +40,39 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400 text-sm">
-                {error}
-              </div>
+              <Alert variant="error" title={error} />
             )}
 
-            <div>
-              <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Enter username"
-                autoComplete="username"
-              />
-            </div>
+            <Input
+              label="Username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              placeholder="Enter username"
+              autoComplete="username"
+            />
 
-            <div>
-              <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter password"
-                autoComplete="current-password"
-              />
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter password"
+              autoComplete="current-password"
+            />
 
-            <button
+            <Button
               type="submit"
-              className="w-full h-11 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 mt-6"
+              loading={loading}
               disabled={loading}
+              className="w-full mt-6"
             >
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Logging in...
-                </>
-              ) : 'Login'}
-            </button>
+              {loading ? 'Logging in...' : 'Login'}
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   );

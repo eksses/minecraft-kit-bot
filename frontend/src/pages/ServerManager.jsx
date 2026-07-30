@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
-import { Plus, X, Server, Globe, Trash2 } from 'lucide-react';
+import { Plus, Globe, Trash2 } from 'lucide-react';
+import {
+  Card, Button, Input, Select, Drawer, EmptyState, LoadingState, StatusBadge
+} from '../components/ui';
+
+const AUTH_OPTIONS = [
+  { value: 'offline', label: 'Offline' },
+  { value: 'microsoft', label: 'Microsoft' },
+];
+
+const VERSION_OPTIONS = [
+  { value: '1.17', label: '1.17' },
+  { value: '1.18', label: '1.18' },
+  { value: '1.19', label: '1.19' },
+  { value: '1.20', label: '1.20' },
+  { value: '1.21', label: '1.21' },
+];
 
 export default function ServerManager() {
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ name: '', host: '', port: 25565, version: '1.17', authType: 'offline' });
+  const [submitting, setSubmitting] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => { loadServers(); }, []);
@@ -20,14 +37,17 @@ export default function ServerManager() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       await api.fleet.createServer(form);
-      setShowAdd(false);
+      setDrawerOpen(false);
       setForm({ name: '', host: '', port: 25565, version: '1.17', authType: 'offline' });
       loadServers();
       addToast({ type: 'success', title: 'Server created' });
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to create server' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -42,9 +62,7 @@ export default function ServerManager() {
     }
   };
 
-  if (loading) {
-    return <div className="p-12 text-center text-mdb-text-muted">Loading...</div>;
-  }
+  if (loading) return <LoadingState text="Loading servers..." />;
 
   return (
     <div>
@@ -53,73 +71,70 @@ export default function ServerManager() {
           <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Servers</h1>
           <p className="text-sm text-mdb-text-muted mt-0.5">Minecraft server configurations</p>
         </div>
-        <button
-          className="h-9 px-4 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium inline-flex items-center gap-2 transition-colors"
-          onClick={() => setShowAdd(true)}
-        >
-          <Plus size={16} /> Add Server
-        </button>
+        <Button icon={<Plus size={16} />} onClick={() => setDrawerOpen(true)}>
+          Add Server
+        </Button>
       </div>
 
-      {showAdd && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-stretch justify-end animate-fade-in" onClick={() => setShowAdd(false)}>
-          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-border flex flex-col overflow-y-auto animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-mdb-border">
-              <h2 className="text-lg font-semibold">Add Server</h2>
-              <button className="h-8 w-8 rounded-lg hover:bg-mdb-surface-high flex items-center justify-center text-mdb-text-muted hover:text-mdb-text transition-colors" onClick={() => setShowAdd(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex-1 p-6 overflow-y-auto">
-              <form onSubmit={handleAdd} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Server Name</label>
-                  <input type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} required placeholder="My Server" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Host / IP</label>
-                  <input type="text" value={form.host} onChange={(e) => setForm({...form, host: e.target.value})} required placeholder="mc.example.com" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Port</label>
-                    <input type="number" value={form.port} onChange={(e) => setForm({...form, port: parseInt(e.target.value)})} required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Version</label>
-                    <input type="text" value={form.version} onChange={(e) => setForm({...form, version: e.target.value})} required />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-mdb-text-secondary mb-1.5">Auth Type</label>
-                  <select value={form.authType} onChange={(e) => setForm({...form, authType: e.target.value})}>
-                    <option value="offline">Offline</option>
-                    <option value="microsoft">Microsoft</option>
-                  </select>
-                </div>
-                <div className="flex gap-3 pt-4 border-t border-mdb-border">
-                  <button type="button" className="flex-1 h-10 rounded-lg border border-mdb-border text-sm font-medium text-mdb-text-secondary hover:bg-mdb-surface-high transition-colors" onClick={() => setShowAdd(false)}>Cancel</button>
-                  <button type="submit" className="flex-1 h-10 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium transition-colors">Add Server</button>
-                </div>
-              </form>
-            </div>
+      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add Server">
+        <form onSubmit={handleAdd} className="space-y-4">
+          <Input
+            label="Server Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            placeholder="My Server"
+          />
+          <Input
+            label="Host / IP"
+            value={form.host}
+            onChange={(e) => setForm({ ...form, host: e.target.value })}
+            required
+            placeholder="mc.example.com"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Port"
+              type="number"
+              value={form.port}
+              onChange={(e) => setForm({ ...form, port: parseInt(e.target.value) })}
+              required
+            />
+            <Select
+              label="Version"
+              options={VERSION_OPTIONS}
+              value={form.version}
+              onChange={(e) => setForm({ ...form, version: e.target.value })}
+            />
           </div>
-        </div>
-      )}
+          <Select
+            label="Auth Type"
+            options={AUTH_OPTIONS}
+            value={form.authType}
+            onChange={(e) => setForm({ ...form, authType: e.target.value })}
+          />
+          <div className="flex gap-3 pt-4 border-t border-mdb-border">
+            <Button variant="secondary" type="button" className="flex-1" onClick={() => setDrawerOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={submitting} className="flex-1">
+              Add Server
+            </Button>
+          </div>
+        </form>
+      </Drawer>
 
       {servers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-mdb-text-muted">
-          <Server size={48} className="mb-4 opacity-30" />
-          <div className="text-lg font-medium mb-1 text-mdb-text">No servers</div>
-          <div className="text-sm mb-6">Add a Minecraft server to get started</div>
-          <button className="h-10 px-5 rounded-lg bg-mdb-primary hover:bg-mdb-primary-hover text-white text-sm font-medium inline-flex items-center gap-2 transition-colors" onClick={() => setShowAdd(true)}>
-            <Plus size={16} /> Add Server
-          </button>
-        </div>
+        <EmptyState
+          icon={Globe}
+          title="No servers"
+          description="Add a Minecraft server to get started"
+          action={<Button icon={<Plus size={16} />} onClick={() => setDrawerOpen(true)}>Add Server</Button>}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {servers.map((server) => (
-            <div key={server.id} className="bg-mdb-surface rounded-xl border border-mdb-border p-5">
+            <Card key={server.id}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-mdb-surface-high flex items-center justify-center text-mdb-text-secondary">
@@ -130,23 +145,23 @@ export default function ServerManager() {
                     <div className="text-xs text-mdb-text-muted font-mono">{server.host}:{server.port}</div>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-emerald-500/10 text-emerald-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Online
-                </span>
+                {server.status && <StatusBadge status={server.status} />}
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-mdb-border">
                 <div className="text-xs text-mdb-text-muted">
                   v{server.version} · {server.authType}
                 </div>
-                <button
-                  className="h-7 px-2.5 rounded-lg border border-mdb-border text-xs font-medium text-mdb-text-muted hover:text-red-400 hover:border-red-400/30 transition-colors inline-flex items-center gap-1"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Trash2 size={12} />}
+                  className="text-mdb-text-muted hover:text-mdb-error hover:border-mdb-error/30"
                   onClick={() => handleDelete(server.id)}
                 >
-                  <Trash2 size={12} /> Delete
-                </button>
+                  Delete
+                </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
