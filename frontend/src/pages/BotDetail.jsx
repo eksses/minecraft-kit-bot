@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { StatusBadge, HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { useToast } from '../components/ToastContainer';
-import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, AlertTriangle, Box } from 'lucide-react';
+import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, AlertTriangle, Box, Truck } from 'lucide-react';
+import DeliverModal from '../components/DeliverModal';
 
 const BOT_NAV = [
   { id: 'console', label: 'Console', icon: Terminal },
-  { id: 'chests', label: 'Chests', icon: Box },
+  { id: 'chests', label: 'Delivery & Chests', icon: Truck },
   { id: 'inventory', label: 'Inventory', icon: Package },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'logs', label: 'Logs', icon: AlertTriangle },
@@ -33,6 +34,7 @@ export default function BotDetail() {
   const [orderCount, setOrderCount] = useState(1);
   const [orderPlayer, setOrderPlayer] = useState('');
   const [ordering, setOrdering] = useState(false);
+  const [deliverChest, setDeliverChest] = useState(null);
   const chatEndRef = useRef(null);
   const { addToast } = useToast();
 
@@ -285,6 +287,9 @@ export default function BotDetail() {
                       <div className="text-sm">{chest.itemName}</div>
                       {chest.itemCount !== undefined && <div className="text-muted text-xs">{chest.itemCount} items</div>}
                     </div>
+                    <button className="btn btn-primary btn-sm flex items-center gap-xs" onClick={() => setDeliverChest(chest)}>
+                      <Send size={14} /> Deliver
+                    </button>
                     <button className="btn btn-ghost btn-sm hover-glow" onClick={() => handleRescan(chest.x, chest.y, chest.z)}><RefreshCw size={14} /></button>
                   </div>
                 </div>
@@ -530,6 +535,16 @@ export default function BotDetail() {
       <div className="bot-panel-content">
         {renderContent()}
       </div>
+
+      {deliverChest && (
+        <DeliverModal
+          isOpen={!!deliverChest}
+          onClose={() => setDeliverChest(null)}
+          botId={botId}
+          chestName={deliverChest.name}
+          onDeliverSuccess={loadBotData}
+        />
+      )}
 
       {/* Mobile Bottom Tab Bar */}
       <div className="bot-panel-tabbar">
