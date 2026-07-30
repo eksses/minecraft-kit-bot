@@ -11,7 +11,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} onLogout={logout} />
-      <main className="flex-1 ml-[260px] p-8 overflow-y-auto max-md:ml-0 max-md:p-4 max-md:pb-[calc(var(--bottom-nav-height)+24px)]">
+      <main className="flex-1 lg:ml-[260px] ml-0 p-4 sm:p-6 lg:p-8 pb-[calc(var(--bottom-nav-height)+24px)] lg:pb-8 overflow-y-auto">
         <Outlet />
       </main>
       <BottomNav currentPath={location.pathname} onLogout={logout} />

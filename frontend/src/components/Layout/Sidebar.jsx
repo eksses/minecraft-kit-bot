@@ -28,7 +28,7 @@ const navItems = [
 export default function Sidebar({ currentPath, user, onLogout }) {
   return (
     <nav
-      className="fixed left-0 top-0 bottom-0 w-[260px] bg-mdb-surface border-r border-mdb-border flex flex-col z-40 max-lg:hidden max-[1025px]:!w-[64px]"
+      className="fixed left-0 top-0 bottom-0 hidden lg:flex flex-col w-[260px] bg-mdb-surface border-r border-mdb-border z-40"
       role="navigation"
       aria-label="Main navigation"
     >

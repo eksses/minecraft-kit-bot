@@ -15,7 +15,7 @@ export default function BottomNav({ currentPath, onLogout }) {
   return (
     <>
       <nav
-        className="hidden max-md:flex fixed bottom-0 left-0 right-0 h-[56px] bg-mdb-surface/85 backdrop-blur-md border-t border-mdb-border/80 z-50 items-center justify-around pb-[env(safe-area-inset-bottom)] shadow-lg"
+        className="flex lg:hidden fixed bottom-0 left-0 right-0 h-[56px] bg-mdb-surface/85 backdrop-blur-md border-t border-mdb-border/80 z-50 items-center justify-around pb-[env(safe-area-inset-bottom)] shadow-lg"
         role="navigation"
         aria-label="Main navigation"
       >
