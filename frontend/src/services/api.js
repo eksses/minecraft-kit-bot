@@ -78,6 +78,14 @@ export const configAPI = {
 };
 
 // ============================================================
+// Settings API (General, Bot, Delivery settings)
+// ============================================================
+export const settingsAPI = {
+  get: () => request('/fleet/settings'),
+  update: (data) => request('/fleet/settings', { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+// ============================================================
 // Fleet Management API
 // ============================================================
 export const fleetAPI = {
@@ -96,7 +104,6 @@ export const fleetAPI = {
   createBot: (data) => request('/fleet/bots', { method: 'POST', body: JSON.stringify(data) }),
   startBot: (id) => request(`/fleet/bots/${id}/start`, { method: 'POST' }),
   stopBot: (id) => request(`/fleet/bots/${id}/stop`, { method: 'POST' }),
-  sendBotCommand: (id, command) => request(`/fleet/bots/${id}/command`, { method: 'POST', body: JSON.stringify({ command }) }),
   sendCommand: (id, command) => request(`/fleet/bots/${id}/command`, { method: 'POST', body: JSON.stringify({ command }) }),
   getBotInventory: (id) => request(`/fleet/bots/${id}/inventory`),
   getBotLogs: (id) => request(`/fleet/bots/${id}/logs`),
@@ -149,6 +156,7 @@ class RealtimeClient {
     this.ws = null;
     this.listeners = new Map(); // event -> Set<callback>
     this.subscribedBots = new Set();
+    this.subscribedSwarms = new Set();
     this.reconnectTimer = null;
     this.connected = false;
     this._userId = null;
@@ -176,9 +184,12 @@ class RealtimeClient {
       if (this._userId) {
         this.ws.send(JSON.stringify({ type: 'auth', userId: this._userId }));
       }
-      // Re-subscribe to previously subscribed bots
+      // Re-subscribe to previously subscribed bots and swarms
       for (const botId of this.subscribedBots) {
         this.ws.send(JSON.stringify({ type: 'subscribe_bot', botId }));
+      }
+      for (const swarmId of this.subscribedSwarms) {
+        this.ws.send(JSON.stringify({ type: 'subscribe_swarm', swarmId }));
       }
     };
 
@@ -239,9 +250,24 @@ class RealtimeClient {
     }
   }
 
+  subscribeSwarm(swarmId) {
+    this.subscribedSwarms.add(swarmId);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'subscribe_swarm', swarmId }));
+    }
+  }
+
+  unsubscribeSwarm(swarmId) {
+    this.subscribedSwarms.delete(swarmId);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'unsubscribe_swarm', swarmId }));
+    }
+  }
+
   disconnect() {
     clearTimeout(this.reconnectTimer);
     this.subscribedBots.clear();
+    this.subscribedSwarms.clear();
     this.listeners.clear();
     if (this.ws) {
       this.ws.close();
@@ -276,6 +302,7 @@ export const api = {
   chests: chestAPI,
   config: configAPI,
   fleet: fleetAPI,
+  settings: settingsAPI,
   pluginStore: pluginStoreAPI,
   realtime: realtimeClient,
 };

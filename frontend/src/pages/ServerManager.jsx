@@ -42,56 +42,56 @@ export default function ServerManager() {
   };
 
   if (loading) {
-    return <div className="loading-state">Loading...</div>;
+    return <div className="p-12 text-center text-mdb-text-muted">Loading...</div>;
   }
 
   return (
     <div>
-      <div className="page-header">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Servers</h1>
-          <p className="page-subtitle">Minecraft server configurations</p>
+          <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Servers</h1>
+          <p className="text-sm text-mdb-text-muted mt-0.5">Minecraft server configurations</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>Add Server</button>
+        <button className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" onClick={() => setShowAdd(true)}>Add Server</button>
       </div>
 
       {showAdd && (
-        <div className="drawer-overlay" onClick={() => setShowAdd(false)}>
-          <div className="drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-header">
-              <span className="drawer-title">Add Server</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAdd(false)}>X</button>
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={() => setShowAdd(false)}>
+          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-mdb-surface-high">
+              <span className="text-lg font-bold">Add Server</span>
+              <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => setShowAdd(false)}>X</button>
             </div>
-            <div className="drawer-body">
+            <div className="flex-1 p-6 overflow-y-auto">
               <form onSubmit={handleAdd}>
-                <div className="form-group">
-                  <label className="form-label">Server Name</label>
+                <div className="mb-4">
+                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Server Name</label>
                   <input type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} required placeholder="My Server" />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Host / IP</label>
+                <div className="mb-4">
+                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Host / IP</label>
                   <input type="text" value={form.host} onChange={(e) => setForm({...form, host: e.target.value})} required placeholder="mc.example.com" />
                 </div>
-                <div className="flex gap-sm">
-                  <div className="form-group flex-1">
-                    <label className="form-label">Port</label>
+                <div className="flex gap-2">
+                  <div className="mb-4 flex-1">
+                    <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Port</label>
                     <input type="number" value={form.port} onChange={(e) => setForm({...form, port: parseInt(e.target.value)})} required />
                   </div>
-                  <div className="form-group flex-1">
-                    <label className="form-label">Version</label>
+                  <div className="mb-4 flex-1">
+                    <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Version</label>
                     <input type="text" value={form.version} onChange={(e) => setForm({...form, version: e.target.value})} required />
                   </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Auth Type</label>
+                <div className="mb-4">
+                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Auth Type</label>
                   <select value={form.authType} onChange={(e) => setForm({...form, authType: e.target.value})}>
                     <option value="offline">Offline</option>
                     <option value="microsoft">Microsoft</option>
                   </select>
                 </div>
-                <div className="flex gap-sm mt-md">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">Add Server</button>
+                <div className="flex gap-2 mt-4">
+                  <button type="button" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={() => setShowAdd(false)}>Cancel</button>
+                  <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary">Add Server</button>
                 </div>
               </form>
             </div>
@@ -100,29 +100,29 @@ export default function ServerManager() {
       )}
 
       {servers.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">No servers</div>
-          <div className="empty-state-text">Add a Minecraft server to get started</div>
-          <button className="btn btn-primary mt-md" onClick={() => setShowAdd(true)}>Add Server</button>
+        <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
+          <div className="text-lg font-semibold mb-2">No servers</div>
+          <div className="text-sm text-mdb-text-muted mb-4">Add a Minecraft server to get started</div>
+          <button className="inline-flex items-center gap-2 px-5 h-12 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-4" onClick={() => setShowAdd(true)}>Add Server</button>
         </div>
       ) : (
-        <div className="grid-2col">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {servers.map((server) => (
-            <div key={server.id} className="bot-card">
-              <div className="bot-card-header">
-                <div className="flex items-center gap-sm">
-                  <span className="status-badge status-online">
-                    <span className="status-dot"></span>
+            <div key={server.id} className="bg-mdb-surface border border-mdb-surface-high p-6 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="status-badge inline-flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-widest status-online">
+                    <span className="status-dot w-2 h-2 shrink-0"></span>
                     <span>Online</span>
                   </span>
-                  <span className="bot-card-name">{server.name}</span>
+                  <span className="font-semibold">{server.name}</span>
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(server.id)}>Delete</button>
+                <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10" onClick={() => handleDelete(server.id)}>Delete</button>
               </div>
-              <div className="bot-card-info">
-                <div className="bot-card-host">{server.host}:{server.port}</div>
+              <div className="flex flex-col gap-1 text-mdb-text-secondary text-sm mb-4">
+                <div className="font-mono text-sm">{server.host}:{server.port}</div>
                 <div>v{server.version}</div>
-                <div className="bot-card-meta">{server.authType}</div>
+                <div className="capitalize">{server.authType}</div>
               </div>
             </div>
           ))}

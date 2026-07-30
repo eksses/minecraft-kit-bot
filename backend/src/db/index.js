@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 const DB_PATH = process.env.DATABASE_PATH || join(__dirname, '../../../data/mcdb.db');
 
 // Ensure data directory exists
-import { mkdirSync } from 'fs';
+import { mkdirSync, existsSync, readFileSync } from 'fs';
 mkdirSync(join(__dirname, '../../../data'), { recursive: true });
 
 const sqlite = new Database(DB_PATH);
@@ -208,6 +208,12 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_swarm_memory_swarm_id ON swarm_memory(swarm_id);
     CREATE INDEX IF NOT EXISTS idx_bot_logs_bot_id ON bot_logs(bot_id);
     CREATE INDEX IF NOT EXISTS idx_chest_locations_user_id ON chest_locations(user_id);
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at INTEGER NOT NULL
+    );
   `);
   
   // Migration: Add new columns to bots table if they don't exist
@@ -240,5 +246,38 @@ export function initDatabase() {
     `).run('legacy-admin', 'admin', 'admin@localhost', 'legacy-hash', 'admin', now, now);
   }
   
+  // Seed app_settings from .env defaults (only if table is empty)
+  const settingsCount = sqlite.prepare('SELECT COUNT(*) as cnt FROM app_settings').get();
+  if (settingsCount.cnt === 0) {
+    const envPath = join(__dirname, '../../../.env');
+    const envConfig = {};
+    if (existsSync(envPath)) {
+      const content = readFileSync(envPath, 'utf-8');
+      for (const line of content.split('\n')) {
+        const [key, ...valueParts] = line.split('=');
+        if (key && valueParts.length > 0) {
+          envConfig[key.trim()] = valueParts.join('=').trim();
+        }
+      }
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const defaults = {
+      UI_USER: envConfig.UI_USER || 'admin',
+      UI_PASSWORD: envConfig.UI_PASSWORD || 'password',
+      IP: envConfig.IP || '6b6t.org',
+      PORT: envConfig.PORT || '25565',
+      VERSION: envConfig.VERSION || '1.17',
+      SERVER_PORT: envConfig.SERVER_PORT || '8081',
+      WS_PORT: envConfig.WS_PORT || '3000',
+    };
+
+    const insert = sqlite.prepare('INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)');
+    for (const [key, value] of Object.entries(defaults)) {
+      insert.run(key, value, now);
+    }
+    console.log('Seeded app_settings with defaults from .env');
+  }
+
   console.log('Database initialized successfully');
 }

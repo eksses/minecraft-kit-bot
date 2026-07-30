@@ -11,6 +11,9 @@ const configService = new ConfigService();
 // Initialize database
 initDatabase();
 
+// Load settings from database (overrides .env values)
+await configService.loadFromDB();
+
 // Start swarm coordinator
 swarmCoordinator.start();
 

@@ -22,9 +22,9 @@ const CATEGORY_ICONS = {
 };
 
 const TAG_COLORS = {
-  demo: { bg: 'var(--status-online)', color: '#000' },
-  test: { bg: 'var(--status-warning)', color: '#000' },
-  default: { bg: 'var(--bg-surface-high)', color: 'var(--text-muted)' },
+  demo: { bg: 'var(--color-mdb-online)', color: '#000' },
+  test: { bg: 'var(--color-mdb-working)', color: '#000' },
+  default: { bg: 'var(--color-mdb-surface-high)', color: 'var(--color-mdb-text-muted)' },
 };
 
 export default function PluginStore() {
@@ -144,175 +144,112 @@ export default function PluginStore() {
   const getIcon = (category) => CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
 
   if (loading) {
-    return <div className="loading-state">Loading plugin store...</div>;
+    return <div className="p-12 text-center text-mdb-text-muted">Loading plugin store...</div>;
   }
 
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: '80px' }}>
+    <div className="min-h-screen pb-20">
       {/* Header Banner */}
-      <div style={{
-        padding: '16px 24px',
-        background: 'var(--bg-surface-low)',
-        borderBottom: '1px solid var(--border)',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div className="px-6 py-4 bg-mdb-surface-low border-b border-mdb-outline-variant">
+        <div className="flex justify-between items-end">
           <div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              color: 'var(--text-muted)',
-              marginBottom: '4px',
-            }}>SYSTEM STATUS</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '8px', height: '8px', background: 'var(--status-online)' }} />
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--status-online)' }}>
-                CORE ENGINE: ONLINE
-              </span>
+            <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted mb-1">SYSTEM STATUS</div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-mdb-online" />
+              <span className="font-mono text-[13px] text-mdb-online">CORE ENGINE: ONLINE</span>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              color: 'var(--text-muted)',
-              marginBottom: '4px',
-            }}>ACTIVE PLUGINS</div>
-            <div style={{ fontSize: '24px', fontWeight: '600' }}>{installed.length}</div>
+          <div className="text-right">
+            <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted mb-1">ACTIVE PLUGINS</div>
+            <div className="text-2xl font-semibold">{installed.length}</div>
           </div>
         </div>
       </div>
 
       {/* Tab Bar */}
-      <div className="tab-bar" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex gap-0 border-b border-mdb-outline-variant mb-6">
         <button
-          className={`tab-item ${activeTab === 'available' ? 'active' : ''}`}
+          className={`px-4 h-12 flex items-center text-sm font-medium transition-all border-b-2 ${activeTab === 'available' ? 'text-mdb-primary border-b-mdb-primary' : 'text-mdb-text-muted border-b-transparent hover:text-mdb-text'}`}
           onClick={() => setActiveTab('available')}
         >
-          <Package size={16} /> Available ({available.length})
+          <Package size={16} className="mr-2" /> Available ({available.length})
         </button>
         <button
-          className={`tab-item ${activeTab === 'installed' ? 'active' : ''}`}
+          className={`px-4 h-12 flex items-center text-sm font-medium transition-all border-b-2 ${activeTab === 'installed' ? 'text-mdb-primary border-b-mdb-primary' : 'text-mdb-text-muted border-b-transparent hover:text-mdb-text'}`}
           onClick={() => setActiveTab('installed')}
         >
-          <Download size={16} /> Installed ({installed.length})
+          <Download size={16} className="mr-2" /> Installed ({installed.length})
         </button>
         <button
-          className={`tab-item ${activeTab === 'repos' ? 'active' : ''}`}
+          className={`px-4 h-12 flex items-center text-sm font-medium transition-all border-b-2 ${activeTab === 'repos' ? 'text-mdb-primary border-b-mdb-primary' : 'text-mdb-text-muted border-b-transparent hover:text-mdb-text'}`}
           onClick={() => setActiveTab('repos')}
         >
-          <ShoppingCart size={16} /> Repos ({repos.length})
+          <ShoppingCart size={16} className="mr-2" /> Repos ({repos.length})
         </button>
       </div>
 
       {/* Available Plugins */}
       {activeTab === 'available' && (
-        <div style={{ padding: '24px' }}>
+        <div className="p-6">
           {/* Search Bar */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '0 16px',
-            height: '48px',
-            background: 'var(--bg-surface-high)',
-            border: '1px solid var(--border)',
-            marginBottom: '16px',
-          }}>
-            <Search size={16} style={{ color: 'var(--text-muted)' }} />
+          <div className="flex items-center gap-2 px-4 h-12 bg-mdb-surface-high border border-mdb-outline-variant mb-4">
+            <Search size={16} className="text-mdb-text-muted" />
             <input
               type="text"
               placeholder="Search plugins..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                flex: 1,
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                fontSize: '14px',
-                outline: 'none',
-              }}
+              className="flex-1 bg-transparent border-none text-mdb-text text-sm outline-none"
             />
           </div>
 
           {filteredAvailable.length === 0 ? (
-            <div className="empty-state">
+            <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
               <Package size={48} />
-              <div className="empty-state-title">No plugins found</div>
-              <div className="empty-state-text">Check your repository configuration</div>
+              <div className="text-lg font-semibold mt-4 mb-2">No plugins found</div>
+              <div className="text-sm">Check your repository configuration</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px">
               {filteredAvailable.map((plugin) => {
                 const Icon = getIcon(plugin.category);
-                const installed = isInstalled(plugin.id);
+                const installedPlugin = isInstalled(plugin.id);
                 return (
                   <div
                     key={plugin.id}
-                    style={{
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border)',
-                      padding: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px',
-                      transition: 'border-color 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--status-online)'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                    className="bg-mdb-surface border border-mdb-outline-variant p-4 flex flex-col gap-4 transition-[border-color] hover:border-mdb-online"
                   >
                     {/* Icon + Status */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{
-                        padding: '12px',
-                        background: 'var(--bg-surface-high)',
-                        border: '1px solid var(--border)',
-                      }}>
-                        <Icon size={32} style={{ color: 'var(--status-online)' }} />
+                    <div className="flex justify-between items-start">
+                      <div className="p-3 bg-mdb-surface-high border border-mdb-outline-variant">
+                        <Icon size={32} className="text-mdb-online" />
                       </div>
-                      {installed ? (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '4px 8px',
-                          background: 'var(--bg-surface-low)',
-                          border: '1px solid var(--border)',
-                        }}>
-                          <div style={{ width: '6px', height: '6px', background: 'var(--status-online)' }} />
-                          <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--status-online)' }}>
-                            INSTALLED
-                          </span>
+                      {installedPlugin && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-mdb-surface-low border border-mdb-outline-variant">
+                          <div className="w-1.5 h-1.5 bg-mdb-online" />
+                          <span className="text-[10px] font-bold tracking-wider text-mdb-online">INSTALLED</span>
                         </div>
-                      ) : null}
+                      )}
                     </div>
 
                     {/* Name + Meta */}
                     <div>
-                      <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>{plugin.name}</h3>
-                      <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                      <h3 className="text-lg font-semibold mb-1">{plugin.name}</h3>
+                      <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted mb-2">
                         v{plugin.version} • by {plugin.author || 'Unknown'}
                       </div>
-                      <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '20px', marginBottom: '8px' }}>
+                      <p className="text-sm text-mdb-text-muted leading-5 mb-2">
                         {plugin.description}
                       </p>
                       {plugin.tags && (
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <div className="flex gap-1.5 flex-wrap">
                           {plugin.tags.map((tag) => {
                             const ts = getTagStyle(tag);
                             return (
                               <span
                                 key={tag}
-                                style={{
-                                  padding: '2px 8px',
-                                  background: ts.bg,
-                                  color: ts.color,
-                                  fontSize: '10px',
-                                  fontWeight: '700',
-                                  letterSpacing: '0.05em',
-                                }}
+                                className="px-2 py-0.5 text-[10px] font-bold tracking-wider"
+                                style={{ background: ts.bg, color: ts.color }}
                               >
                                 {tag.toUpperCase()}
                               </span>
@@ -323,19 +260,17 @@ export default function PluginStore() {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', gap: '4px' }}>
-                      {installed ? (
+                    <div className="mt-auto pt-4 border-t border-mdb-outline-variant flex gap-1">
+                      {installedPlugin ? (
                         <button
-                          className="btn btn-sm"
-                          style={{ flex: 1, height: '48px', opacity: 0.5, cursor: 'default' }}
+                          className="flex-1 h-12 text-xs font-bold opacity-50 cursor-default bg-mdb-surface-high border border-mdb-outline-variant"
                           disabled
                         >
-                          <CheckCircle size={16} /> Installed
+                          <CheckCircle size={16} className="mr-2" /> Installed
                         </button>
                       ) : (
                         <button
-                          className="btn btn-primary btn-sm"
-                          style={{ flex: 1, height: '48px' }}
+                          className="flex-1 h-12 text-xs font-bold bg-mdb-primary text-mdb-on-primary flex items-center justify-center gap-2"
                           onClick={() => handleInstall(plugin.id)}
                           disabled={installing === plugin.id}
                         >
@@ -347,8 +282,7 @@ export default function PluginStore() {
                           href={plugin.homepage}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-secondary btn-sm"
-                          style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          className="inline-flex items-center justify-center w-12 h-12 border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high"
                         >
                           <ExternalLink size={16} />
                         </a>
@@ -364,72 +298,47 @@ export default function PluginStore() {
 
       {/* Installed Plugins */}
       {activeTab === 'installed' && (
-        <div style={{ padding: '24px' }}>
+        <div className="p-6">
           {installed.length === 0 ? (
-            <div className="empty-state">
+            <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
               <Package size={48} />
-              <div className="empty-state-title">No plugins installed</div>
-              <div className="empty-state-text">Browse the Available tab to install plugins</div>
+              <div className="text-lg font-semibold mt-4 mb-2">No plugins installed</div>
+              <div className="text-sm">Browse the Available tab to install plugins</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px">
               {installed.map((plugin) => {
                 const Icon = getIcon(plugin.category);
                 return (
                   <div
                     key={plugin.id}
-                    style={{
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border)',
-                      padding: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px',
-                    }}
+                    className="bg-mdb-surface border border-mdb-outline-variant p-4 flex flex-col gap-4"
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{
-                        padding: '12px',
-                        background: 'var(--bg-surface-high)',
-                        border: '1px solid var(--border)',
-                      }}>
-                        <Icon size={32} style={{ color: 'var(--status-online)' }} />
+                    <div className="flex justify-between items-start">
+                      <div className="p-3 bg-mdb-surface-high border border-mdb-outline-variant">
+                        <Icon size={32} className="text-mdb-online" />
                       </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '4px 8px',
-                        background: 'var(--bg-surface-low)',
-                        border: '1px solid var(--border)',
-                      }}>
-                        <div style={{ width: '6px', height: '6px', background: plugin.enabled ? 'var(--status-online)' : 'var(--text-muted)' }} />
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          letterSpacing: '0.05em',
-                          color: plugin.enabled ? 'var(--status-online)' : 'var(--text-muted)',
-                        }}>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-mdb-surface-low border border-mdb-outline-variant">
+                        <div className={`w-1.5 h-1.5 ${plugin.enabled ? 'bg-mdb-online' : 'bg-mdb-text-muted'}`} />
+                        <span className={`text-[10px] font-bold tracking-wider ${plugin.enabled ? 'text-mdb-online' : 'text-mdb-text-muted'}`}>
                           {plugin.enabled ? 'ENABLED' : 'DISABLED'}
                         </span>
                       </div>
                     </div>
                     <div>
-                      <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>{plugin.name}</h3>
-                      <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                      <h3 className="text-lg font-semibold mb-1">{plugin.name}</h3>
+                      <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted">
                         v{plugin.version} • by {plugin.author || 'Unknown'}
                       </div>
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', gap: '4px' }}>
+                    <div className="mt-auto pt-4 border-t border-mdb-outline-variant flex gap-1">
                       <button
-                        className="btn btn-secondary btn-sm"
-                        style={{ flex: 1, height: '48px' }}
+                        className="flex-1 h-12 text-xs font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high flex items-center justify-center gap-2"
                       >
                         <Settings size={16} /> Settings
                       </button>
                       <button
-                        className="btn btn-danger btn-sm"
-                        style={{ flex: 1, height: '48px' }}
+                        className="flex-1 h-12 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10 flex items-center justify-center gap-2"
                         onClick={() => handleUninstall(plugin.id)}
                         disabled={uninstalling === plugin.id}
                       >
@@ -446,48 +355,39 @@ export default function PluginStore() {
 
       {/* Repositories */}
       {activeTab === 'repos' && (
-        <div style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600' }}>Repositories</h2>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Repositories</h2>
             <button
-              className="btn btn-primary btn-sm"
+              className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary"
               onClick={() => { setEditingRepo(null); setRepoForm({ name: '', url: '' }); setShowAddRepo(true); }}
-              style={{ height: '48px' }}
             >
               <Plus size={16} /> Add Repository
             </button>
           </div>
-          <div className="list">
+          <div>
             {repos.map((repo) => (
-              <div className="list-item" key={repo.id}>
-                <div className="list-item-info">
-                  <div className="list-item-name">
+              <div key={repo.id} className="flex items-center justify-between px-4 h-12 border-b border-mdb-outline-variant">
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold">
                     {repo.name}
                     {!isCustomRepo(repo.id) && (
-                      <span style={{
-                        marginLeft: '8px',
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        letterSpacing: '0.05em',
-                        padding: '2px 8px',
-                        background: 'var(--status-online)',
-                        color: '#000',
-                      }}>
+                      <span className="ml-2 text-[10px] font-bold tracking-wider px-2 py-0.5 bg-mdb-online text-black">
                         OFFICIAL
                       </span>
                     )}
                   </div>
-                  <div className="list-item-meta" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
+                  <div className="font-mono text-[13px] text-mdb-text-muted">
                     {repo.url}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="flex gap-1">
                   {isCustomRepo(repo.id) && (
                     <>
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleEditRepo(repo)}>
+                      <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={() => handleEditRepo(repo)}>
                         <Settings size={14} /> Edit
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleRemoveRepo(repo.id)}>
+                      <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10" onClick={() => handleRemoveRepo(repo.id)}>
                         <Trash2 size={14} /> Delete
                       </button>
                     </>
@@ -501,16 +401,16 @@ export default function PluginStore() {
 
       {/* Add/Edit Repository Drawer */}
       {showAddRepo && (
-        <div className="drawer-overlay" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
-          <div className="drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-header">
-              <span className="drawer-title">{editingRepo ? 'Edit Repository' : 'Add Repository'}</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>✕</button>
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
+          <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-mdb-surface-high">
+              <span className="text-lg font-bold">{editingRepo ? 'Edit Repository' : 'Add Repository'}</span>
+              <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>X</button>
             </div>
-            <div className="drawer-body">
+            <div className="flex-1 p-6 overflow-y-auto">
               <form onSubmit={handleAddRepo}>
-                <div className="form-group">
-                  <label className="form-label">NAME</label>
+                <div className="mb-4">
+                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">NAME</label>
                   <input
                     type="text"
                     value={repoForm.name}
@@ -519,8 +419,8 @@ export default function PluginStore() {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">URL</label>
+                <div className="mb-4">
+                  <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">URL</label>
                   <input
                     type="url"
                     value={repoForm.url}
@@ -529,11 +429,11 @@ export default function PluginStore() {
                     required
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
+                <div className="flex gap-2 mt-4">
+                  <button type="button" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high" onClick={() => { setShowAddRepo(false); setEditingRepo(null); }}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
+                  <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary">
                     {editingRepo ? 'Update Repository' : 'Add Repository'}
                   </button>
                 </div>

@@ -150,6 +150,15 @@ export const chestLocations = sqliteTable('chest_locations', {
 });
 
 // ============================================================
+// App Settings Table (key-value store for configurable settings)
+// ============================================================
+export const appSettings = sqliteTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ============================================================
 // Relations
 // ============================================================
 export const usersRelations = relations(users, ({ many }) => ({

@@ -37,7 +37,7 @@ export default function BotInspector({ botId, onClose }) {
     e.preventDefault();
     if (!command.trim()) return;
     try {
-      await api.fleet.sendBotCommand(botId, command);
+      await api.fleet.sendCommand(botId, command);
       setCommand('');
       loadBotData();
       addToast({ type: 'success', title: 'Command sent' });
@@ -58,9 +58,9 @@ export default function BotInspector({ botId, onClose }) {
 
   if (loading) {
     return (
-      <div className="drawer-overlay" onClick={onClose}>
-        <div className="drawer" onClick={(e) => e.stopPropagation()}>
-          <div className="drawer-loading">Loading bot data...</div>
+      <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={onClose}>
+        <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="p-12 text-center text-mdb-text-muted">Loading bot data...</div>
         </div>
       </div>
     );
@@ -71,32 +71,32 @@ export default function BotInspector({ botId, onClose }) {
   const status = bot.liveStatus?.status || bot.status;
 
   return (
-    <div className="drawer-overlay" onClick={onClose}>
-      <div className="drawer" onClick={(e) => e.stopPropagation()}>
-        <div className="drawer-header">
-          <span className="drawer-title">{bot.name}</span>
-          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-stretch justify-end" onClick={onClose}>
+      <div className="w-full max-w-[480px] bg-mdb-surface border-l border-mdb-surface-high flex flex-col overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-6 border-b border-mdb-surface-high">
+          <span className="text-lg font-bold">{bot.name}</span>
+          <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={onClose} aria-label="Close">
             <X size={20} />
           </button>
         </div>
 
-        <div className="drawer-body">
-          <div className="flex justify-between items-center mb-md">
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
             <StatusBadge status={status} />
-            <div className="flex gap-sm">
+            <div className="flex gap-2">
               {status === 'OFFLINE' ? (
-                <button className="btn btn-success btn-sm" onClick={handleStart}>Start</button>
+                <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-online text-mdb-surface-lowest" onClick={handleStart}>Start</button>
               ) : (
-                <button className="btn btn-warning btn-sm" onClick={handleStop}>Stop</button>
+                <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-working text-mdb-surface-lowest" onClick={handleStop}>Stop</button>
               )}
             </div>
           </div>
 
-          <div className="bot-detail-info">
-            <div><span className="bot-detail-label">Username:</span> {bot.username}</div>
-            <div><span className="bot-detail-label">Server:</span> {bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
-            <div className="bot-detail-position">
-              <span className="bot-detail-label">Position:</span>{' '}
+          <div className="text-sm mb-4">
+            <div className="mb-2"><span className="text-mdb-text-muted">Username:</span> {bot.username}</div>
+            <div className="mb-2"><span className="text-mdb-text-muted">Server:</span> {bot.liveStatus?.serverConfig?.name || 'Not assigned'}</div>
+            <div className="font-mono text-sm">
+              <span className="text-mdb-text-muted">Position:</span>{' '}
               {bot.liveStatus?.position
                 ? `${Math.round(bot.liveStatus.position.x)}, ${Math.round(bot.liveStatus.position.y)}, ${Math.round(bot.liveStatus.position.z)}`
                 : 'N/A'}
@@ -106,17 +106,17 @@ export default function BotInspector({ botId, onClose }) {
           {bot.liveStatus?.health != null && <HealthBar value={bot.liveStatus.health} />}
           {bot.liveStatus?.food != null && <FoodBar value={bot.liveStatus.food} />}
 
-          <div className="mt-md">
-            <h3 className="inv-heading">Inventory</h3>
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold mb-2">Inventory</h3>
             <div className="inventory-grid">
               {Array.from({ length: 36 }, (_, i) => {
                 const item = inventory.find(inv => inv.slot === i);
                 return (
-                  <div key={i} className={`inventory-slot ${item ? '' : 'empty'}`}>
+                  <div key={i} className={`inventory-slot aspect-square bg-mdb-bg flex items-center justify-center flex-col p-0.5 min-h-[40px] ${item ? '' : 'empty'}`}>
                     {item && (
                       <>
-                        <span className="inventory-slot-name">{item.name}</span>
-                        {item.count > 1 && <span className="inventory-slot-count">{item.count}</span>}
+                        <span className="font-mono text-[9px] text-mdb-text-muted text-center overflow-hidden text-ellipsis whitespace-nowrap w-full">{item.name}</span>
+                        {item.count > 1 && <span className="font-mono text-[11px] font-bold text-mdb-text">{item.count}</span>}
                       </>
                     )}
                   </div>
@@ -125,31 +125,31 @@ export default function BotInspector({ botId, onClose }) {
             </div>
           </div>
 
-          <div className="mt-md">
-            <h3 className="inv-heading">Command</h3>
-            <form onSubmit={handleSendCommand} className="flex gap-sm">
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold mb-2">Command</h3>
+            <form onSubmit={handleSendCommand} className="flex gap-2">
               <input
                 type="text"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 placeholder="/say hello"
-                className="command-input flex-1"
+                className="flex-1 font-mono text-[13px]"
               />
-              <button type="submit" className="btn btn-primary" aria-label="Send command">
+              <button type="submit" className="inline-flex items-center gap-2 h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" aria-label="Send command">
                 <Send size={16} />
               </button>
             </form>
           </div>
 
-          <div className="mt-md">
-            <h3 className="inv-heading">Logs</h3>
-            <div className="log-container">
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold mb-2">Logs</h3>
+            <div className="max-h-[200px] overflow-y-auto bg-mdb-bg border border-mdb-surface-high p-2">
               {logs.length === 0 ? (
-                <div className="text-muted text-sm">No logs available</div>
+                <div className="text-mdb-text-muted text-sm">No logs available</div>
               ) : (
                 logs.slice(0, 20).map((log, i) => (
-                  <div key={i} className="log-line">
-                    <span className="log-line-time">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                  <div key={i} className="log-line font-mono text-xs leading-relaxed text-mdb-text-secondary py-0.5 border-b border-mdb-outline-variant hover:bg-mdb-surface-high">
+                    <span className="text-mdb-text-muted mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     {log.message}
                   </div>
                 ))

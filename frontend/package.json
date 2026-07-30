@@ -18,7 +18,9 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^4.3.0",
+    "tailwindcss": "^4.3.3",
     "vite": "^5.4.0",
     "vite-plugin-pwa": "^0.20.0",
     "workbox-window": "^7.1.0"

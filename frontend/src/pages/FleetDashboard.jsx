@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../components/ToastContainer';
+import { useRealtime } from '../hooks/useRealtime';
 import { StatusBadge, HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { RefreshCw, Plus, Play, Square, Scan, Layers, Server, Bot, Activity, Clock, AlertTriangle } from 'lucide-react';
 
@@ -14,13 +15,7 @@ export default function FleetDashboard() {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadDashboard();
-    const interval = setInterval(loadDashboard, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       const [dashData, botsData, swarmsData, serversData] = await Promise.all([
         api.fleet.getDashboard(),
@@ -37,7 +32,22 @@ export default function FleetDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  const botIds = bots.map(b => b.id);
+  const swarmIds = swarms.map(s => s.id);
+  const rt = useRealtime(botIds, swarmIds);
+
+  useEffect(() => {
+    if (!rt?.on) return;
+    const unsubs = [
+      rt.on('bot_status', () => loadDashboard()),
+      rt.on('swarm_update', () => loadDashboard()),
+    ];
+    return () => unsubs.forEach(fn => fn());
+  }, [rt, loadDashboard]);
 
   const handleStartAll = async () => {
     const offlineBots = bots.filter(b => (b.liveStatus?.status || b.status) === 'OFFLINE');
@@ -72,7 +82,7 @@ export default function FleetDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center loading-state">
+      <div className="flex items-center justify-center p-12 text-mdb-text-muted">
         Loading fleet data...
       </div>
     );
@@ -80,84 +90,84 @@ export default function FleetDashboard() {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Fleet Command</h1>
-          <p className="page-subtitle mono-sm">{bots.length} bots &middot; {onlineBots.length} online</p>
+          <h1 className="text-2xl font-bold text-mdb-text tracking-tight">Fleet Command</h1>
+          <p className="text-sm text-mdb-text-muted mt-0.5 font-mono text-xs">{bots.length} bots &middot; {onlineBots.length} online</p>
         </div>
-        <div className="flex gap-sm">
-          <button className="btn btn-ghost btn-sm" onClick={loadDashboard} aria-label="Refresh">
+        <div className="flex gap-2">
+          <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high" onClick={loadDashboard} aria-label="Refresh">
             <RefreshCw size={16} />
           </button>
-          <Link to="/fleet/bots" className="btn btn-primary btn-sm">
+          <Link to="/fleet/bots" className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-primary text-mdb-on-primary no-underline">
             <Plus size={16} /> Add Bot
           </Link>
         </div>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-value">{onlineBots.length}<span className="text-muted">/{bots.length}</span></div>
-          <div className="stat-label"><Bot size={14} /> Bots Online</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+          <div className="text-[28px] font-bold leading-tight tracking-tight">{onlineBots.length}<span className="text-mdb-text-muted">/{bots.length}</span></div>
+          <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1"><Bot size={14} className="inline" /> Bots Online</div>
         </div>
-        <div className="stat-card stat-warning">
-          <div className="stat-value">{activeTasks}</div>
-          <div className="stat-label"><Activity size={14} /> Active Tasks</div>
+        <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+          <div className="text-[28px] font-bold leading-tight tracking-tight text-mdb-working">{activeTasks}</div>
+          <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1"><Activity size={14} className="inline" /> Active Tasks</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{swarms.length}</div>
-          <div className="stat-label"><Layers size={14} /> Swarms</div>
+        <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+          <div className="text-[28px] font-bold leading-tight tracking-tight">{swarms.length}</div>
+          <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1"><Layers size={14} className="inline" /> Swarms</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{servers.length}</div>
-          <div className="stat-label"><Server size={14} /> Servers</div>
+        <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+          <div className="text-[28px] font-bold leading-tight tracking-tracking">{servers.length}</div>
+          <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1"><Server size={14} className="inline" /> Servers</div>
         </div>
       </div>
 
-      <div className="flex gap-sm mb-lg">
-        <button className="btn btn-success btn-sm" onClick={handleStartAll} disabled={offlineBots.length === 0}>
+      <div className="flex gap-2 mb-6">
+        <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-online text-mdb-surface-lowest" onClick={handleStartAll} disabled={offlineBots.length === 0}>
           <Play size={14} /> Start All ({offlineBots.length})
         </button>
-        <button className="btn btn-warning btn-sm" onClick={handleStopAll} disabled={onlineBots.length === 0}>
+        <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold bg-mdb-working text-mdb-surface-lowest" onClick={handleStopAll} disabled={onlineBots.length === 0}>
           <Square size={14} /> Stop All ({onlineBots.length})
         </button>
       </div>
 
-      <div className="grid-2col">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <div className="section">
-            <div className="section-header">
+          <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
+            <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant flex items-center justify-between">
               <span>Bot Fleet</span>
-              <Link to="/fleet/bots" className="btn btn-ghost btn-sm">View All</Link>
+              <Link to="/fleet/bots" className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high no-underline">View All</Link>
             </div>
             {bots.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-title">No bots yet</div>
-                <div className="empty-state-text">Add your first bot to get started</div>
-                <Link to="/fleet/bots" className="btn btn-primary mt-md">Add Bot</Link>
+              <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
+                <div className="text-base font-semibold mb-2">No bots yet</div>
+                <div className="text-sm mb-4">Add your first bot to get started</div>
+                <Link to="/fleet/bots" className="inline-flex items-center gap-2 px-5 h-12 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-4 no-underline">Add Bot</Link>
               </div>
             ) : (
               bots.slice(0, 6).map((bot, i) => {
                 const status = bot.liveStatus?.status || bot.status;
                 const isOnline = status === 'ONLINE';
                 return (
-                  <div key={bot.id} className="list-item clickable stagger-item" onClick={() => navigate(`/fleet/bots/${bot.id}`)}>
-                    <div className="list-item-info">
-                      <div className="avatar">{bot.name.charAt(0)}</div>
+                  <div key={bot.id} className="flex items-center justify-between px-4 h-12 border-b border-mdb-outline-variant cursor-pointer transition-colors hover:bg-mdb-surface-high stagger-item" onClick={() => navigate(`/fleet/bots/${bot.id}`)}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 bg-mdb-surface-high flex items-center justify-center font-bold text-sm text-mdb-primary shrink-0">{bot.name.charAt(0)}</div>
                       <div className="flex-1">
-                        <div className="list-item-name">{bot.name}</div>
-                        <div className="list-item-meta mono-sm">{bot.username}</div>
+                        <div className="font-semibold">{bot.name}</div>
+                        <div className="font-mono text-xs text-mdb-text-muted">{bot.username}</div>
                         {isOnline && bot.liveStatus?.health != null && (
-                          <div className="flex gap-sm mt-xs">
+                          <div className="flex gap-2 mt-1">
                             <HealthBar value={bot.liveStatus.health} />
                             <FoodBar value={bot.liveStatus.food} />
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-sm" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       {isOnline && (
-                        <button className="btn btn-ghost btn-sm hover-glow" onClick={() => handleQuickScan(bot.id)} aria-label="Quick scan">
+                        <button className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high hover-glow" onClick={() => handleQuickScan(bot.id)} aria-label="Quick scan">
                           <Scan size={14} />
                         </button>
                       )}
@@ -171,77 +181,77 @@ export default function FleetDashboard() {
         </div>
 
         <div>
-          <div className="section">
-            <div className="section-header">
+          <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
+            <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant flex items-center justify-between">
               <span>Active Swarms</span>
-              <Link to="/fleet/swarms" className="btn btn-ghost btn-sm">View All</Link>
+              <Link to="/fleet/swarms" className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high no-underline">View All</Link>
             </div>
             {swarms.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-title">No swarms yet</div>
-                <div className="empty-state-text">Create a swarm to group your bots</div>
-                <Link to="/fleet/swarms" className="btn btn-primary mt-md">Create Swarm</Link>
+              <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
+                <div className="text-base font-semibold mb-2">No swarms yet</div>
+                <div className="text-sm mb-4">Create a swarm to group your bots</div>
+                <Link to="/fleet/swarms" className="inline-flex items-center gap-2 px-5 h-12 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-4 no-underline">Create Swarm</Link>
               </div>
             ) : (
               swarms.slice(0, 3).map((swarm) => (
-                <div key={swarm.id} className="list-item clickable" onClick={() => navigate('/fleet/swarms')}>
+                <div key={swarm.id} className="flex items-center justify-between px-4 h-12 border-b border-mdb-outline-variant cursor-pointer transition-colors hover:bg-mdb-surface-high" onClick={() => navigate('/fleet/swarms')}>
                   <div>
-                    <div className="list-item-name">{swarm.name}</div>
-                    <div className="list-item-meta">
+                    <div className="font-semibold">{swarm.name}</div>
+                    <div className="text-[13px] text-mdb-text-muted">
                       {swarm.stats?.totalBots || 0} bots &middot; {swarm.loadBalancing}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-success text-sm">{swarm.stats?.idleBots || 0} idle</span>
-                    <span className="separator">/</span>
-                    <span className="text-warning text-sm">{swarm.stats?.activeTasks || 0} active</span>
+                    <span className="text-mdb-online text-sm">{swarm.stats?.idleBots || 0} idle</span>
+                    <span className="mx-1 text-mdb-outline-variant">/</span>
+                    <span className="text-mdb-working text-sm">{swarm.stats?.activeTasks || 0} active</span>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          <div className="section">
-            <div className="section-header">
+          <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
+            <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant flex items-center justify-between">
               <span>Task Queue</span>
-              <Link to="/fleet/tasks" className="btn btn-ghost btn-sm">View All</Link>
+              <Link to="/fleet/tasks" className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high no-underline">View All</Link>
             </div>
-            <div className="stats-grid mb-0">
-              <div className="stat-card">
-                <div className="stat-value">{dashboard?.tasks?.pending || 0}</div>
-                <div className="stat-label">Pending</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-0">
+              <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+                <div className="text-[28px] font-bold leading-tight tracking-tight">{dashboard?.tasks?.pending || 0}</div>
+                <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1">Pending</div>
               </div>
-              <div className="stat-card stat-warning">
-                <div className="stat-value">{dashboard?.tasks?.active || 0}</div>
-                <div className="stat-label">Active</div>
+              <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+                <div className="text-[28px] font-bold leading-tight tracking-tight text-mdb-working">{dashboard?.tasks?.active || 0}</div>
+                <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1">Active</div>
               </div>
-              <div className="stat-card stat-success">
-                <div className="stat-value">{dashboard?.tasks?.completed || 0}</div>
-                <div className="stat-label">Done</div>
+              <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+                <div className="text-[28px] font-bold leading-tight tracking-tight text-mdb-online">{dashboard?.tasks?.completed || 0}</div>
+                <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1">Done</div>
               </div>
-              <div className="stat-card stat-danger">
-                <div className="stat-value">{dashboard?.tasks?.failed || 0}</div>
-                <div className="stat-label">Failed</div>
+              <div className="bg-mdb-surface border border-mdb-surface-high p-6">
+                <div className="text-[28px] font-bold leading-tight tracking-tight text-mdb-status-error">{dashboard?.tasks?.failed || 0}</div>
+                <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mt-1">Failed</div>
               </div>
             </div>
           </div>
 
-          <div className="section">
-            <div className="section-header">
+          <div className="bg-mdb-surface border border-mdb-surface-high p-6 mb-6">
+            <div className="text-base font-semibold mb-4 pb-4 border-b border-mdb-outline-variant flex items-center justify-between">
               <span>Servers</span>
-              <Link to="/fleet/servers" className="btn btn-ghost btn-sm">View All</Link>
+              <Link to="/fleet/servers" className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high no-underline">View All</Link>
             </div>
             {servers.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-title">No servers yet</div>
-                <div className="empty-state-text">Add a server to connect your bots</div>
+              <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
+                <div className="text-base font-semibold mb-2">No servers yet</div>
+                <div className="text-sm mb-4">Add a server to connect your bots</div>
               </div>
             ) : (
               servers.slice(0, 3).map((server) => (
-                <div key={server.id} className="list-item">
+                <div key={server.id} className="flex items-center justify-between px-4 h-12 border-b border-mdb-outline-variant">
                   <div>
-                    <div className="list-item-name">{server.name}</div>
-                    <div className="list-item-meta mono-sm">{server.host}:{server.port}</div>
+                    <div className="font-semibold">{server.name}</div>
+                    <div className="font-mono text-xs text-mdb-text-muted">{server.host}:{server.port}</div>
                   </div>
                   <StatusBadge status="ONLINE" />
                 </div>

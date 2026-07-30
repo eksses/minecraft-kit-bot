@@ -37,18 +37,18 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
   if (!isOpen) return null;
 
   return (
-    <div className="more-overlay" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-end justify-center" onClick={onClose}>
       <div
-        className="more-sheet"
+        className="w-full max-h-[85vh] bg-mdb-surface border-t border-mdb-surface-high overflow-y-auto py-4"
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="more-sheet-header">
-          <span className="more-sheet-title">Navigation</span>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-mdb-surface-high">
+          <span className="text-base font-semibold">Navigation</span>
           <button
-            className="btn btn-ghost btn-sm"
+            className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high"
             onClick={onClose}
             aria-label="Close"
           >
@@ -61,15 +61,15 @@ export default function MoreSheet({ isOpen, onClose, currentPath, onLogout }) {
             to={path}
             end={path === '/fleet'}
             onClick={onClose}
-            className={({ isActive }) => `more-nav-item ${isActive ? 'active' : ''}`}
+            className={({ isActive }) => `flex items-center gap-2 px-6 h-12 text-sm font-medium no-underline transition-all ${isActive ? 'bg-mdb-surface-high text-mdb-primary' : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-primary'} [&>svg]:w-5 [&>svg]:h-5`}
           >
             <Icon size={20} />
             <span>{label}</span>
           </NavLink>
         ))}
-        <div className="more-sheet-footer">
+        <div className="px-6 py-4 border-t border-mdb-surface-high mt-2">
           <button
-            className="more-nav-item logout-btn"
+            className="flex items-center gap-2 px-6 h-12 text-sm font-medium w-full text-mdb-status-error bg-transparent border-none cursor-pointer hover:bg-mdb-surface-high"
             onClick={() => { onClose(); onLogout(); }}
           >
             <LogOut size={20} />

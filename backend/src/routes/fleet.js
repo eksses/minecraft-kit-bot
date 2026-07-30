@@ -8,7 +8,16 @@ import { swarmCoordinator } from '../services/swarmCoordinator.js';
 import { TradingService } from '../services/tradingService.js';
 import { chestService } from '../services/chest.js';
 import { deliveryEngine } from '../services/deliveryEngine.js';
+import { configService } from '../services/config.js';
 import mc from 'minecraft-protocol';
+
+const requireAdmin = async (c, next) => {
+  const session = c.get('session');
+  if (!session?.authenticated || session.role !== 'admin') {
+    return c.json({ error: 'Admin access required' }, 403);
+  }
+  return next();
+};
 
 export const fleetRoutes = new Hono();
 
@@ -126,6 +135,27 @@ botLifecycleManager.on('bot:spawned', async (data) => {
 for (const [id, bot] of botLifecycleManager.bots) {
   wireBotEvents(bot);
 }
+
+// ============================================================
+// App Settings (must be before /:id routes)
+// ============================================================
+fleetRoutes.get('/settings', requireAuth, requireAdmin, (c) => {
+  return c.json(configService.getPublicSettings());
+});
+
+fleetRoutes.put('/settings', requireAuth, requireAdmin, async (c) => {
+  const body = await c.req.json();
+  await configService.updateConfig(body);
+  return c.json({ success: true, settings: configService.getPublicSettings() });
+});
+
+fleetRoutes.get('/settings/bot', requireAuth, requireAdmin, (c) => {
+  return c.json({
+    IP: configService.get('IP', '6b6t.org'),
+    PORT: parseInt(configService.get('PORT', '25565'), 10),
+    VERSION: configService.get('VERSION', '1.17'),
+  });
+});
 
 // ============================================================
 // Server Management

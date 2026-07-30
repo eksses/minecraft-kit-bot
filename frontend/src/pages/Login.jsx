@@ -27,19 +27,23 @@ export default function Login() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-logo">
-          <Gamepad2 size={28} className="login-logo-icon" />
+    <div className="min-h-screen flex items-center justify-center p-6 bg-mdb-bg">
+      <div className="w-full max-w-[400px] bg-mdb-surface border border-mdb-surface-high p-8">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <Gamepad2 size={28} className="text-mdb-primary text-2xl" />
         </div>
-        <h1 className="login-title">MDB Platform</h1>
-        <p className="login-subtitle">Minecraft Delivery Bot Management</p>
+        <h1 className="text-2xl font-bold text-center text-mdb-text">MDB Platform</h1>
+        <p className="text-sm text-mdb-text-muted text-center mt-1 mb-8">Minecraft Delivery Bot Management</p>
         
         <form onSubmit={handleSubmit}>
-          {error && <div className="login-error">{error}</div>}
+          {error && (
+            <div className="bg-mdb-error/10 border border-mdb-error rounded-none p-2 px-4 mb-4 text-mdb-error text-[13px]">
+              {error}
+            </div>
+          )}
           
-          <div className="form-group">
-            <label className="form-label">Username</label>
+          <div className="mb-4">
+            <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Username</label>
             <input
               type="text"
               value={username}
@@ -50,8 +54,8 @@ export default function Login() {
             />
           </div>
           
-          <div className="form-group">
-            <label className="form-label">Password</label>
+          <div className="mb-4">
+            <label className="block font-mono text-[11px] font-medium uppercase tracking-wider text-mdb-text-muted mb-1.5">Password</label>
             <input
               type="password"
               value={password}
@@ -62,7 +66,7 @@ export default function Login() {
             />
           </div>
           
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+          <button type="submit" className="inline-flex items-center justify-center gap-2 w-full h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

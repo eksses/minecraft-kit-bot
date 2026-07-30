@@ -99,68 +99,60 @@ export default function Plugins() {
   const enabledCount = plugins.filter(p => p.enabled).length;
 
   if (loading) {
-    return <div className="loading-state">Loading plugins...</div>;
+    return <div className="p-12 text-center text-mdb-text-muted">Loading plugins...</div>;
   }
 
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: '80px' }}>
+    <div className="min-h-screen pb-20">
       {/* Header */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        background: 'var(--bg-surface)',
-        borderBottom: '1px solid var(--border)',
-        padding: '16px 24px',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Terminal size={32} style={{ color: 'var(--status-online)' }} />
+      <div className="sticky top-0 z-40 bg-mdb-surface border-b border-mdb-outline-variant px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Terminal size={32} className="text-mdb-online" />
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: '600', letterSpacing: '-0.01em' }}>Plugins</h1>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Manage installed plugins, enable/disable, configure settings</p>
+              <h1 className="text-2xl font-semibold tracking-tight">Plugins</h1>
+              <p className="text-sm text-mdb-text-muted">Manage installed plugins, enable/disable, configure settings</p>
             </div>
           </div>
           <button
-            className="btn btn-ghost btn-sm"
+            className="inline-flex items-center justify-center w-12 h-12 text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high"
             onClick={loadPlugins}
-            style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <RefreshCw size={20} style={{ color: 'var(--status-online)' }} />
+            <RefreshCw size={20} className="text-mdb-online" />
           </button>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>TOTAL INSTALLED</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--status-online)', marginTop: '4px' }}>{plugins.length}</div>
+      <div className="p-6 grid grid-cols-4 gap-4">
+        <div className="bg-mdb-surface border border-mdb-outline-variant p-4">
+          <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted">TOTAL INSTALLED</div>
+          <div className="text-[32px] font-bold text-mdb-online mt-1">{plugins.length}</div>
         </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>ACTIVE</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--status-online)', marginTop: '4px' }}>{enabledCount}</div>
+        <div className="bg-mdb-surface border border-mdb-outline-variant p-4">
+          <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted">ACTIVE</div>
+          <div className="text-[32px] font-bold text-mdb-online mt-1">{enabledCount}</div>
         </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>DISABLED</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--status-warning)', marginTop: '4px' }}>{plugins.length - enabledCount}</div>
+        <div className="bg-mdb-surface border border-mdb-outline-variant p-4">
+          <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted">DISABLED</div>
+          <div className="text-[32px] font-bold text-mdb-working mt-1">{plugins.length - enabledCount}</div>
         </div>
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>STATUS</div>
-          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--status-online)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '8px', height: '8px', background: 'var(--status-online)' }} />
+        <div className="bg-mdb-surface border border-mdb-outline-variant p-4">
+          <div className="text-[11px] font-bold tracking-wider text-mdb-text-muted">STATUS</div>
+          <div className="text-sm font-semibold text-mdb-online mt-2 flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-mdb-online" />
             ALL SYSTEMS GO
           </div>
         </div>
       </div>
 
       {/* Plugin List */}
-      <div style={{ padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="px-6 flex flex-col gap-4">
         {plugins.length === 0 ? (
-          <div className="empty-state">
+          <div className="flex flex-col items-center justify-center p-12 text-mdb-text-muted text-center">
             <Puzzle size={48} />
-            <div className="empty-state-title">No plugins installed</div>
-            <div className="empty-state-text">Go to Plugin Store to install plugins</div>
+            <div className="text-lg font-semibold mt-4 mb-2">No plugins installed</div>
+            <div className="text-sm">Go to Plugin Store to install plugins</div>
           </div>
         ) : (
           plugins.map((plugin) => {
@@ -170,106 +162,63 @@ export default function Plugins() {
             return (
               <div
                 key={plugin.id}
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: `1px solid ${isExpanded ? 'var(--status-online)' : 'var(--border)'}`,
-                  boxShadow: isExpanded ? '0 0 15px rgba(0,255,65,0.1)' : 'none',
-                  transition: 'border-color 0.2s, box-shadow 0.2s',
-                }}
+                className={`bg-mdb-surface border transition-all ${isExpanded ? 'border-mdb-online shadow-[0_0_15px_rgba(0,255,65,0.1)]' : 'border-mdb-outline-variant'}`}
               >
                 {/* Plugin Header */}
-                <div style={{
-                  padding: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  borderBottom: isExpanded ? '1px solid var(--border)' : 'none',
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        background: plugin.enabled ? 'var(--status-online)' : 'var(--status-error)',
-                      }} />
-                      <h3 style={{ fontSize: '18px', fontWeight: '600' }}>{plugin.name}</h3>
+                <div className={`p-6 flex items-center justify-between ${isExpanded ? 'border-b border-mdb-outline-variant' : ''}`}>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 ${plugin.enabled ? 'bg-mdb-online' : 'bg-mdb-status-error'}`} />
+                      <h3 className="text-lg font-semibold">{plugin.name}</h3>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
-                      <span style={{
-                        padding: '2px 8px',
-                        background: 'var(--bg-surface-high)',
-                        border: '1px solid var(--border)',
-                      }}>
+                    <div className="flex items-center gap-3 text-mdb-text-muted font-mono text-[13px]">
+                      <span className="px-2 py-0.5 bg-mdb-surface-high border border-mdb-outline-variant">
                         v{plugin.version}
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="flex items-center gap-1">
                         <User size={14} />
                         {plugin.author || 'Unknown'}
                       </span>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      letterSpacing: '0.05em',
-                      color: plugin.enabled ? 'var(--status-online)' : 'var(--text-muted)',
-                    }}>
+                  <div className="flex items-center gap-4">
+                    <span className={`text-[11px] font-bold tracking-wider ${plugin.enabled ? 'text-mdb-online' : 'text-mdb-text-muted'}`}>
                       {plugin.enabled ? 'ENABLED' : 'DISABLED'}
                     </span>
                     <button
                       onClick={() => handleToggle(plugin.id, !plugin.enabled)}
-                      style={{
-                        width: '48px',
-                        height: '24px',
-                        background: plugin.enabled ? 'var(--status-online)' : 'var(--bg-surface-high)',
-                        position: 'relative',
-                        cursor: 'pointer',
-                        border: 'none',
-                        transition: 'background 0.2s',
-                      }}
+                      className="w-12 h-6 relative cursor-pointer border-none transition-colors"
+                      style={{ background: plugin.enabled ? 'var(--color-mdb-online)' : 'var(--color-mdb-surface-high)' }}
                     >
-                      <div style={{
-                        position: 'absolute',
-                        top: '2px',
-                        [plugin.enabled ? 'right' : 'left']: '2px',
-                        width: '20px',
-                        height: '20px',
-                        background: 'var(--bg-surface)',
-                        transition: 'all 0.2s',
-                      }} />
+                      <div
+                        className="absolute top-0.5 w-5 h-5 bg-mdb-surface transition-all"
+                        style={{ [plugin.enabled ? 'right' : 'left']: '2px' }}
+                      />
                     </button>
                   </div>
                 </div>
 
                 {/* Expanded Settings */}
                 {isExpanded && (
-                  <div style={{ padding: '24px', background: 'var(--bg-surface-low)' }}>
+                  <div className="p-6 bg-mdb-surface-low">
                     {Object.keys(settings).length > 0 ? (
                       <form onSubmit={(e) => { e.preventDefault(); handleSaveSettings(plugin.id); }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {Object.entries(settings).map(([key, value]) => (
-                            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <label style={{
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                letterSpacing: '0.05em',
-                                color: 'var(--text-muted)',
-                                textTransform: 'uppercase',
-                              }}>
+                            <div key={key} className="flex flex-col gap-2">
+                              <label className="text-[11px] font-bold tracking-wider text-mdb-text-muted uppercase">
                                 {key.replace(/_/g, ' ')}
                               </label>
                               {typeof value === 'boolean' ? (
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div className="flex gap-2">
                                   <button
                                     type="button"
                                     onClick={() => setPluginSettings({
                                       ...pluginSettings,
                                       [plugin.id]: { ...settings, [key]: true }
                                     })}
-                                    className={`btn btn-sm ${value ? 'btn-primary' : 'btn-secondary'}`}
-                                    style={{ flex: 1, height: '48px' }}
+                                    className={`flex-1 h-12 text-xs font-bold ${value ? 'bg-mdb-primary text-mdb-on-primary' : 'border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high'}`}
                                   >
                                     Enabled
                                   </button>
@@ -279,8 +228,7 @@ export default function Plugins() {
                                       ...pluginSettings,
                                       [plugin.id]: { ...settings, [key]: false }
                                     })}
-                                    className={`btn btn-sm ${!value ? 'btn-primary' : 'btn-secondary'}`}
-                                    style={{ flex: 1, height: '48px' }}
+                                    className={`flex-1 h-12 text-xs font-bold ${!value ? 'bg-mdb-primary text-mdb-on-primary' : 'border-2 border-mdb-primary text-mdb-primary bg-transparent hover:bg-mdb-surface-high'}`}
                                   >
                                     Disabled
                                   </button>
@@ -293,16 +241,7 @@ export default function Plugins() {
                                     ...pluginSettings,
                                     [plugin.id]: { ...settings, [key]: parseInt(e.target.value) || 0 }
                                   })}
-                                  style={{
-                                    height: '48px',
-                                    background: 'var(--bg-surface-high)',
-                                    border: '1px solid var(--border)',
-                                    color: 'var(--text-primary)',
-                                    padding: '0 16px',
-                                    fontFamily: 'JetBrains Mono, monospace',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                  }}
+                                  className="h-12 bg-mdb-surface-high border border-mdb-outline-variant text-mdb-text px-4 font-mono text-sm outline-none"
                                 />
                               ) : (
                                 <input
@@ -312,16 +251,7 @@ export default function Plugins() {
                                     ...pluginSettings,
                                     [plugin.id]: { ...settings, [key]: e.target.value }
                                   })}
-                                  style={{
-                                    height: '48px',
-                                    background: 'var(--bg-surface-high)',
-                                    border: '1px solid var(--border)',
-                                    color: 'var(--text-primary)',
-                                    padding: '0 16px',
-                                    fontFamily: 'JetBrains Mono, monospace',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                  }}
+                                  className="h-12 bg-mdb-surface-high border border-mdb-outline-variant text-mdb-text px-4 font-mono text-sm outline-none"
                                 />
                               )}
                             </div>
@@ -329,16 +259,15 @@ export default function Plugins() {
                         </div>
                         <button
                           type="submit"
-                          className="btn btn-primary"
-                          style={{ width: '100%', height: '48px', marginTop: '24px' }}
+                          className="inline-flex items-center justify-center gap-2 w-full h-12 px-5 text-sm font-bold bg-mdb-primary text-mdb-on-primary mt-6"
                           disabled={saving === plugin.id}
                         >
                           {saving === plugin.id ? 'SAVING...' : <><Save size={16} /> SAVE SETTINGS</>}
                         </button>
                       </form>
                     ) : (
-                      <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
-                        <Settings size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                      <div className="text-center p-6 text-mdb-text-muted">
+                        <Settings size={32} className="mx-auto mb-2 opacity-50" />
                         <p>No settings configured for this plugin</p>
                       </div>
                     )}
@@ -347,25 +276,17 @@ export default function Plugins() {
 
                 {/* Footer Actions */}
                 {!isExpanded && (
-                  <div style={{
-                    padding: '12px 24px',
-                    borderTop: '1px solid var(--border)',
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '8px',
-                  }}>
+                  <div className="px-6 py-3 border-t border-mdb-outline-variant flex justify-end gap-2">
                     <button
-                      className="btn btn-ghost btn-sm"
+                      className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold text-mdb-text-secondary hover:text-mdb-primary hover:bg-mdb-surface-high"
                       onClick={() => toggleExpand(plugin.id)}
-                      style={{ height: '36px' }}
                     >
                       <Settings size={14} /> Settings
                       {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
                     <button
-                      className="btn btn-danger btn-sm"
+                      className="inline-flex items-center gap-2 h-9 px-3 text-xs font-bold border-2 border-mdb-status-error text-mdb-status-error hover:bg-mdb-status-error/10"
                       onClick={() => handleUninstall(plugin.id)}
-                      style={{ height: '36px' }}
                     >
                       <Trash2 size={14} /> Uninstall
                     </button>
@@ -375,18 +296,7 @@ export default function Plugins() {
                 {/* Expand/Collapse Toggle */}
                 <div
                   onClick={() => toggleExpand(plugin.id)}
-                  style={{
-                    padding: '8px 24px',
-                    borderTop: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-high)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  className="px-6 py-2 border-t border-mdb-outline-variant flex items-center justify-center cursor-pointer text-mdb-text-muted transition-colors hover:bg-mdb-surface-high"
                 >
                   {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>

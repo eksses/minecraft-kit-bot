@@ -31,26 +31,26 @@ export function ToastContainer() {
   const { toasts, removeToast } = useToast();
   
   return (
-    <div className="toast-container" role="region" aria-label="Notifications">
+    <div className="fixed top-6 right-6 z-50 flex flex-col gap-2" role="region" aria-label="Notifications">
       {toasts.map(toast => (
         <div 
           key={toast.id} 
-          className={`toast toast-${toast.type}`}
+          className={`toast bg-mdb-surface border border-mdb-surface-high p-4 min-w-[280px] max-w-[400px] flex items-center gap-2 text-sm text-mdb-text ${toast.type === 'success' ? 'border-l-[3px] border-l-mdb-online' : toast.type === 'error' ? 'border-l-[3px] border-l-mdb-status-error' : toast.type === 'warning' ? 'border-l-[3px] border-l-mdb-working' : 'border-l-[3px] border-l-mdb-primary'}`}
           onClick={() => removeToast(toast.id)}
           role="alert"
         >
-          <span className="toast-icon">
-            {toast.type === 'success' && '✓'}
-            {toast.type === 'error' && '✕'}
-            {toast.type === 'warning' && '⚠'}
-            {toast.type === 'info' && 'ℹ'}
+          <span className="text-base">
+            {toast.type === 'success' && '\u2713'}
+            {toast.type === 'error' && '\u2715'}
+            {toast.type === 'warning' && '\u26A0'}
+            {toast.type === 'info' && '\u2139'}
           </span>
-          <div className="toast-content">
-            <div className="toast-title">{toast.title}</div>
-            {toast.message && <div className="toast-message">{toast.message}</div>}
+          <div className="flex-1">
+            <div className="font-semibold">{toast.title}</div>
+            {toast.message && <div className="text-xs text-mdb-text-muted mt-0.5">{toast.message}</div>}
           </div>
-          <button className="toast-close" onClick={(e) => { e.stopPropagation(); removeToast(toast.id); }}>
-            ×
+          <button className="text-mdb-text-muted hover:text-mdb-text text-lg" onClick={(e) => { e.stopPropagation(); removeToast(toast.id); }}>
+            \u00d7
           </button>
         </div>
       ))}

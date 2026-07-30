@@ -19,8 +19,8 @@ function PrivateRoute({ children }) {
   
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-mdb-bg">
+        <div className="w-6 h-6 border-2 border-mdb-surface-high border-t-mdb-primary rounded-full animate-spin"></div>
         Loading...
       </div>
     );

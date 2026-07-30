@@ -1,9 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { db, schema } from '../db/index.js';
+
+// Keys that should never be stored in DB (secrets)
+const SECRET_KEYS = new Set(['BOTNAME', 'PASSWORD']);
 
 export class ConfigService {
   constructor() {
     this.config = this.loadConfig();
+    this._dbLoaded = false;
   }
   
   loadConfig() {
@@ -21,6 +26,19 @@ export class ConfigService {
     }
     
     return config;
+  }
+
+  async loadFromDB() {
+    try {
+      const rows = await db.select().from(schema.appSettings);
+      for (const row of rows) {
+        this.config[row.key] = row.value;
+      }
+      this._dbLoaded = true;
+      console.log(`[Config] Loaded ${rows.length} settings from database`);
+    } catch (err) {
+      console.error('[Config] Failed to load settings from DB, using .env fallback:', err.message);
+    }
   }
   
   get(key, defaultValue) {
@@ -64,25 +82,36 @@ export class ConfigService {
     return path.resolve('chestData.json');
   }
   
-  updateConfig(updates) {
+  async updateConfig(updates) {
+    const now = Math.floor(Date.now() / 1000);
+    
     for (const [key, value] of Object.entries(updates)) {
       this.config[key] = value;
-    }
-    
-    const content = Object.entries(this.config)
-      .map(([k, v]) => `${k}=${v}`)
-      .join('\n');
-    
-    fs.writeFileSync(path.resolve('.env'), content, 'utf-8');
-    
-    // Reload dotenv
-    for (const [key, value] of Object.entries(updates)) {
       process.env[key] = value;
+      
+      if (!SECRET_KEYS.has(key)) {
+        await db.insert(schema.appSettings)
+          .values({ key, value, updatedAt: new Date(now * 1000) })
+          .onConflictDoUpdate({
+            target: schema.appSettings.key,
+            set: { value, updatedAt: new Date(now * 1000) },
+          });
+      }
     }
   }
   
   getAll() {
     return { ...this.config };
+  }
+
+  getPublicSettings() {
+    const publicSettings = {};
+    for (const [key, value] of Object.entries(this.config)) {
+      if (!SECRET_KEYS.has(key)) {
+        publicSettings[key] = value;
+      }
+    }
+    return publicSettings;
   }
 }
 
