@@ -9,7 +9,7 @@ import DeliverModal from '../components/DeliverModal';
 
 const TAB_ITEMS = [
   { id: 'console', label: 'Console', icon: Terminal },
-  { id: 'delivery', label: 'Delivery', icon: Box },
+  { id: 'delivery', label: 'Bot Deliveries', icon: Box },
   { id: 'inventory', label: 'Inventory', icon: Package },
   { id: 'whitelist', label: 'Whitelist', icon: Shield },
   { id: 'settings', label: 'Settings', icon: Settings },
@@ -223,13 +223,13 @@ export default function BotDetail() {
         <div ref={chatEndRef} />
       </div>
 
-      <form onSubmit={handleConsoleSubmit} className="flex gap-2 items-center shrink-0">
+      <form onSubmit={handleConsoleSubmit} className="flex items-center h-12 rounded-xl border border-slate-800 bg-[#0d1017] p-1 gap-2 shrink-0">
         <Button
           type="button"
           variant={consoleMode === 'command' ? 'success' : 'primary'}
           size="sm"
           onClick={() => setConsoleMode(m => m === 'chat' ? 'command' : 'chat')}
-          className="shrink-0 font-mono"
+          className="shrink-0 font-mono h-full px-3"
         >
           {consoleMode === 'chat' ? 'Say' : '/'}
         </Button>
@@ -237,12 +237,12 @@ export default function BotDetail() {
           value={consoleInput}
           onChange={(e) => setConsoleInput(e.target.value)}
           placeholder={consoleMode === 'chat' ? 'Say something...' : '/command args...'}
-          className="flex-1"
+          className="flex-1 h-full"
           disabled={!isOnline}
         />
-        <Button type="submit" disabled={!isOnline || !consoleInput.trim()} icon={Send} />
+        <Button type="submit" disabled={!isOnline || !consoleInput.trim()} icon={Send} className="h-full px-3" />
         {chatMessages.length > 0 && (
-          <IconButton icon={Trash2} size="sm" onClick={() => setChatMessages([])} tooltip="Clear messages" />
+          <IconButton icon={Trash2} size="sm" onClick={() => setChatMessages([])} tooltip="Clear messages" className="h-full" />
         )}
       </form>
     </div>
@@ -563,42 +563,46 @@ export default function BotDetail() {
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-mdb-surface/95 backdrop-blur-md border-b border-mdb-border flex items-center justify-between px-3 z-40">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <IconButton icon={ArrowLeft} size="sm" onClick={() => navigate('/fleet/bots')} tooltip="Back to Bots" />
-          <div className="relative flex-1 min-w-0">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center gap-2 bg-mdb-surface-high text-mdb-text text-sm font-semibold rounded-lg pl-3 pr-2 py-1.5 border border-mdb-border hover:border-mdb-border-hover transition-colors text-left"
-            >
-              {TAB_ITEMS.find(t => t.id === activeTab) && (() => {
-                const TabIcon = TAB_ITEMS.find(t => t.id === activeTab).icon;
-                return <TabIcon size={14} className="text-mdb-primary shrink-0" />;
-              })()}
-              <span className="truncate">{TAB_ITEMS.find(t => t.id === activeTab)?.label}</span>
-              <ChevronDown size={14} className={`ml-auto text-mdb-text-muted shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {dropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute top-full left-0 right-0 mt-1 bg-mdb-surface border border-mdb-border rounded-xl shadow-2xl overflow-hidden z-50 animate-scale-up">
-                  {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
-                      className={`flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors ${
-                        activeTab === id
-                          ? 'bg-mdb-primary/10 text-mdb-primary font-medium'
-                          : 'text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text'
-                      }`}
-                    >
-                      <Icon size={16} />
-                      <span>{label}</span>
-                      {id === 'delivery' && chests.length > 0 && (
-                        <span className="ml-auto bg-mdb-primary/15 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <span className="text-slate-400 text-sm font-medium truncate shrink-0">{bot.name}</span>
+            <span className="text-slate-600 text-sm shrink-0">/</span>
+            <div className="relative min-w-0 flex-1">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full flex items-center gap-2 bg-mdb-surface-high text-white text-sm font-semibold rounded-lg pl-3 pr-2 py-1.5 border border-mdb-border hover:border-mdb-border-hover transition-colors text-left"
+              >
+                {TAB_ITEMS.find(t => t.id === activeTab) && (() => {
+                  const TabIcon = TAB_ITEMS.find(t => t.id === activeTab).icon;
+                  return <TabIcon size={14} className="text-mdb-primary shrink-0" />;
+                })()}
+                <span className="truncate">{TAB_ITEMS.find(t => t.id === activeTab)?.label}</span>
+                <ChevronDown size={14} className={`ml-auto text-mdb-text-muted shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#131722]/95 backdrop-blur-md border border-white/10 shadow-2xl rounded-xl overflow-hidden z-50 animate-scale-up">
+                    {TAB_ITEMS.map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => { setActiveTab(id); setDropdownOpen(false); }}
+                        className={`flex items-center gap-3 w-full min-h-[44px] px-4 py-3 text-sm transition-colors ${
+                          activeTab === id
+                            ? 'bg-mdb-primary/10 text-mdb-primary font-medium'
+                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span>{label}</span>
+                        {id === 'delivery' && chests.length > 0 && (
+                          <span className="ml-auto bg-mdb-primary/15 text-mdb-primary text-[10px] font-mono px-1.5 py-0.5 rounded-full">{chests.length}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
