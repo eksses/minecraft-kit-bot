@@ -317,6 +317,8 @@ export default function BotDetail() {
         </div>
       </div>
     </div>
+  );
+
   // Whitelist
   const [whitelist, setWhitelist] = useState([]);
   const [showAddWhitelist, setShowAddWhitelist] = useState(false);
