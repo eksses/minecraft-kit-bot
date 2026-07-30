@@ -248,27 +248,48 @@ async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
     });
 
     const chestBlock = bot.blockAt(chestPos);
-    if (!chestBlock) throw new Error('Chest block not found');
+    if (!chestBlock) throw new Error('Block at ' + x + ',' + y + ',' + z + ' not found');
     
-    const chest = await bot.openContainer(chestBlock);
-    const item = chest.slots.find(s => s?.name === itemName);
+    // Ensure bot is looking directly at the target chest block before interacting
+    try {
+      await bot.lookAt(chestPos.offset(0.5, 0.5, 0.5));
+    } catch (_) { /* ignore lookAt error */ }
+
+    // Open container with error handling for obstructed or unopenable blocks
+    let chest;
+    try {
+      chest = await bot.openContainer(chestBlock);
+    } catch (openErr) {
+      const blockAbove = bot.blockAt(chestPos.offset(0, 1, 0));
+      if (blockAbove && blockAbove.boundingBox === 'block') {
+        throw new Error('Chest at ' + x + ',' + y + ',' + z + ' is obstructed by block above (' + blockAbove.name + ')');
+      }
+      throw new Error('Could not open chest (' + chestBlock.name + '): ' + openErr.message);
+    }
     
+    // Find matching item by name or fallback to first non-empty slot
+    let item = chest.slots.find(s => s && s.name && (s.name.toLowerCase() === (itemName || '').toLowerCase() || s.name.toLowerCase().includes((itemName || '').toLowerCase())));
     if (!item) {
-      chest.close();
-      throw new Error('Item ' + itemName + ' not found in chest');
+      item = chest.slots.find(s => s !== null);
     }
 
+    if (!item) {
+      chest.close();
+      throw new Error('Chest at ' + x + ',' + y + ',' + z + ' is empty');
+    }
+
+    const actualItemName = item.name || itemName || 'item';
     await chest.withdraw(item.type, null, count || 1);
     chest.close();
     
     if (playerName) {
-      bot.chat('/w ' + playerName + ' Here is ' + (count || 1) + ' ' + itemName + '!');
+      bot.chat('/w ' + playerName + ' Here is ' + (count || 1) + ' ' + actualItemName + '!');
       bot.chat('/tpa ' + playerName);
     }
     
     parentPort.postMessage({
       type: 'item_taken',
-      data: { itemName, count: count || 1, playerName: playerName, success: true }
+      data: { itemName: actualItemName, count: count || 1, playerName: playerName, success: true }
     });
   } catch (err) {
     parentPort.postMessage({
