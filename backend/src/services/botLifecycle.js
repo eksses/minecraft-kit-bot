@@ -269,48 +269,78 @@ async function openContainerWithRetry(bot, block, maxRetries = 3) {
 }
 
 async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
+  console.log('[LIVE-DEBUG] Starting handleTakeItem: pos=(' + x + ', ' + y + ', ' + z + '), item="' + itemName + '", count=' + count + ', player="' + playerName + '"');
   try {
     const chestPos = new (require('vec3').Vec3)(x, y, z);
+    bot.clearControlStates();
     bot.pathfinder.setGoal(new goals.GoalNear(x, y, z, 1));
     
     await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Pathfinding timeout')), 30000);
+      const timeout = setTimeout(() => {
+        bot.pathfinder.setGoal(null);
+        reject(new Error('Pathfinding timeout to (' + x + ',' + y + ',' + z + ')'));
+      }, 30000);
+      
       bot.once('goal_reached', () => {
         clearTimeout(timeout);
+        console.log('[LIVE-DEBUG] Goal reached at (' + x + ', ' + y + ', ' + z + ').');
         resolve();
       });
     });
 
     const chestBlock = bot.blockAt(chestPos);
-    if (!chestBlock) throw new Error('Block at ' + x + ',' + y + ',' + z + ' not found');
+    console.log('[LIVE-DEBUG] Block at (' + x + ', ' + y + ', ' + z + '): ' + (chestBlock ? chestBlock.name : 'NULL'));
+    if (!chestBlock) throw new Error('Block at ' + x + ',' + y + ',' + z + ' not found in loaded world');
     
+    console.log('[LIVE-DEBUG] Opening container at (' + x + ', ' + y + ', ' + z + ')...');
     const chest = await openContainerWithRetry(bot, chestBlock, 3);
-    
-    // Find matching item by name or fallback to first non-empty slot
-    let item = chest.slots.find(s => s && s.name && (s.name.toLowerCase() === (itemName || '').toLowerCase() || s.name.toLowerCase().includes((itemName || '').toLowerCase())));
-    if (!item) {
-      item = chest.slots.find(s => s !== null);
+    console.log('[LIVE-DEBUG] Container opened successfully! Total slots: ' + chest.slots.length);
+
+    // Resolve item ID via registry or container items
+    let itemId = null;
+    let actualItemName = itemName || 'item';
+
+    const normalizedItemName = (itemName || '').toLowerCase().replace(/ /g, '_');
+    if (bot.registry && bot.registry.itemsByName[normalizedItemName]) {
+      itemId = bot.registry.itemsByName[normalizedItemName].id;
+      actualItemName = bot.registry.itemsByName[normalizedItemName].name || itemName;
+      console.log('[LIVE-DEBUG] Resolved item "' + itemName + '" via registry ID: ' + itemId);
+    } else {
+      const containerItems = chest.containerItems ? chest.containerItems() : chest.slots.filter(Boolean);
+      const match = containerItems.find(s => s && s.name && (s.name.toLowerCase() === normalizedItemName || s.name.toLowerCase().includes(normalizedItemName)));
+      const selected = match || containerItems[0];
+      if (selected) {
+        itemId = selected.type;
+        actualItemName = selected.name || itemName;
+        console.log('[LIVE-DEBUG] Selected container item ID: ' + itemId + ' (' + actualItemName + ')');
+      }
     }
 
-    if (!item) {
+    if (itemId == null) {
       chest.close();
-      throw new Error('Chest at ' + x + ',' + y + ',' + z + ' is empty');
+      throw new Error('Chest at ' + x + ',' + y + ',' + z + ' has no matching item and is empty');
     }
 
-    const actualItemName = item.name || itemName || 'item';
-    await chest.withdraw(item.type, null, count || 1);
+    console.log('[LIVE-DEBUG] Withdrawing item ID ' + itemId + ' x' + (count || 1) + '...');
+    await chest.withdraw(itemId, null, count || 1);
     chest.close();
+    console.log('[LIVE-DEBUG] Container closed after withdrawal.');
     
     if (playerName) {
+      console.log('[LIVE-DEBUG] Whispering and sending /tpa to ' + playerName);
       bot.chat('/w ' + playerName + ' Here is ' + (count || 1) + ' ' + actualItemName + '!');
       bot.chat('/tpa ' + playerName);
     }
+
+    bot.pathfinder.setGoal(null);
     
     parentPort.postMessage({
       type: 'item_taken',
       data: { itemName: actualItemName, count: count || 1, playerName: playerName, success: true }
     });
   } catch (err) {
+    console.error('[LIVE-DEBUG] Error in handleTakeItem:', err.message);
+    bot.pathfinder.setGoal(null);
     parentPort.postMessage({
       type: 'item_take_error',
       data: { error: err.message }
