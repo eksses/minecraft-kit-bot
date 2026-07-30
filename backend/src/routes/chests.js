@@ -106,32 +106,12 @@ chestRoutes.post('/:botId/scan', requireAuth, async (c) => {
         const { db: dbRef, schema: schemaRef } = await import('../db/index.js');
         
         fleetBot.on('scan_complete', async (scanData) => {
-          console.log('[Scan] Bot ' + fleetBot.name + ' completed scan, found ' + scanData.found + ' chests');
           try {
-            for (const chest of scanData.chests) {
-              await dbRef.insert(schemaRef.chestLocations).values({
-                id: randomUUID(),
-                userId: fleetBot.userId,
-                serverId: fleetBot.serverConfig?.id || null,
-                name: chest.name,
-                x: chest.x,
-                y: chest.y,
-                z: chest.z,
-                itemName: chest.item,
-                itemCount: chest.itemCount,
-                allItems: JSON.stringify(chest.allItems),
-                source: chest.source,
-                signData: chest.signData ? JSON.stringify(chest.signData) : null,
-                status: chest.status,
-                isDouble: chest.isDouble || false,
-                lastScanned: new Date(chest.lastScanned),
-                botId: fleetBot.id,
-                createdAt: new Date(),
-              });
-            }
-            console.log('[Scan] Saved ' + scanData.chests.length + ' chests to database');
+            const { saveScanResultsToDb } = await import('../utils/chest-helpers.js');
+            await saveScanResultsToDb(fleetBot, scanData, scanRadius);
+            console.log('[Scan] Saved & de-duplicated ' + scanData.chests.length + ' chests for bot ' + fleetBot.name);
           } catch (err) {
-            console.error('[Scan] Error saving chests:', err.message);
+            console.error('[Scan] Error saving scan results:', err.message);
           }
         });
         

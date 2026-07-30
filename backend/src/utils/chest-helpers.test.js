@@ -66,7 +66,85 @@ async function testOpenChestSafely() {
   console.log('✅ openChestSafely unit tests passed successfully');
 }
 
-testOpenChestSafely().catch((err) => {
+async function testSaveScanResultsToDb() {
+  console.log('Testing saveScanResultsToDb de-duplication and cleanup...');
+  const { saveScanResultsToDb } = await import('./chest-helpers.js');
+  const { db, schema } = await import('../db/index.js');
+  const { chestService } = await import('../services/chest.js');
+  const { eq } = await import('drizzle-orm');
+
+  const existingUser = await db.query.users.findFirst();
+  let testUserId = existingUser?.id;
+  if (!testUserId) {
+    testUserId = 'test-user-' + Date.now();
+    await db.insert(schema.users).values({
+      id: testUserId,
+      username: 'testuser',
+      passwordHash: 'dummy',
+      createdAt: new Date(),
+    });
+  }
+
+  const testBotId = 'test-bot-dedup-' + Date.now();
+
+  const mockBot = {
+    id: testBotId,
+    userId: testUserId,
+    position: { x: 100, y: 64, z: 200 },
+  };
+
+  const initialScanData = {
+    found: 2,
+    chests: [
+      { name: 'grass_block', x: 105, y: 64, z: 205, item: 'grass_block', itemCount: 64, lastScanned: Date.now() },
+      { name: 'diamond_sword', x: 110, y: 64, z: 210, item: 'diamond_sword', itemCount: 1, lastScanned: Date.now() },
+    ],
+  };
+
+  // 1. Initial save
+  await saveScanResultsToDb(mockBot, initialScanData, 32);
+
+  let storedChests = await db.select().from(schema.chestLocations).where(eq(schema.chestLocations.botId, testBotId));
+  assert.strictEqual(storedChests.length, 2, 'Initial scan should store 2 unique chests');
+
+  // 2. Rescan same location with moved/updated coordinates (diamond_sword moved to 112, 64, 212)
+  const rescanData = {
+    found: 2,
+    chests: [
+      { name: 'grass_block', x: 105, y: 64, z: 205, item: 'grass_block', itemCount: 64, lastScanned: Date.now() },
+      { name: 'diamond_sword', x: 112, y: 64, z: 212, item: 'diamond_sword', itemCount: 1, lastScanned: Date.now() },
+    ],
+  };
+
+  await saveScanResultsToDb(mockBot, rescanData, 32);
+
+  storedChests = await db.select().from(schema.chestLocations).where(eq(schema.chestLocations.botId, testBotId));
+  assert.strictEqual(storedChests.length, 2, 'Rescan should update existing chest without creating duplicates');
+
+  const updatedDiamond = storedChests.find(c => c.name === 'diamond_sword');
+  assert.strictEqual(updatedDiamond.x, 112, 'Diamond sword X should be updated');
+
+  // 3. Rescan area where diamond_sword was REMOVED (only grass_block remains in range)
+  const removedScanData = {
+    found: 1,
+    chests: [
+      { name: 'grass_block', x: 105, y: 64, z: 205, item: 'grass_block', itemCount: 64, lastScanned: Date.now() },
+    ],
+  };
+
+  await saveScanResultsToDb(mockBot, removedScanData, 32);
+
+  storedChests = await db.select().from(schema.chestLocations).where(eq(schema.chestLocations.botId, testBotId));
+  assert.strictEqual(storedChests.length, 1, 'Removed chest should be deleted from DB on rescan');
+  assert.strictEqual(storedChests[0].name, 'grass_block');
+  assert.strictEqual(chestService.get('diamond_sword'), null, 'Removed chest should be deleted from chestData.json');
+
+  // Clean up test records
+  await db.delete(schema.chestLocations).where(eq(schema.chestLocations.botId, testBotId));
+  console.log('✅ saveScanResultsToDb de-duplication and cleanup unit tests passed successfully');
+}
+
+testOpenChestSafely().then(() => testSaveScanResultsToDb()).catch((err) => {
   console.error('❌ Unit test failed:', err);
   process.exit(1);
 });

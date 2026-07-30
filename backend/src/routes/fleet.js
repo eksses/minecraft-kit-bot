@@ -46,41 +46,11 @@ function wireBotEvents(bot) {
   bot.on('scan_complete', async (scanData) => {
     console.log('[Scan] Bot ' + bot.name + ' completed scan, found ' + scanData.found + ' chests');
     try {
-      for (const chest of scanData.chests) {
-        // Save scanned chest to database
-        await db.insert(schema.chestLocations).values({
-          id: randomUUID(),
-          userId: bot.userId,
-          serverId: bot.serverConfig?.id || null,
-          name: chest.name,
-          x: chest.x,
-          y: chest.y,
-          z: chest.z,
-          itemName: chest.item,
-          itemCount: chest.itemCount,
-          allItems: JSON.stringify(chest.allItems),
-          source: chest.source,
-          signData: chest.signData ? JSON.stringify(chest.signData) : null,
-          status: chest.status,
-          isDouble: chest.isDouble || false,
-          lastScanned: new Date(chest.lastScanned),
-          botId: bot.id,
-          createdAt: new Date(),
-        });
-
-        // Also save/update chestData.json file
-        if (chest.name) {
-          chestService.save(chest.name, {
-            x: chest.x,
-            y: chest.y,
-            z: chest.z,
-            item: chest.item || 'unknown',
-          });
-        }
-      }
-      console.log('[Scan] Saved ' + scanData.chests.length + ' chests to database and chestData.json');
+      const { saveScanResultsToDb } = await import('../utils/chest-helpers.js');
+      await saveScanResultsToDb(bot, scanData, 32);
+      console.log('[Scan] Saved & de-duplicated ' + scanData.chests.length + ' chests for bot ' + bot.name);
     } catch (err) {
-      console.error('[Scan] Error saving chests:', err.message);
+      console.error('[Scan] Error saving scan results:', err.message);
     }
   });
 
