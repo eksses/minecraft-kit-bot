@@ -234,6 +234,40 @@ parentPort.on('message', (msg) => {
   }
 });
 
+async function openContainerWithRetry(bot, block, maxRetries = 3) {
+  if (!block) throw new Error('Block not found');
+  
+  // Clear any control states (e.g. sneaking/forward) that block right-click on Paper/Spigot
+  bot.clearControlStates();
+
+  let lastErr = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      try {
+        await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
+      } catch (_) {}
+
+      await new Promise(r => setTimeout(r, 250 * attempt));
+
+      if (typeof bot.openChest === 'function') {
+        return await bot.openChest(block);
+      } else {
+        return await bot.openContainer(block);
+      }
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  const pos = block.position;
+  const blockAbove = bot.blockAt(pos.offset(0, 1, 0));
+  if (blockAbove && blockAbove.boundingBox === 'block') {
+    throw new Error('Chest at ' + pos.x + ',' + pos.y + ',' + pos.z + ' is obstructed by block above (' + blockAbove.name + ')');
+  }
+
+  throw new Error('Could not open chest (' + block.name + ') after ' + maxRetries + ' attempts: ' + (lastErr?.message || 'windowOpen timeout'));
+}
+
 async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
   try {
     const chestPos = new (require('vec3').Vec3)(x, y, z);
@@ -250,22 +284,7 @@ async function handleTakeItem(bot, x, y, z, itemName, count, playerName) {
     const chestBlock = bot.blockAt(chestPos);
     if (!chestBlock) throw new Error('Block at ' + x + ',' + y + ',' + z + ' not found');
     
-    // Ensure bot is looking directly at the target chest block before interacting
-    try {
-      await bot.lookAt(chestPos.offset(0.5, 0.5, 0.5));
-    } catch (_) { /* ignore lookAt error */ }
-
-    // Open container with error handling for obstructed or unopenable blocks
-    let chest;
-    try {
-      chest = await bot.openContainer(chestBlock);
-    } catch (openErr) {
-      const blockAbove = bot.blockAt(chestPos.offset(0, 1, 0));
-      if (blockAbove && blockAbove.boundingBox === 'block') {
-        throw new Error('Chest at ' + x + ',' + y + ',' + z + ' is obstructed by block above (' + blockAbove.name + ')');
-      }
-      throw new Error('Could not open chest (' + chestBlock.name + '): ' + openErr.message);
-    }
+    const chest = await openContainerWithRetry(bot, chestBlock, 3);
     
     // Find matching item by name or fallback to first non-empty slot
     let item = chest.slots.find(s => s && s.name && (s.name.toLowerCase() === (itemName || '').toLowerCase() || s.name.toLowerCase().includes((itemName || '').toLowerCase())));
@@ -557,7 +576,7 @@ async function scanSingleChest(bot, blockInfo, scanMarkedOnly) {
     }
   }
   
-  const container = await bot.openContainer(block);
+  const container = await openContainerWithRetry(bot, block, 2);
   const contents = readContainerContents(bot, container);
   container.close();
   
