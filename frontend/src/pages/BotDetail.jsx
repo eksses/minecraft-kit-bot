@@ -78,18 +78,20 @@ export default function BotDetail() {
 
   const loadBotData = async () => {
     try {
-      const [botData, invData, chestData, scanCfg, delivCfg] = await Promise.all([
+      const [botData, invData, chestData, scanCfg, delivCfg, wlistData] = await Promise.all([
         api.fleet.getBot(botId),
         api.fleet.getBotInventory(botId),
         api.chests.listForBot(botId).catch(() => []),
         api.chests.getScanConfig(botId).catch(() => ({ scanRadius: 16, autoRescan: true })),
         api.fleet.getDeliveryConfig().catch(() => null),
+        api.fleet.getWhitelist().catch(() => []),
       ]);
       setBot(botData);
       setInventory(invData);
       setChests(chestData);
       setScanConfig(scanCfg);
       if (delivCfg) setDeliveryConfig(delivCfg);
+      setWhitelist(wlistData || []);
     } catch {
       addToast({ type: 'error', title: 'Failed to load bot data' });
     } finally {
@@ -332,10 +334,6 @@ export default function BotDetail() {
       setWhitelist(data || []);
     } catch (_) {}
   };
-
-  useEffect(() => {
-    loadWhitelist();
-  }, []);
 
   const handleAddWhitelist = async (e) => {
     e.preventDefault();
