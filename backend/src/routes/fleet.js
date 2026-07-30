@@ -733,6 +733,47 @@ fleetRoutes.post('/delivery-config', requireAuth, async (c) => {
 });
 
 // ============================================================
+// In-Game Whitelist Management Routes (Web UI)
+// ============================================================
+fleetRoutes.get('/whitelist', requireAuth, async (c) => {
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const list = await whitelistService.listAll();
+  return c.json(list);
+});
+
+fleetRoutes.post('/whitelist', requireAuth, async (c) => {
+  const session = c.get('session');
+  const body = await c.req.json();
+  const { playerName, role } = body;
+  if (!playerName || !playerName.trim()) {
+    return c.json({ error: 'Player name is required' }, 400);
+  }
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const entry = await whitelistService.addPlayer(playerName, role || 'user', session.username || 'web_admin');
+  return c.json({ success: true, entry });
+});
+
+fleetRoutes.put('/whitelist/:playerName', requireAuth, async (c) => {
+  const session = c.get('session');
+  const targetName = c.req.param('playerName');
+  const body = await c.req.json();
+  const { role } = body;
+  if (!role || !['admin', 'vip', 'user'].includes(role)) {
+    return c.json({ error: 'Valid role (admin, vip, user) is required' }, 400);
+  }
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const entry = await whitelistService.addPlayer(targetName, role, session.username || 'web_admin');
+  return c.json({ success: true, entry });
+});
+
+fleetRoutes.delete('/whitelist/:playerName', requireAuth, async (c) => {
+  const targetName = c.req.param('playerName');
+  const { whitelistService } = await import('../services/whitelistService.js');
+  await whitelistService.removePlayer(targetName);
+  return c.json({ success: true });
+});
+
+// ============================================================
 // Global Tasks (all user's tasks across all swarms)
 // ============================================================
 fleetRoutes.get('/tasks', requireAuth, async (c) => {

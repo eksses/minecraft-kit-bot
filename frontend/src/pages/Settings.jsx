@@ -8,6 +8,7 @@ const TAB_ITEMS = [
   { id: 'general', label: 'General' },
   { id: 'bot', label: 'Bot' },
   { id: 'delivery', label: 'Delivery' },
+  { id: 'whitelist', label: 'Whitelist' },
   { id: 'users', label: 'Users' },
 ];
 
@@ -54,16 +55,23 @@ export default function Settings() {
   const [savingBot, setSavingBot] = useState(false);
   const [savingDelivery, setSavingDelivery] = useState(false);
 
+  const [whitelist, setWhitelist] = useState([]);
+  const [showAddWhitelist, setShowAddWhitelist] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
+
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
     try {
-      const [usersData, generalData, deliveryData] = await Promise.all([
+      const [usersData, generalData, deliveryData, whitelistData] = await Promise.all([
         api.fleet.getUsers().catch(() => []),
         api.settings.get().catch(() => ({})),
         api.fleet.getDeliveryConfig().catch(() => null),
+        api.fleet.getWhitelist().catch(() => []),
       ]);
       setUsers(usersData);
+      setWhitelist(whitelistData || []);
       if (generalData?.SERVER_PORT) setGeneralForm(prev => ({ ...prev, SERVER_PORT: generalData.SERVER_PORT }));
       if (generalData?.WS_PORT) setGeneralForm(prev => ({ ...prev, WS_PORT: generalData.WS_PORT }));
       if (generalData?.IP) setBotForm(prev => ({ ...prev, IP: generalData.IP }));
@@ -74,6 +82,36 @@ export default function Settings() {
       addToast({ type: 'error', title: 'Failed to load settings' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddWhitelist = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingPlayer) {
+        await api.fleet.updateWhitelist(editingPlayer.playerName, { role: whitelistForm.role });
+        addToast({ type: 'success', title: 'Player role updated' });
+      } else {
+        await api.fleet.addWhitelist(whitelistForm);
+        addToast({ type: 'success', title: 'Player added to whitelist' });
+      }
+      setShowAddWhitelist(false);
+      setEditingPlayer(null);
+      setWhitelistForm({ playerName: '', role: 'user' });
+      setWhitelist(await api.fleet.getWhitelist());
+    } catch (err) {
+      addToast({ type: 'error', title: err.error || 'Failed to save whitelist player' });
+    }
+  };
+
+  const handleDeleteWhitelist = async (playerName) => {
+    if (!confirm(`Remove ${playerName} from whitelist?`)) return;
+    try {
+      await api.fleet.deleteWhitelist(playerName);
+      setWhitelist(await api.fleet.getWhitelist());
+      addToast({ type: 'success', title: 'Player removed from whitelist' });
+    } catch (err) {
+      addToast({ type: 'error', title: 'Failed to remove player' });
     }
   };
 
@@ -158,6 +196,19 @@ export default function Settings() {
       )}
       {activeTab === 'delivery' && (
         <DeliveryTab form={deliveryForm} setForm={setDeliveryForm} saving={savingDelivery} onSave={handleSaveDelivery} />
+      )}
+      {activeTab === 'whitelist' && (
+        <WhitelistTab
+          whitelist={whitelist}
+          onAdd={handleAddWhitelist}
+          onDelete={handleDeleteWhitelist}
+          showAdd={showAddWhitelist}
+          setShowAdd={setShowAddWhitelist}
+          editingPlayer={editingPlayer}
+          setEditingPlayer={setEditingPlayer}
+          form={whitelistForm}
+          setForm={setWhitelistForm}
+        />
       )}
       {activeTab === 'users' && (
         <UsersTab users={users} onAdd={handleAdd} onDelete={handleDelete} showAdd={showAdd} setShowAdd={setShowAdd} form={form} setForm={setForm} />
@@ -444,6 +495,124 @@ function UsersTab({ users, onAdd, onDelete, showAdd, setShowAdd, form, setForm }
             </Button>
             <Button variant="primary" type="submit">
               Add User
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </>
+  );
+}
+
+function WhitelistTab({ whitelist, onAdd, onDelete, showAdd, setShowAdd, editingPlayer, setEditingPlayer, form, setForm }) {
+  const handleOpenAdd = () => {
+    setEditingPlayer(null);
+    setForm({ playerName: '', role: 'user' });
+    setShowAdd(true);
+  };
+
+  const handleOpenEdit = (p) => {
+    setEditingPlayer(p);
+    setForm({ playerName: p.playerName, role: p.role });
+    setShowAdd(true);
+  };
+
+  return (
+    <>
+      <Card padding="none">
+        <CardHeader
+          title="In-Game Whitelist"
+          subtitle={`${whitelist.length} whitelisted player${whitelist.length !== 1 ? 's' : ''}`}
+          action={
+            <Button variant="primary" size="sm" onClick={handleOpenAdd}>
+              Add Player
+            </Button>
+          }
+        />
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Minecraft Username</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">In-Game Role</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Added By</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted text-left px-5 h-10 border-b border-mdb-border">Date Added</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-mdb-text-muted border-b border-mdb-border"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-mdb-border">
+              {whitelist.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-sm text-mdb-text-muted">
+                    No players in-game whitelisted yet. Click "Add Player" to grant access.
+                  </td>
+                </tr>
+              ) : (
+                whitelist.map((p) => (
+                  <tr key={p.id || p.playerName} className="hover:bg-mdb-surface-high transition-colors">
+                    <td className="font-medium px-5 h-12 text-sm text-mdb-text">{p.playerName}</td>
+                    <td className="px-5 h-12 text-sm">
+                      <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                        p.role === 'admin'
+                          ? 'bg-mdb-primary/15 text-mdb-primary'
+                          : p.role === 'vip'
+                          ? 'bg-amber-500/15 text-amber-400'
+                          : 'bg-mdb-surface-high text-mdb-text-muted'
+                      }`}>
+                        {p.role ? p.role.toUpperCase() : 'USER'}
+                      </span>
+                    </td>
+                    <td className="text-mdb-text-muted text-sm px-5 h-12">{p.addedBy || 'system'}</td>
+                    <td className="text-mdb-text-muted text-sm px-5 h-12">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td className="text-right px-5 h-12 space-x-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleOpenEdit(p)}
+                      >
+                        Edit Role
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => onDelete(p.playerName)}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Modal isOpen={showAdd} onClose={() => { setShowAdd(false); setEditingPlayer(null); }} title={editingPlayer ? `Edit Role: ${editingPlayer.playerName}` : 'Add Player to Whitelist'} size="sm">
+        <form onSubmit={onAdd} className="space-y-4">
+          <Input
+            label="Minecraft Username"
+            value={form.playerName}
+            onChange={(e) => setForm({ ...form, playerName: e.target.value })}
+            placeholder="e.g. FitMC"
+            disabled={!!editingPlayer}
+            required
+          />
+          <Select
+            label="In-Game Role"
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            options={[
+              { value: 'user', label: 'User (Standard kit orders)' },
+              { value: 'vip', label: 'VIP (Priority kit orders)' },
+              { value: 'admin', label: 'Admin (In-game whitelist control)' },
+            ]}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" type="button" onClick={() => { setShowAdd(false); setEditingPlayer(null); }}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingPlayer ? 'Save Role' : 'Add to Whitelist'}
             </Button>
           </div>
         </form>

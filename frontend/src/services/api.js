@@ -146,6 +146,12 @@ export const fleetAPI = {
   // Delivery Configuration
   getDeliveryConfig: () => request('/fleet/delivery-config'),
   updateDeliveryConfig: (data) => request('/fleet/delivery-config', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Whitelist API
+  getWhitelist: () => request('/fleet/whitelist'),
+  addWhitelist: (data) => request('/fleet/whitelist', { method: 'POST', body: JSON.stringify(data) }),
+  updateWhitelist: (playerName, data) => request(`/fleet/whitelist/${encodeURIComponent(playerName)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteWhitelist: (playerName) => request(`/fleet/whitelist/${encodeURIComponent(playerName)}`, { method: 'DELETE' }),
 };
 
 // ============================================================
