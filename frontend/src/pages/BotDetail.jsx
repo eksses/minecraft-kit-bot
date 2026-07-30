@@ -52,6 +52,12 @@ export default function BotDetail() {
   const [savingDelivery, setSavingDelivery] = useState(false);
   const [showDeliveryAdvanced, setShowDeliveryAdvanced] = useState(false);
 
+  // Whitelist
+  const [whitelist, setWhitelist] = useState([]);
+  const [showAddWhitelist, setShowAddWhitelist] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
+
   useEffect(() => {
     if (botId) loadBotData();
   }, [botId]);
@@ -320,11 +326,6 @@ export default function BotDetail() {
   );
 
   // Whitelist
-  const [whitelist, setWhitelist] = useState([]);
-  const [showAddWhitelist, setShowAddWhitelist] = useState(false);
-  const [editingPlayer, setEditingPlayer] = useState(null);
-  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
-
   const loadWhitelist = async () => {
     try {
       const data = await api.fleet.getWhitelist();
