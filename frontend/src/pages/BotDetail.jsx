@@ -35,6 +35,15 @@ export default function BotDetail() {
   const [orderPlayer, setOrderPlayer] = useState('');
   const [ordering, setOrdering] = useState(false);
   const [deliverChest, setDeliverChest] = useState(null);
+  const [deliveryConfig, setDeliveryConfig] = useState({
+    DELIVERY_MODE: 'TPA',
+    TARGET_COORD_MODE: 'USER',
+    POST_DELIVERY_ACTION: 'FLY_HOME',
+    STORAGE_KEYS: { ender: 'ender', chest: 'chest', elytra: 'elytra', rocket: 'rocket' },
+    BASE_COORDINATES: { x: 0, y: 64, z: 0 },
+    RANDOM_REGION_BOUNDS: { x1: -1000, z1: -1000, x2: 1000, z2: 1000 }
+  });
+  const [useWebViewer, setUseWebViewer] = useState(true);
   const chatEndRef = useRef(null);
   const { addToast } = useToast();
 
@@ -58,18 +67,20 @@ export default function BotDetail() {
 
   const loadBotData = async () => {
     try {
-      const [botData, invData, logData, chestData, scanCfg] = await Promise.all([
+      const [botData, invData, logData, chestData, scanCfg, delivCfg] = await Promise.all([
         api.fleet.getBot(botId),
         api.fleet.getBotInventory(botId),
         api.fleet.getBotLogs(botId),
         api.chests.listForBot(botId).catch(() => []),
         api.chests.getScanConfig(botId).catch(() => ({ scanRadius: 16, autoRescan: true })),
+        api.fleet.getDeliveryConfig().catch(() => null),
       ]);
       setBot(botData);
       setInventory(invData);
       setLogs(logData);
       setChests(chestData);
       setScanConfig(scanCfg);
+      if (delivCfg) setDeliveryConfig(delivCfg);
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to load bot data' });
     } finally {
@@ -161,6 +172,16 @@ export default function BotDetail() {
       addToast({ type: 'success', title: 'Scan config saved' });
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to save config' });
+    }
+  };
+
+  const handleSaveDeliveryConfig = async () => {
+    try {
+      const res = await api.fleet.updateDeliveryConfig(deliveryConfig);
+      if (res && res.config) setDeliveryConfig(res.config);
+      addToast({ type: 'success', title: 'Delivery configuration saved' });
+    } catch (err) {
+      addToast({ type: 'error', title: 'Failed to save delivery config: ' + (err.message || 'Error') });
     }
   };
 
@@ -335,6 +356,90 @@ export default function BotDetail() {
                 </button>
               </div>
             </form>
+            <div className="divider" />
+            <div className="bot-panel-section-header" style={{ marginTop: '8px' }}>
+              <Truck size={18} />
+              <span>Delivery Engine Settings</span>
+            </div>
+            <div className="section" style={{ background: '#1c1b1b', padding: '12px', borderRadius: '4px', border: '1px solid #2a2a2a' }}>
+              <div className="form-row">
+                <div className="form-group flex-1">
+                  <label className="form-label">Delivery Transport Mode</label>
+                  <select
+                    value={deliveryConfig.DELIVERY_MODE}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, DELIVERY_MODE: e.target.value })}
+                  >
+                    <option value="TPA">TPA (Teleport Request)</option>
+                    <option value="ELYTRA">ELYTRA (Autonomous Flight)</option>
+                  </select>
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Target Coords Mode</label>
+                  <select
+                    value={deliveryConfig.TARGET_COORD_MODE}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, TARGET_COORD_MODE: e.target.value })}
+                  >
+                    <option value="USER">USER (Direct Coordinates)</option>
+                    <option value="RANDOM_REGION">RANDOM_REGION (Bounded Region)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Post-Delivery Action Waterfall</label>
+                <select
+                  value={deliveryConfig.POST_DELIVERY_ACTION}
+                  onChange={(e) => setDeliveryConfig({ ...deliveryConfig, POST_DELIVERY_ACTION: e.target.value })}
+                >
+                  <option value="FLY_HOME">FLY_HOME (Fly back to base coordinates)</option>
+                  <option value="ECHEST_SAVE_AND_DIE">ECHEST_SAVE_AND_DIE (Stash flight gear in EChest then suicide)</option>
+                  <option value="DIRECT_DIE">DIRECT_DIE (Skip stashing, immediate suicide)</option>
+                </select>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group flex-1">
+                  <label className="form-label">Key: Ender Chest</label>
+                  <input
+                    type="text"
+                    value={deliveryConfig.STORAGE_KEYS?.ender || 'ender'}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, ender: e.target.value } })}
+                  />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Key: Standard Chest</label>
+                  <input
+                    type="text"
+                    value={deliveryConfig.STORAGE_KEYS?.chest || 'chest'}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, chest: e.target.value } })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group flex-1">
+                  <label className="form-label">Key: Elytra</label>
+                  <input
+                    type="text"
+                    value={deliveryConfig.STORAGE_KEYS?.elytra || 'elytra'}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, elytra: e.target.value } })}
+                  />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Key: Rockets</label>
+                  <input
+                    type="text"
+                    value={deliveryConfig.STORAGE_KEYS?.rocket || 'rocket'}
+                    onChange={(e) => setDeliveryConfig({ ...deliveryConfig, STORAGE_KEYS: { ...deliveryConfig.STORAGE_KEYS, rocket: e.target.value } })}
+                  />
+                </div>
+              </div>
+
+              <button className="btn btn-primary btn-sm mt-sm" onClick={handleSaveDeliveryConfig}>
+                Save Delivery Settings
+              </button>
+            </div>
+
             {showScanConfig && (
               <div className="drawer-overlay animate-fade-in" onClick={() => setShowScanConfig(false)}>
                 <div className="drawer animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
@@ -370,22 +475,41 @@ export default function BotDetail() {
             <div className="bot-panel-section-header">
               <Package size={18} />
               <span>Inventory ({inventory.length} items)</span>
+              <div className="flex gap-sm ml-auto">
+                <button
+                  className={`btn btn-sm ${useWebViewer ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setUseWebViewer(!useWebViewer)}
+                >
+                  {useWebViewer ? 'Mineflayer Web Viewer' : 'Grid View'}
+                </button>
+              </div>
             </div>
-            <div className="inventory-grid">
-              {Array.from({ length: 36 }, (_, i) => {
-                const item = inventory.find(inv => inv.slot === i);
-                return (
-                  <div key={i} className={`inventory-slot ${item ? '' : 'empty'}`}>
-                    {item && (
-                      <>
-                        <span className="inventory-slot-name">{item.name}</span>
-                        {item.count > 1 && <span className="inventory-slot-count">{item.count}</span>}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+
+            {useWebViewer ? (
+              <div className="web-inventory-frame-container" style={{ width: '100%', height: '520px', border: '1px solid #2a2a2a', borderRadius: '4px', overflow: 'hidden' }}>
+                <iframe
+                  src={`http://${window.location.hostname}:3001`}
+                  title="Mineflayer Live Web Inventory"
+                  style={{ width: '100%', height: '100%', border: 'none', background: '#141313' }}
+                />
+              </div>
+            ) : (
+              <div className="inventory-grid">
+                {Array.from({ length: 36 }, (_, i) => {
+                  const item = inventory.find(inv => inv.slot === i);
+                  return (
+                    <div key={i} className={`inventory-slot ${item ? '' : 'empty'}`}>
+                      {item && (
+                        <>
+                          <span className="inventory-slot-name">{item.name}</span>
+                          {item.count > 1 && <span className="inventory-slot-count">{item.count}</span>}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       case 'settings':

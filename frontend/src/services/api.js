@@ -155,6 +155,10 @@ export const fleetAPI = {
   getUsers: () => request('/auth/users'),
   createUser: (data) => request('/auth/users', { method: 'POST', body: JSON.stringify(data) }),
   deleteUser: (id) => request(`/auth/users/${id}`, { method: 'DELETE' }),
+
+  // Delivery Configuration
+  getDeliveryConfig: () => request('/fleet/delivery-config'),
+  updateDeliveryConfig: (data) => request('/fleet/delivery-config', { method: 'POST', body: JSON.stringify(data) }),
 };
 
 // ============================================================

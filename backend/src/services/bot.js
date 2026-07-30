@@ -7,6 +7,7 @@ import { configService } from './config.js';
 import { ChestScanner } from './chest-scanner.js';
 import { openChestSafely } from '../utils/chest-helpers.js';
 import { DeliveryEngine } from './deliveryEngine.js';
+import inventoryViewer from 'mineflayer-web-inventory';
 import { db, schema } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 
@@ -47,6 +48,16 @@ export class BotService extends EventEmitter {
         this.connected = true;
         this.bot.service = this;
         this.bot.deliveryEngine = this.deliveryEngine;
+        
+        try {
+          inventoryViewer(this.bot, {
+            port: parseInt(process.env.WEB_INVENTORY_PORT || '3001', 10),
+            startOnLoad: true,
+          });
+        } catch (err) {
+          console.warn('Mineflayer web inventory init warning:', err.message);
+        }
+
         this.bot.chat(`/login ${this.botConfig.password}`);
         
         // Set bot metadata on the mineflayer object for ChestScanner DB writes
