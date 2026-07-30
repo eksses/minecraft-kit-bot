@@ -16,8 +16,8 @@ export function Button({
 }) {
   const base = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mdb-primary focus-visible:ring-offset-2 focus-visible:ring-offset-mdb-bg';
   const sizes = {
-    sm: 'h-11 px-3.5 text-xs gap-1.5',
-    md: 'h-11 px-4 text-sm gap-2',
+    sm: 'h-10 px-4 text-xs gap-2',
+    md: 'h-12 px-4 text-sm gap-2',
     lg: 'h-12 px-6 text-sm font-semibold gap-2.5 shadow-lg shadow-mdb-primary/10',
   };
   const iconOnlyWidths = { sm: 'w-11 px-0 aspect-square', md: 'w-11 px-0 aspect-square', lg: 'w-12 px-0 aspect-square' };
@@ -99,7 +99,7 @@ export function Input({ label, error, helperText, size = 'md', className = '', .
 
 /* ─── Select ─── */
 export function Select({ label, options = [], size = 'md', className = '', ...props }) {
-  const h = size === 'lg' ? 'h-12' : 'h-10';
+  const h = size === 'lg' ? 'h-12' : 'min-h-[44px] h-11';
 
   return (
     <div className={className}>
@@ -381,7 +381,7 @@ export function FormGroup({ label, error, required, className = '', children }) 
 
 /* ─── FormRow ─── */
 export function FormRow({ gap = 'md', className = '', children }) {
-  const gaps = { sm: 'gap-2', md: 'gap-3', lg: 'gap-5' };
+  const gaps = { sm: 'gap-2', md: 'gap-4', lg: 'gap-6' };
   return <div className={`grid grid-cols-1 sm:grid-cols-2 ${gaps[gap]} ${className}`}>{children}</div>;
 }
 
