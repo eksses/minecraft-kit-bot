@@ -1,7 +1,7 @@
 {
   "name": "minecraft-kit-bot",
   "version": "3.0.0",
-  "description": "Minecraft Kit Delivery Bot - Hono Backend + React PWA Frontend",
+  "description": "Automated Minecraft Kit Delivery Bot for 2b2t, 6b6t, and anarchy servers. Supports TPA teleport, Elytra flight, chest scanning, and in-game whitelist commands.",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -14,16 +14,19 @@
     "frontend": "cd frontend && npm run dev"
   },
   "keywords": [
-    "minecraft",
-    "kit-delivery",
+    "minecraft-kit-delivery-bot",
+    "2b2t-kit-bot",
+    "6b6t-delivery-bot",
+    "anarchy-server-kit-bot",
+    "mineflayer-delivery-bot",
+    "automated-kit-bot",
+    "minecraft-shop-bot",
+    "minecraft-item-delivery-bot",
+    "elytra-delivery-bot",
+    "minecraft-stash-delivery",
     "mineflayer",
-    "bot",
-    "anarchy",
     "2b2t",
-    "6b6t",
-    "hono",
-    "react",
-    "pwa"
+    "6b6t"
   ],
   "author": "samirx69",
   "license": "ISC",
