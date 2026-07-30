@@ -1,18 +1,33 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { X, Search, Copy, Check, ChevronRight } from 'lucide-react';
+import { HealthBar, FoodBar, LiveStatusDot, StatusBadge } from './StatusComponents';
 
 /* ─── Button ─── */
-export function Button({ variant = 'primary', size = 'md', icon: iconProp, loading, disabled, className = '', children, ...props }) {
-  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0';
-  const sizes = { sm: 'h-8 px-3 text-xs gap-1.5', md: 'h-9 px-4 text-sm gap-2', lg: 'h-10 px-5 text-sm gap-2' };
-  const iconOnlyWidths = { sm: 'w-8 px-0 aspect-square', md: 'w-9 px-0 aspect-square', lg: 'w-10 px-0 aspect-square' };
+export function Button({
+  as: Component = 'button',
+  variant = 'primary',
+  size = 'md',
+  icon: iconProp,
+  loading,
+  disabled,
+  className = '',
+  children,
+  ...props
+}) {
+  const base = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-[0.98] select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mdb-primary focus-visible:ring-offset-2 focus-visible:ring-offset-mdb-bg';
+  const sizes = {
+    sm: 'h-9 px-3.5 text-xs gap-1.5',
+    md: 'h-10 px-4 text-sm gap-2',
+    lg: 'h-12 px-6 text-sm font-semibold gap-2.5 shadow-lg shadow-mdb-primary/10',
+  };
+  const iconOnlyWidths = { sm: 'w-9 px-0 aspect-square', md: 'w-10 px-0 aspect-square', lg: 'w-12 px-0 aspect-square' };
   const iconSizes = { sm: 14, md: 16, lg: 18 };
   const variants = {
-    primary: 'bg-mdb-primary text-white hover:bg-mdb-primary-hover shadow-sm hover:shadow-mdb-primary/20 hover:shadow-md',
-    secondary: 'border border-mdb-border text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text hover:border-mdb-border-hover',
+    primary: 'bg-mdb-primary text-white hover:bg-mdb-primary-hover shadow-md shadow-mdb-primary/20',
+    secondary: 'border border-mdb-border bg-mdb-surface text-mdb-text-secondary hover:bg-mdb-surface-high hover:text-mdb-text hover:border-mdb-border-hover',
     ghost: 'text-mdb-text-secondary hover:text-mdb-text hover:bg-mdb-surface-high',
-    danger: 'bg-mdb-error-light text-mdb-error hover:bg-mdb-error hover:text-white shadow-sm',
-    success: 'bg-mdb-success-light text-mdb-success hover:bg-mdb-success hover:text-white shadow-sm',
+    danger: 'bg-mdb-error/15 text-mdb-error hover:bg-mdb-error hover:text-white border border-mdb-error/20 shadow-sm',
+    success: 'bg-mdb-success/15 text-mdb-success hover:bg-mdb-success hover:text-white border border-mdb-success/20 shadow-sm',
   };
   const disabledCls = disabled || loading ? 'opacity-50 cursor-not-allowed pointer-events-none active:scale-100' : '';
   const iconOnly = iconProp && !children;
@@ -27,9 +42,9 @@ export function Button({ variant = 'primary', size = 'md', icon: iconProp, loadi
   };
 
   return (
-    <button
+    <Component
       className={`${base} ${sizes[size]} ${variants[variant]} ${disabledCls} ${iconOnly ? iconOnlyWidths[size] : ''} ${className}`}
-      disabled={disabled || loading}
+      disabled={Component === 'button' ? (disabled || loading) : undefined}
       {...props}
     >
       {loading ? (
@@ -40,7 +55,7 @@ export function Button({ variant = 'primary', size = 'md', icon: iconProp, loadi
           {children}
         </>
       )}
-    </button>
+    </Component>
   );
 }
 
@@ -188,15 +203,7 @@ export function Badge({ variant = 'default', size = 'sm', dot, className = '', c
 }
 
 /* ─── StatusBadge ─── */
-export function StatusBadge({ status }) {
-  const map = {
-    IDLE: 'success', ONLINE: 'success', COMPLETED: 'success',
-    WORKING: 'warning', ON_DELIVERY: 'warning', ACTIVE: 'warning', IN_PROGRESS: 'warning', PENDING: 'info',
-    BUSY: 'error', ERROR: 'error', FAILED: 'error',
-    OFFLINE: 'default',
-  };
-  return <Badge variant={map[status] || 'default'} dot>{status}</Badge>;
-}
+export { StatusBadge };
 
 /* ─── Tabs ─── */
 export function Tabs({ items = [], value, onChange, variant = 'underline', className = '' }) {
