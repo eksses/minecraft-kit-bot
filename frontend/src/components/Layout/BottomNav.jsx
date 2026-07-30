@@ -25,7 +25,7 @@ export default function BottomNav({ currentPath, onLogout }) {
             to={path}
             end={path === '/fleet'}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 rounded-lg text-[10px] font-medium no-underline transition-all duration-150 ${
+              `flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] py-1 rounded-lg text-xs font-medium no-underline transition-all duration-150 ${
                 isActive ? 'text-mdb-primary bg-mdb-primary/10' : 'text-mdb-text-muted hover:text-mdb-text'
               }`
             }
@@ -35,7 +35,7 @@ export default function BottomNav({ currentPath, onLogout }) {
           </NavLink>
         ))}
         <button
-          className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 rounded-lg text-mdb-text-muted hover:text-mdb-text text-[10px] font-medium border-none bg-transparent cursor-pointer transition-colors duration-150"
+          className="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] py-1 rounded-lg text-mdb-text-muted hover:text-mdb-text text-xs font-medium border-none bg-transparent cursor-pointer transition-colors duration-150"
           onClick={() => setShowMore(true)}
           aria-label="More options"
         >
