@@ -66,11 +66,21 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8081',
-        changeOrigin: true
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            // Suppress connection reset errors from proxy
+          });
+        }
       },
       '/ws': {
         target: 'ws://localhost:8081',
-        ws: true
+        ws: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            // Suppress websocket connection reset errors from proxy
+          });
+        }
       }
     }
   },

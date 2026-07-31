@@ -13,6 +13,8 @@ frontend/dist
 frontend/node_modules
 backend/node_modules
 backend/dist
-data/mcdb.db-shm
-data/mcdb.db-wal
+data/*.db
+data/*.db-shm
+data/*.db-wal
+.superpowers/
 opencode.json
