@@ -12,11 +12,13 @@ import {
   Truck,
   Server,
   ListTodo,
+  Box,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/fleet', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/fleet/delivery', label: 'Delivery', icon: Truck },
+  { path: '/fleet/chests', label: 'Chests', icon: Box },
   { path: '/fleet/bots', label: 'Bots', icon: Bot },
   { path: '/fleet/swarms', label: 'Swarms', icon: Layers },
   { path: '/fleet/servers', label: 'Servers', icon: Server },

@@ -13,6 +13,7 @@ import Plugins from './pages/Plugins';
 import DeliveryPage from './pages/DeliveryPage';
 import ServerManager from './pages/ServerManager';
 import TaskQueue from './pages/TaskQueue';
+import Chests from './pages/Chests';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -42,6 +43,8 @@ function App() {
           <Route path="/" element={<Navigate to="/fleet" replace />} />
           <Route path="/fleet" element={<FleetDashboard />} />
           <Route path="/fleet/delivery" element={<DeliveryPage />} />
+          <Route path="/fleet/chests" element={<Chests />} />
+          <Route path="/chests" element={<Chests />} />
           <Route path="/fleet/bots" element={<BotControl />} />
           <Route path="/fleet/bots/:botId" element={<BotDetail />} />
           <Route path="/fleet/swarms" element={<SwarmController />} />

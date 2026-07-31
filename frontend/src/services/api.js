@@ -1,7 +1,8 @@
 const API_BASE = '/api';
 
 async function request(endpoint, options = {}) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const url = endpoint.startsWith('/api') ? endpoint : `${API_BASE}${endpoint}`;
+  const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -42,6 +43,7 @@ export const botAPI = {
 // Chest API (Bot-Scoped)
 // ============================================================
 export const chestAPI = {
+  getAll: () => request('/fleet/chests'),
   listForBot: (botId) => request(`/chests/${botId}`),
   createForBot: (botId, data) => request(`/chests/${botId}`, { method: 'POST', body: JSON.stringify(data) }),
   triggerScan: (botId, radius = 32) =>
@@ -67,6 +69,10 @@ export const chestAPI = {
       method: 'POST',
       body: JSON.stringify({ itemName, count, playerName, ...options }),
     }),
+  updateRules: (id, data) => request('/api/chests/' + id + '/rules', { method: 'PUT', body: typeof data === 'string' ? data : JSON.stringify(data) }),
+  resetCooldowns: (id) => request('/api/chests/' + id + '/reset-cooldowns', { method: 'POST' }),
+  update: (id, data) => request('/fleet/chests/' + id, { method: 'PUT', body: typeof data === 'string' ? data : JSON.stringify(data) }),
+  delete: (id) => request('/fleet/chests/' + id, { method: 'DELETE' }),
 };
 
 // ============================================================
