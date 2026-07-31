@@ -309,6 +309,53 @@ chestRoutes.get('/:botId', requireAuth, async (c) => {
 });
 
 /**
+ * POST / — Create a chest location
+ */
+chestRoutes.post('/', requireAuth, async (c) => {
+  const session = c.get('session');
+  const body = await c.req.json();
+  const { name, x, y, z, item, itemName, description, botId, serverId, minRank, cooldownMinutes, maxHourlyLimit, maxDailyLimit, maxWithdrawPerOrder, category, status } = body;
+
+  const targetItem = itemName || item;
+  if (!name || !targetItem) {
+    return c.json({ error: 'Missing required fields (name, item)' }, 400);
+  }
+
+  const coordCheck = validateCoordinates(x, y, z);
+  if (!coordCheck.valid) {
+    return c.json({ error: coordCheck.error }, 400);
+  }
+
+  const chestId = crypto.randomUUID();
+  try {
+    await db.insert(schema.chestLocations).values({
+      id: chestId,
+      userId: session.id,
+      serverId: serverId || null,
+      botId: botId || null,
+      name,
+      x: coordCheck.x,
+      y: coordCheck.y,
+      z: coordCheck.z,
+      itemName: targetItem,
+      description: description || null,
+      source: 'manual',
+      status: status || 'active',
+      minRank: minRank || 'public',
+      cooldownMinutes: cooldownMinutes !== undefined ? Number(cooldownMinutes) : 0,
+      maxHourlyLimit: maxHourlyLimit !== undefined ? Number(maxHourlyLimit) : 0,
+      maxDailyLimit: maxDailyLimit !== undefined ? Number(maxDailyLimit) : 0,
+      maxWithdrawPerOrder: maxWithdrawPerOrder !== undefined ? Number(maxWithdrawPerOrder) : 64,
+      category: category || 'General',
+      createdAt: new Date(),
+    });
+    return c.json({ id: chestId, success: true });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+});
+
+/**
  * POST /:botId — Create a chest associated with a specific bot
  * D-14a: Per-bot data isolation
  */
@@ -322,9 +369,10 @@ chestRoutes.post('/:botId', requireAuth, async (c) => {
   }
 
   const body = await c.req.json();
-  const { name, x, y, z, item } = body;
+  const { name, x, y, z, item, itemName, description, minRank, cooldownMinutes, maxHourlyLimit, maxDailyLimit, maxWithdrawPerOrder, category, status } = body;
 
-  if (!name || !item) {
+  const targetItem = itemName || item;
+  if (!name || !targetItem) {
     return c.json({ error: 'Missing required fields (name, item)' }, 400);
   }
 
@@ -334,22 +382,132 @@ chestRoutes.post('/:botId', requireAuth, async (c) => {
   }
 
   try {
+    const chestId = crypto.randomUUID();
     await db.insert(schema.chestLocations).values({
-      id: crypto.randomUUID(),
+      id: chestId,
       userId: session.id,
       serverId: botData.serverId || null,
       name,
       x: coordCheck.x,
       y: coordCheck.y,
       z: coordCheck.z,
-      itemName: item,
+      itemName: targetItem,
+      description: description || null,
       source: 'manual',
-      status: 'active',
+      status: status || 'active',
       botId,
+      minRank: minRank || 'public',
+      cooldownMinutes: cooldownMinutes !== undefined ? Number(cooldownMinutes) : 0,
+      maxHourlyLimit: maxHourlyLimit !== undefined ? Number(maxHourlyLimit) : 0,
+      maxDailyLimit: maxDailyLimit !== undefined ? Number(maxDailyLimit) : 0,
+      maxWithdrawPerOrder: maxWithdrawPerOrder !== undefined ? Number(maxWithdrawPerOrder) : 64,
+      category: category || 'General',
       createdAt: new Date(),
     });
-    return c.json({ success: true });
+    return c.json({ id: chestId, success: true });
   } catch (error) {
     return c.json({ error: error.message }, 400);
   }
+});
+
+/**
+ * PUT /:id — Update a chest location
+ */
+chestRoutes.put('/:id', requireAuth, async (c) => {
+  const chestId = c.req.param('id');
+  const session = c.get('session');
+  const body = await c.req.json();
+
+  const chest = await db.query.chestLocations.findFirst({
+    where: and(
+      eq(schema.chestLocations.id, chestId),
+      eq(schema.chestLocations.userId, session.id)
+    ),
+  });
+
+  if (!chest) {
+    return c.json({ error: 'Chest not found' }, 404);
+  }
+
+  const updates = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.x !== undefined) updates.x = Number(body.x);
+  if (body.y !== undefined) updates.y = Number(body.y);
+  if (body.z !== undefined) updates.z = Number(body.z);
+  if (body.itemName !== undefined || body.item !== undefined) updates.itemName = body.itemName || body.item;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.status !== undefined) updates.status = body.status;
+  if (body.botId !== undefined) updates.botId = body.botId;
+  if (body.serverId !== undefined) updates.serverId = body.serverId;
+  if (body.minRank !== undefined) updates.minRank = body.minRank;
+  if (body.cooldownMinutes !== undefined) updates.cooldownMinutes = Number(body.cooldownMinutes);
+  if (body.maxHourlyLimit !== undefined) updates.maxHourlyLimit = Number(body.maxHourlyLimit);
+  if (body.maxDailyLimit !== undefined) updates.maxDailyLimit = Number(body.maxDailyLimit);
+  if (body.maxWithdrawPerOrder !== undefined) updates.maxWithdrawPerOrder = Number(body.maxWithdrawPerOrder);
+  if (body.category !== undefined) updates.category = body.category;
+
+  await db.update(schema.chestLocations)
+    .set(updates)
+    .where(eq(schema.chestLocations.id, chestId));
+
+  return c.json({ success: true });
+});
+
+/**
+ * PUT /:id/rules — Update chest access rules and limits
+ */
+chestRoutes.put('/:id/rules', requireAuth, async (c) => {
+  const chestId = c.req.param('id');
+  const session = c.get('session');
+  const body = await c.req.json();
+
+  const chest = await db.query.chestLocations.findFirst({
+    where: and(
+      eq(schema.chestLocations.id, chestId),
+      eq(schema.chestLocations.userId, session.id)
+    ),
+  });
+
+  if (!chest) {
+    return c.json({ error: 'Chest not found' }, 404);
+  }
+
+  const updates = {};
+  if (body.minRank !== undefined) updates.minRank = body.minRank;
+  if (body.cooldownMinutes !== undefined) updates.cooldownMinutes = Number(body.cooldownMinutes);
+  if (body.maxHourlyLimit !== undefined) updates.maxHourlyLimit = Number(body.maxHourlyLimit);
+  if (body.maxDailyLimit !== undefined) updates.maxDailyLimit = Number(body.maxDailyLimit);
+  if (body.maxWithdrawPerOrder !== undefined) updates.maxWithdrawPerOrder = Number(body.maxWithdrawPerOrder);
+  if (body.category !== undefined) updates.category = body.category;
+  if (body.status !== undefined) updates.status = body.status;
+
+  await db.update(schema.chestLocations)
+    .set(updates)
+    .where(eq(schema.chestLocations.id, chestId));
+
+  return c.json({ success: true, updates });
+});
+
+/**
+ * POST /:id/reset-cooldowns — Reset player cooldown records for a chest
+ */
+chestRoutes.post('/:id/reset-cooldowns', requireAuth, async (c) => {
+  const chestId = c.req.param('id');
+  const session = c.get('session');
+
+  const chest = await db.query.chestLocations.findFirst({
+    where: and(
+      eq(schema.chestLocations.id, chestId),
+      eq(schema.chestLocations.userId, session.id)
+    ),
+  });
+
+  if (!chest) {
+    return c.json({ error: 'Chest not found' }, 404);
+  }
+
+  const { chestRuleEngine } = await import('../services/chestRuleEngine.js');
+  await chestRuleEngine.resetCooldowns(chest.botId || null, null, chestId);
+
+  return c.json({ success: true, message: 'Cooldowns reset for chest' });
 });

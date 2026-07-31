@@ -31,7 +31,7 @@ function wireBotEvents(bot) {
   bot.on('chat_command_help', async (data) => {
     try {
       const { whitelistService } = await import('../services/whitelistService.js');
-      const userRole = await whitelistService.getRole(data.username);
+      const userRole = await whitelistService.getRole(bot.id, data.username);
       const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
 
       bot.sendCommand(`/w ${data.username} === MDB KIT BOT HELP ===`);
@@ -43,7 +43,7 @@ function wireBotEvents(bot) {
       bot.sendCommand(`/w ${data.username} • !role - Check your whitelist role`);
       bot.sendCommand(`/w ${data.username} • !mode - Show delivery status & settings`);
       if (userRole === 'admin') {
-        bot.sendCommand(`/w ${data.username} Admin Cmds: !wlist add/remove/list <player> [role]`);
+        bot.sendCommand(`/w ${data.username} Admin Cmds: !wlist add/remove/list <player> [role] | !resetcd <player> [kit]`);
       }
     } catch (err) {
       console.error('[ChatCommand] Error sending help:', err.message);
@@ -53,8 +53,8 @@ function wireBotEvents(bot) {
   bot.on('chat_command_role', async (data) => {
     try {
       const { whitelistService } = await import('../services/whitelistService.js');
-      const userRole = await whitelistService.getRole(data.username);
-      const isWlisted = await whitelistService.isWhitelisted(data.username);
+      const userRole = await whitelistService.getRole(bot.id, data.username);
+      const isWlisted = await whitelistService.isWhitelisted(bot.id, data.username);
       bot.sendCommand(`/w ${data.username} Role: ${userRole.toUpperCase()} | Whitelisted: ${isWlisted ? 'YES' : 'NO'}`);
     } catch (err) {
       console.error('[ChatCommand] Error checking role:', err.message);
@@ -73,21 +73,21 @@ function wireBotEvents(bot) {
   bot.on('chat_command_wlist', async (data) => {
     try {
       const { whitelistService } = await import('../services/whitelistService.js');
-      const senderRole = await whitelistService.getRole(data.username);
+      const senderRole = await whitelistService.getRole(bot.id, data.username);
       if (senderRole !== 'admin') {
         bot.sendCommand(`/w ${data.username} Permission Denied: Admin role required to manage whitelist.`);
         return;
       }
 
       if (data.subcmd === 'list') {
-        const all = await whitelistService.listAll();
+        const all = await whitelistService.listForBot(bot.id);
         const listStr = all.map(p => `${p.playerName} (${p.role})`).join(', ');
         bot.sendCommand(`/w ${data.username} Whitelist (${all.length}): ${listStr || 'Empty'}`);
       } else if (data.subcmd === 'add' && data.targetPlayer) {
-        await whitelistService.addPlayer(data.targetPlayer, data.role || 'user', data.username);
+        await whitelistService.addPlayer(bot.id, data.targetPlayer, data.role || 'user', data.username);
         bot.sendCommand(`/w ${data.username} Added ${data.targetPlayer} to whitelist as [${(data.role || 'user').toUpperCase()}].`);
       } else if (data.subcmd === 'remove' && data.targetPlayer) {
-        await whitelistService.removePlayer(data.targetPlayer);
+        await whitelistService.removePlayer(bot.id, data.targetPlayer);
         bot.sendCommand(`/w ${data.username} Removed ${data.targetPlayer} from whitelist.`);
       } else {
         bot.sendCommand(`/w ${data.username} Usage: !wlist add <player> [admin|vip|user] OR !wlist remove <player> OR !wlist list`);
@@ -97,12 +97,42 @@ function wireBotEvents(bot) {
     }
   });
 
+  bot.on('chat_command_resetcd', async (data) => {
+    try {
+      const { whitelistService } = await import('../services/whitelistService.js');
+      const { chestRuleEngine } = await import('../services/chestRuleEngine.js');
+      const senderRole = await whitelistService.getRole(bot.id, data.username);
+      if (senderRole !== 'admin') {
+        bot.sendCommand(`/w ${data.username} Permission Denied: Admin role required to reset cooldowns.`);
+        return;
+      }
+
+      let chestId = null;
+      if (data.kitName) {
+        const chest = await db.query.chestLocations.findFirst({
+          where: and(
+            eq(schema.chestLocations.botId, bot.id),
+            eq(schema.chestLocations.name, data.kitName)
+          ),
+        });
+        if (chest) {
+          chestId = chest.id;
+        }
+      }
+
+      await chestRuleEngine.resetCooldowns(bot.id, data.targetPlayer, chestId);
+      bot.sendCommand(`/w ${data.username} Reset cooldowns for ${data.targetPlayer}${data.kitName ? ' on kit ' + data.kitName : ''}.`);
+    } catch (err) {
+      console.error('[ChatCommand] Error in !resetcd:', err.message);
+    }
+  });
+
   bot.on('chat_command_list', async (data) => {
     try {
       const { whitelistService } = await import('../services/whitelistService.js');
       const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
       if (deliveryCfg.WHITELIST_ENABLED) {
-        const isWlisted = await whitelistService.isWhitelisted(data.username);
+        const isWlisted = await whitelistService.isWhitelisted(bot.id, data.username);
         if (!isWlisted) {
           bot.sendCommand(`/w ${data.username} Permission Denied: You are not whitelisted on this bot.`);
           return;
@@ -126,14 +156,31 @@ function wireBotEvents(bot) {
     console.log('[Trade] Bot ' + bot.name + ' received trade request for: ' + (tradeData.chestName || tradeData.itemName));
     try {
       const { whitelistService } = await import('../services/whitelistService.js');
+      const { chestRuleEngine } = await import('../services/chestRuleEngine.js');
       const deliveryCfg = bot.deliveryEngine?.getConfig() || {};
       const playerName = tradeData.playerName || 'player';
 
       // Check Whitelist Enforcement
       if (deliveryCfg.WHITELIST_ENABLED) {
-        const isWlisted = await whitelistService.isWhitelisted(playerName);
+        const isWlisted = await whitelistService.isWhitelisted(bot.id, playerName);
         if (!isWlisted) {
-          bot.sendCommand(`/w ${playerName} Permission Denied: You are not whitelisted to order kits.`);
+          bot.sendCommand(`/w ${playerName} Permission Denied: You are not whitelisted on this bot to order kits.`);
+          return;
+        }
+      }
+
+      const targetChestName = tradeData.chestName || tradeData.itemName;
+      const chest = await db.query.chestLocations.findFirst({
+        where: and(
+          eq(schema.chestLocations.botId, bot.id),
+          eq(schema.chestLocations.name, targetChestName)
+        ),
+      });
+
+      if (chest) {
+        const access = await chestRuleEngine.validateAccess(bot.id, playerName, chest);
+        if (!access.allowed) {
+          bot.sendCommand(`/w ${playerName} ${access.reason}`);
           return;
         }
       }
@@ -143,7 +190,11 @@ function wireBotEvents(bot) {
         targetZ: tradeData.targetZ,
         hasExplicitCoords: tradeData.hasExplicitCoords,
       };
-      await tradingService.fulfillOrder(bot.id, playerName, tradeData.chestName || tradeData.itemName, 1, options);
+      const result = await tradingService.fulfillOrder(bot.id, playerName, targetChestName, 1, options);
+
+      if (chest && result?.success !== false) {
+        await chestRuleEngine.recordClaim(bot.id, playerName, chest.id);
+      }
     } catch (err) {
       console.error('[Trade] Error fulfilling order:', err.message);
     }
@@ -677,13 +728,21 @@ fleetRoutes.post('/chests', requireAuth, async (c) => {
   await db.insert(schema.chestLocations).values({
     id: chestId,
     userId: user.id,
-    serverId: body.serverId,
+    botId: body.botId || null,
+    serverId: body.serverId || null,
     name: body.name,
     x: body.x,
     y: body.y,
     z: body.z,
-    itemName: body.itemName,
-    description: body.description,
+    itemName: body.itemName || body.item,
+    description: body.description || null,
+    minRank: body.minRank || 'public',
+    cooldownMinutes: body.cooldownMinutes !== undefined ? Number(body.cooldownMinutes) : 0,
+    maxHourlyLimit: body.maxHourlyLimit !== undefined ? Number(body.maxHourlyLimit) : 0,
+    maxDailyLimit: body.maxDailyLimit !== undefined ? Number(body.maxDailyLimit) : 0,
+    maxWithdrawPerOrder: body.maxWithdrawPerOrder !== undefined ? Number(body.maxWithdrawPerOrder) : 64,
+    category: body.category || 'General',
+    status: body.status || 'active',
     createdAt: new Date(),
   });
 
@@ -695,8 +754,14 @@ fleetRoutes.put('/chests/:id', requireAuth, async (c) => {
   const chestId = c.req.param('id');
   const body = await c.req.json();
   
+  const updates = { ...body };
+  if (updates.cooldownMinutes !== undefined) updates.cooldownMinutes = Number(updates.cooldownMinutes);
+  if (updates.maxHourlyLimit !== undefined) updates.maxHourlyLimit = Number(updates.maxHourlyLimit);
+  if (updates.maxDailyLimit !== undefined) updates.maxDailyLimit = Number(updates.maxDailyLimit);
+  if (updates.maxWithdrawPerOrder !== undefined) updates.maxWithdrawPerOrder = Number(updates.maxWithdrawPerOrder);
+
   await db.update(schema.chestLocations)
-    .set(body)
+    .set(updates)
     .where(and(
       eq(schema.chestLocations.id, chestId),
       eq(schema.chestLocations.userId, user.id)
@@ -826,6 +891,59 @@ fleetRoutes.get('/bots/:id/logs', requireAuth, async (c) => {
     .where(eq(schema.botLogs.botId, botId))
     .limit(50);
   return c.json(logs);
+});
+
+// ============================================================
+// Per-Bot Whitelist & Cooldown Endpoints
+// ============================================================
+fleetRoutes.get('/bots/:id/whitelist', requireAuth, async (c) => {
+  const botId = c.req.param('id');
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const list = await whitelistService.listForBot(botId);
+  return c.json(list);
+});
+
+fleetRoutes.post('/bots/:id/whitelist', requireAuth, async (c) => {
+  const session = c.get('session');
+  const botId = c.req.param('id');
+  const body = await c.req.json();
+  const { playerName, role } = body;
+  if (!playerName || !playerName.trim()) {
+    return c.json({ error: 'Player name is required' }, 400);
+  }
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const entry = await whitelistService.addPlayer(botId, playerName, role || 'user', session.username || 'web_admin');
+  return c.json({ success: true, entry });
+});
+
+fleetRoutes.put('/bots/:id/whitelist/:playerName', requireAuth, async (c) => {
+  const session = c.get('session');
+  const botId = c.req.param('id');
+  const targetName = c.req.param('playerName');
+  const body = await c.req.json();
+  const { role } = body;
+  if (!role || !['admin', 'vip', 'user', 'normal'].includes(role.toLowerCase())) {
+    return c.json({ error: 'Valid role is required' }, 400);
+  }
+  const { whitelistService } = await import('../services/whitelistService.js');
+  const entry = await whitelistService.addPlayer(botId, targetName, role, session.username || 'web_admin');
+  return c.json({ success: true, entry });
+});
+
+fleetRoutes.delete('/bots/:id/whitelist/:playerName', requireAuth, async (c) => {
+  const botId = c.req.param('id');
+  const targetName = c.req.param('playerName');
+  const { whitelistService } = await import('../services/whitelistService.js');
+  await whitelistService.removePlayer(botId, targetName);
+  return c.json({ success: true });
+});
+
+fleetRoutes.post('/bots/:id/whitelist/:playerName/reset-cooldown', requireAuth, async (c) => {
+  const botId = c.req.param('id');
+  const targetName = c.req.param('playerName');
+  const { chestRuleEngine } = await import('../services/chestRuleEngine.js');
+  await chestRuleEngine.resetCooldowns(botId, targetName);
+  return c.json({ success: true });
 });
 
 // ============================================================

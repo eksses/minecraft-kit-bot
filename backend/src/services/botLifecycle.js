@@ -186,6 +186,20 @@ function createBot(config) {
       return;
     }
 
+    // Reset Cooldown Command (!resetcd <player> [kit])
+    const resetcdMatch = trimmed.match(/^!resetcd\s+([^\s]+)(?:\s+([^\s]+))?$/i);
+    if (resetcdMatch) {
+      parentPort.postMessage({
+        type: 'chat_command_resetcd',
+        data: {
+          username,
+          targetPlayer: resetcdMatch[1],
+          kitName: resetcdMatch[2] || null
+        }
+      });
+      return;
+    }
+
     // Kit Request Command
     const match = trimmed.match(/^(?:!kit|!deliver|!get|\\/trade|!trade)\\s+([^\\s]+)(?:\\s+(-?\\d+)\\s+(-?\\d+))?$/i);
     if (match) {
@@ -1017,6 +1031,10 @@ export class BotInstance extends EventEmitter {
 
       case 'chat_command_mode':
         this.emit('chat_command_mode', msg.data);
+        break;
+
+      case 'chat_command_resetcd':
+        this.emit('chat_command_resetcd', msg.data);
         break;
 
       case 'scan_log':

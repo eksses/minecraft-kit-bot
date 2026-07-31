@@ -142,21 +142,15 @@ export class ChestRuleEngine {
 
   async resetCooldowns(botId, playerName, chestId) {
     const cleanName = (playerName || '').trim().toLowerCase();
-    let whereClause;
+    const conditions = [];
 
-    if (chestId) {
-      whereClause = and(
-        eq(schema.playerCooldowns.botId, botId),
-        eq(schema.playerCooldowns.playerName, cleanName),
-        eq(schema.playerCooldowns.chestId, chestId)
-      );
-    } else {
-      whereClause = and(
-        eq(schema.playerCooldowns.botId, botId),
-        eq(schema.playerCooldowns.playerName, cleanName)
-      );
-    }
+    if (botId) conditions.push(eq(schema.playerCooldowns.botId, botId));
+    if (cleanName) conditions.push(eq(schema.playerCooldowns.playerName, cleanName));
+    if (chestId) conditions.push(eq(schema.playerCooldowns.chestId, chestId));
 
+    if (conditions.length === 0) return false;
+
+    const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
     await db.delete(schema.playerCooldowns).where(whereClause).run();
     return true;
   }
