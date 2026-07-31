@@ -4,8 +4,8 @@ import { api } from '../services/api';
 import { HealthBar, FoodBar } from '../components/ui/StatusComponents';
 import { useToast } from '../components/ToastContainer';
 import { useRealtime } from '../hooks/useRealtime';
-import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, Box, Trash2, Shield, Plus, ChevronRight } from 'lucide-react';
-import { Button, Card, CardHeader, Input, Select, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge } from '../components/ui';
+import { ArrowLeft, Send, RefreshCw, Scan, Package, Settings, Terminal, Play, Square, ChevronDown, Box, Trash2, Shield, Plus, ChevronRight, Search, RotateCcw, Edit2 } from 'lucide-react';
+import { Button, Card, CardHeader, Input, Select, EmptyState, LoadingState, IconButton, Modal, Progress, Toggle, StatusBadge, ConfirmAction } from '../components/ui';
 import DeliverModal from '../components/DeliverModal';
 
 const TAB_ITEMS = [
@@ -58,7 +58,8 @@ export default function BotDetail() {
   const [whitelist, setWhitelist] = useState([]);
   const [showAddWhitelist, setShowAddWhitelist] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState(null);
-  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'user' });
+  const [whitelistForm, setWhitelistForm] = useState({ playerName: '', role: 'normal' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Realtime subscription for chat
   const rt = useRealtime([botId], []);
@@ -89,7 +90,7 @@ export default function BotDetail() {
         api.chests.listForBot(botId).catch(() => []),
         api.chests.getScanConfig(botId).catch(() => ({ scanRadius: 16, autoRescan: true })),
         api.fleet.getDeliveryConfig().catch(() => null),
-        api.fleet.getWhitelist().catch(() => []),
+        api.fleet.getWhitelist(botId).catch(() => []),
       ]);
       setBot(botData);
       setInventory(invData);
@@ -337,7 +338,7 @@ export default function BotDetail() {
   // Whitelist
   const loadWhitelist = async () => {
     try {
-      const data = await api.fleet.getWhitelist();
+      const data = await api.fleet.getWhitelist(botId);
       setWhitelist(data || []);
     } catch (_) {}
   };
@@ -346,41 +347,94 @@ export default function BotDetail() {
     e.preventDefault();
     try {
       if (editingPlayer) {
-        await api.fleet.updateWhitelist(editingPlayer.playerName, { role: whitelistForm.role });
+        await api.fleet.updateWhitelist(botId, editingPlayer.playerName, { role: whitelistForm.role });
         addToast({ type: 'success', title: 'Player role updated' });
       } else {
-        await api.fleet.addWhitelist(whitelistForm);
+        await api.fleet.addWhitelist(botId, { playerName: whitelistForm.playerName, role: whitelistForm.role });
         addToast({ type: 'success', title: 'Player added to whitelist' });
       }
       setShowAddWhitelist(false);
       setEditingPlayer(null);
-      setWhitelistForm({ playerName: '', role: 'user' });
+      setWhitelistForm({ playerName: '', role: 'normal' });
       loadWhitelist();
     } catch (err) {
-      addToast({ type: 'error', title: err.error || 'Failed to save whitelist player' });
+      addToast({ type: 'error', title: err.message || err.error || 'Failed to save whitelist player' });
     }
   };
 
-  const handleDeleteWhitelist = async (playerName) => {
-    if (!confirm(`Remove ${playerName} from whitelist?`)) return;
+  const handleRemoveWhitelist = async (playerName) => {
     try {
-      await api.fleet.deleteWhitelist(playerName);
+      await api.fleet.removeWhitelist(botId, playerName);
       loadWhitelist();
-      addToast({ type: 'success', title: 'Player removed from whitelist' });
+      addToast({ type: 'success', title: `Removed ${playerName} from whitelist` });
     } catch (_) {
       addToast({ type: 'error', title: 'Failed to remove player' });
     }
   };
 
+  const handleResetCooldown = async (playerName) => {
+    try {
+      await api.fleet.resetPlayerCooldown(botId, playerName);
+      addToast({ type: 'success', title: `Reset cooldowns for ${playerName}` });
+    } catch (_) {
+      addToast({ type: 'error', title: 'Failed to reset cooldown' });
+    }
+  };
+
+  const getRoleBadge = (role) => {
+    const r = (role || 'normal').toLowerCase();
+    if (r === 'admin') {
+      return (
+        <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+          ADMIN
+        </span>
+      );
+    }
+    if (r === 'vip') {
+      return (
+        <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+          VIP
+        </span>
+      );
+    }
+    return (
+      <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+        NORMAL
+      </span>
+    );
+  };
+
+  const filteredWhitelist = whitelist.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (p.playerName && p.playerName.toLowerCase().includes(q)) ||
+      (p.role && p.role.toLowerCase().includes(q)) ||
+      (p.addedBy && p.addedBy.toLowerCase().includes(q))
+    );
+  });
+
   const renderWhitelist = () => (
     <div className="max-w-[800px] mx-auto w-full space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Shield size={16} /> Whitelist ({whitelist.length})
         </h2>
-        <Button size="sm" icon={Plus} onClick={() => { setEditingPlayer(null); setWhitelistForm({ playerName: '', role: 'user' }); setShowAddWhitelist(true); }}>
-          Add Player
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:w-64">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search players..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#0d111a] border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
+            />
+          </div>
+          <Button size="sm" icon={Plus} onClick={() => { setEditingPlayer(null); setWhitelistForm({ playerName: '', role: 'normal' }); setShowAddWhitelist(true); }}>
+            Add Player
+          </Button>
+        </div>
       </div>
 
       <Card padding="none">
@@ -388,42 +442,60 @@ export default function BotDetail() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Username</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Player Name</th>
                 <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Role</th>
                 <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Added By</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 text-left px-4 h-9 border-b border-slate-800/50">Date Added</th>
                 <th className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-800/50"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
-              {whitelist.length === 0 ? (
+              {filteredWhitelist.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                    No players whitelisted. Click "Add Player" above to grant access.
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                    {searchQuery ? 'No matching whitelisted players found.' : 'No players whitelisted for this bot. Click "Add Player" above to grant access.'}
                   </td>
                 </tr>
               ) : (
-                whitelist.map((p) => (
+                filteredWhitelist.map((p) => (
                   <tr key={p.id || p.playerName} className="hover:bg-slate-800/30 transition-colors">
                     <td className="font-medium px-4 h-11 text-sm text-slate-100">{p.playerName}</td>
                     <td className="px-4 h-11 text-sm">
-                      <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
-                        p.role === 'admin'
-                          ? 'bg-emerald-500/20 text-emerald-400'
-                          : p.role === 'vip'
-                          ? 'bg-amber-500/20 text-amber-400'
-                          : 'bg-slate-800 text-slate-500'
-                      }`}>
-                        {p.role ? p.role.toUpperCase() : 'USER'}
-                      </span>
+                      {getRoleBadge(p.role)}
                     </td>
                     <td className="text-slate-500 text-sm px-4 h-11">{p.addedBy || 'system'}</td>
+                    <td className="text-slate-500 text-sm px-4 h-11">{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A'}</td>
                     <td className="text-right px-4 h-11 space-x-2">
-                      <Button variant="secondary" size="sm" onClick={() => { setEditingPlayer(p); setWhitelistForm({ playerName: p.playerName, role: p.role }); setShowAddWhitelist(true); }}>
-                        Edit
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={Edit2}
+                        onClick={() => {
+                          setEditingPlayer(p);
+                          setWhitelistForm({ playerName: p.playerName, role: p.role || 'normal' });
+                          setShowAddWhitelist(true);
+                        }}
+                      >
+                        Edit Role
                       </Button>
-                      <Button variant="danger" size="sm" onClick={() => handleDeleteWhitelist(p.playerName)}>
-                        Delete
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={RotateCcw}
+                        onClick={() => handleResetCooldown(p.playerName)}
+                      >
+                        Reset Cooldowns
                       </Button>
+                      <ConfirmAction
+                        title="Remove Player"
+                        message={`Remove ${p.playerName} from whitelist?`}
+                        confirmLabel="Remove"
+                        onConfirm={() => handleRemoveWhitelist(p.playerName)}
+                      >
+                        <Button variant="danger" size="sm" icon={Trash2}>
+                          Remove
+                        </Button>
+                      </ConfirmAction>
                     </td>
                   </tr>
                 ))
@@ -436,7 +508,7 @@ export default function BotDetail() {
       <Modal isOpen={showAddWhitelist} onClose={() => { setShowAddWhitelist(false); setEditingPlayer(null); }} title={editingPlayer ? `Edit Role: ${editingPlayer.playerName}` : 'Add Player to Whitelist'} size="sm">
         <form onSubmit={handleAddWhitelist} className="space-y-4">
           <Input
-            label="Minecraft Username"
+            label="Player Name"
             value={whitelistForm.playerName}
             onChange={(e) => setWhitelistForm({ ...whitelistForm, playerName: e.target.value })}
             placeholder="e.g. FitMC"
@@ -444,13 +516,13 @@ export default function BotDetail() {
             required
           />
           <Select
-            label="In-Game Role"
+            label="Role"
             value={whitelistForm.role}
             onChange={(e) => setWhitelistForm({ ...whitelistForm, role: e.target.value })}
             options={[
-              { value: 'user', label: 'User (Standard kit orders)' },
-              { value: 'vip', label: 'VIP (Priority kit orders)' },
-              { value: 'admin', label: 'Admin (In-game whitelist control)' },
+              { value: 'normal', label: 'NORMAL' },
+              { value: 'vip', label: 'VIP' },
+              { value: 'admin', label: 'ADMIN' },
             ]}
           />
           <div className="flex gap-4 pt-2">
@@ -458,7 +530,7 @@ export default function BotDetail() {
               Cancel
             </Button>
             <Button variant="primary" type="submit">
-              {editingPlayer ? 'Save Role' : 'Add to Whitelist'}
+              {editingPlayer ? 'Save Role' : 'Add Player'}
             </Button>
           </div>
         </form>

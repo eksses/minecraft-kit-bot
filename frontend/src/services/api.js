@@ -154,10 +154,20 @@ export const fleetAPI = {
   updateDeliveryConfig: (data) => request('/fleet/delivery-config', { method: 'POST', body: JSON.stringify(data) }),
 
   // Whitelist API
-  getWhitelist: () => request('/fleet/whitelist'),
-  addWhitelist: (data) => request('/fleet/whitelist', { method: 'POST', body: JSON.stringify(data) }),
-  updateWhitelist: (playerName, data) => request(`/fleet/whitelist/${encodeURIComponent(playerName)}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteWhitelist: (playerName) => request(`/fleet/whitelist/${encodeURIComponent(playerName)}`, { method: 'DELETE' }),
+  getWhitelist: (botId) => botId ? request('/api/fleet/bots/' + botId + '/whitelist') : request('/fleet/whitelist'),
+  addWhitelist: (botId, data) => typeof botId === 'object'
+    ? request('/fleet/whitelist', { method: 'POST', body: JSON.stringify(botId) })
+    : request('/api/fleet/bots/' + botId + '/whitelist', { method: 'POST', body: JSON.stringify(data) }),
+  updateWhitelist: (botId, playerName, data) => data !== undefined
+    ? request('/api/fleet/bots/' + botId + '/whitelist/' + encodeURIComponent(playerName), { method: 'PUT', body: JSON.stringify(data) })
+    : request('/fleet/whitelist/' + encodeURIComponent(botId), { method: 'PUT', body: JSON.stringify(playerName) }),
+  removeWhitelist: (botId, playerName) => playerName !== undefined
+    ? request('/api/fleet/bots/' + botId + '/whitelist/' + encodeURIComponent(playerName), { method: 'DELETE' })
+    : request('/fleet/whitelist/' + encodeURIComponent(botId), { method: 'DELETE' }),
+  deleteWhitelist: (botId, playerName) => playerName !== undefined
+    ? request('/api/fleet/bots/' + botId + '/whitelist/' + encodeURIComponent(playerName), { method: 'DELETE' })
+    : request('/fleet/whitelist/' + encodeURIComponent(botId), { method: 'DELETE' }),
+  resetPlayerCooldown: (botId, playerName) => request('/api/fleet/bots/' + botId + '/whitelist/' + encodeURIComponent(playerName) + '/reset-cooldown', { method: 'POST' }),
 };
 
 // ============================================================
