@@ -146,6 +146,12 @@ export const chestLocations = sqliteTable('chest_locations', {
   isDouble: integer('is_double', { mode: 'boolean' }).notNull().default(false),
   lastScanned: integer('last_scanned', { mode: 'timestamp' }),
   botId: text('bot_id').references(() => bots.id, { onDelete: 'set null' }),
+  minRank: text('min_rank', { enum: ['public', 'normal', 'vip', 'admin'] }).notNull().default('public'),
+  cooldownMinutes: integer('cooldown_minutes').notNull().default(0),
+  maxHourlyLimit: integer('max_hourly_limit').notNull().default(0),
+  maxDailyLimit: integer('max_daily_limit').notNull().default(0),
+  maxWithdrawPerOrder: integer('max_withdraw_per_order').notNull().default(64),
+  category: text('category').notNull().default('General'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -180,6 +186,8 @@ export const botsRelations = relations(bots, ({ one, many }) => ({
   server: one(servers, { fields: [bots.serverId], references: [servers.id] }),
   swarm: one(swarms, { fields: [bots.swarmId], references: [swarms.id] }),
   scanConfigs: many(scanConfigs),
+  whitelists: many(playerWhitelist),
+  cooldowns: many(playerCooldowns),
 }));
 
 export const swarmsRelations = relations(swarms, ({ one, many }) => ({
@@ -232,11 +240,36 @@ export const scanConfigsRelations = relations(scanConfigs, ({ one }) => ({
 // ============================================================
 export const playerWhitelist = sqliteTable('player_whitelist', {
   id: text('id').primaryKey(),
-  playerName: text('player_name').notNull().unique(),
-  role: text('role', { enum: ['admin', 'vip', 'user'] }).notNull().default('user'),
+  botId: text('bot_id').references(() => bots.id, { onDelete: 'cascade' }),
+  playerName: text('player_name').notNull(),
+  role: text('role', { enum: ['admin', 'vip', 'normal'] }).notNull().default('normal'),
   addedBy: text('added_by').default('system'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+export const playerWhitelistRelations = relations(playerWhitelist, ({ one }) => ({
+  bot: one(bots, { fields: [playerWhitelist.botId], references: [bots.id] }),
+}));
+
+// ============================================================
+// Player Cooldowns & Limits Table
+// ============================================================
+export const playerCooldowns = sqliteTable('player_cooldowns', {
+  id: text('id').primaryKey(),
+  botId: text('bot_id').references(() => bots.id, { onDelete: 'cascade' }),
+  playerName: text('player_name').notNull(),
+  chestId: text('chest_id').references(() => chestLocations.id, { onDelete: 'cascade' }),
+  claimCountHour: integer('claim_count_hour').notNull().default(0),
+  claimCountDay: integer('claim_count_day').notNull().default(0),
+  lastClaimAt: integer('last_claim_at', { mode: 'timestamp' }),
+  hourlyResetAt: integer('hourly_reset_at', { mode: 'timestamp' }),
+  dailyResetAt: integer('daily_reset_at', { mode: 'timestamp' }),
+});
+
+export const playerCooldownsRelations = relations(playerCooldowns, ({ one }) => ({
+  bot: one(bots, { fields: [playerCooldowns.botId], references: [bots.id] }),
+  chest: one(chestLocations, { fields: [playerCooldowns.chestId], references: [chestLocations.id] }),
+}));
 
 // ============================================================
 // Delivery Config Table (Global delivery settings, persisted)

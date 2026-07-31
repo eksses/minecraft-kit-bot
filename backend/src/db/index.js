@@ -180,10 +180,23 @@ export function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS player_whitelist (
       id TEXT PRIMARY KEY,
-      player_name TEXT NOT NULL UNIQUE,
-      role TEXT NOT NULL DEFAULT 'user',
+      bot_id TEXT REFERENCES bots(id) ON DELETE CASCADE,
+      player_name TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'normal',
       added_by TEXT DEFAULT 'system',
       created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS player_cooldowns (
+      id TEXT PRIMARY KEY,
+      bot_id TEXT REFERENCES bots(id) ON DELETE CASCADE,
+      player_name TEXT NOT NULL,
+      chest_id TEXT REFERENCES chest_locations(id) ON DELETE CASCADE,
+      claim_count_hour INTEGER NOT NULL DEFAULT 0,
+      claim_count_day INTEGER NOT NULL DEFAULT 0,
+      last_claim_at INTEGER,
+      hourly_reset_at INTEGER,
+      daily_reset_at INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS plugins (
@@ -207,17 +220,6 @@ export function initDatabase() {
       PRIMARY KEY (plugin_id, key)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id);
-    CREATE INDEX IF NOT EXISTS idx_bots_server_id ON bots(server_id);
-    CREATE INDEX IF NOT EXISTS idx_bots_swarm_id ON bots(swarm_id);
-    CREATE INDEX IF NOT EXISTS idx_bots_status ON bots(status);
-    CREATE INDEX IF NOT EXISTS idx_delivery_queue_swarm_id ON delivery_queue(swarm_id);
-    CREATE INDEX IF NOT EXISTS idx_delivery_queue_status ON delivery_queue(status);
-    CREATE INDEX IF NOT EXISTS idx_delivery_queue_assigned_bot_id ON delivery_queue(assigned_bot_id);
-    CREATE INDEX IF NOT EXISTS idx_swarm_memory_swarm_id ON swarm_memory(swarm_id);
-    CREATE INDEX IF NOT EXISTS idx_bot_logs_bot_id ON bot_logs(bot_id);
-    CREATE INDEX IF NOT EXISTS idx_chest_locations_user_id ON chest_locations(user_id);
-
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,
       value TEXT,
@@ -225,7 +227,15 @@ export function initDatabase() {
     );
   `);
   
-  // Migration: Add new columns to bots table if they don't exist
+  // Migration: Add new columns to tables if they don't exist
+  const safeAddColumn = (table, colDef) => {
+    try {
+      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${colDef}`);
+    } catch (e) {
+      // Column might already exist, ignore error
+    }
+  };
+
   const botColumns = sqlite.prepare("PRAGMA table_info(bots)").all();
   const botColumnNames = botColumns.map(c => c.name);
   
@@ -244,6 +254,31 @@ export function initDatabase() {
   if (!botColumnNames.includes('auth_password')) {
     sqlite.exec(`ALTER TABLE bots ADD COLUMN auth_password TEXT`);
   }
+
+  // Safe migrations for player_whitelist & chest_locations
+  safeAddColumn('player_whitelist', 'bot_id TEXT REFERENCES bots(id) ON DELETE CASCADE');
+  safeAddColumn('chest_locations', "min_rank TEXT NOT NULL DEFAULT 'public'");
+  safeAddColumn('chest_locations', 'cooldown_minutes INTEGER NOT NULL DEFAULT 0');
+  safeAddColumn('chest_locations', 'max_hourly_limit INTEGER NOT NULL DEFAULT 0');
+  safeAddColumn('chest_locations', 'max_daily_limit INTEGER NOT NULL DEFAULT 0');
+  safeAddColumn('chest_locations', 'max_withdraw_per_order INTEGER NOT NULL DEFAULT 64');
+  safeAddColumn('chest_locations', "category TEXT NOT NULL DEFAULT 'General'");
+
+  // Create indexes after ensuring columns exist
+  sqlite.exec(`
+    CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id);
+    CREATE INDEX IF NOT EXISTS idx_bots_server_id ON bots(server_id);
+    CREATE INDEX IF NOT EXISTS idx_bots_swarm_id ON bots(swarm_id);
+    CREATE INDEX IF NOT EXISTS idx_bots_status ON bots(status);
+    CREATE INDEX IF NOT EXISTS idx_delivery_queue_swarm_id ON delivery_queue(swarm_id);
+    CREATE INDEX IF NOT EXISTS idx_delivery_queue_status ON delivery_queue(status);
+    CREATE INDEX IF NOT EXISTS idx_delivery_queue_assigned_bot_id ON delivery_queue(assigned_bot_id);
+    CREATE INDEX IF NOT EXISTS idx_swarm_memory_swarm_id ON swarm_memory(swarm_id);
+    CREATE INDEX IF NOT EXISTS idx_bot_logs_bot_id ON bot_logs(bot_id);
+    CREATE INDEX IF NOT EXISTS idx_chest_locations_user_id ON chest_locations(user_id);
+    CREATE INDEX IF NOT EXISTS idx_player_cooldowns_bot_player ON player_cooldowns(bot_id, player_name);
+    CREATE INDEX IF NOT EXISTS idx_player_whitelist_bot_player ON player_whitelist(bot_id, player_name);
+  `);
   
   // Create default admin user if not exists
   const existingUser = sqlite.prepare('SELECT id FROM users WHERE id = ?').get('legacy-admin');
